@@ -1,0 +1,295 @@
+/* Reset & Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0a0a0a;
+  color: #f2f2f0;
+  font-family: ui-monospace, SF Mono, Cascadia Code, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 920px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Header Styling */
+.app-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  color: #7a7a76;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: #f2f2f0;
+}
+
+.description {
+  color: #7a7a76;
+  max-width: 640px;
+}
+
+/* Panel Design */
+.panel {
+  background-color: #121212;
+  border: 1px solid #232323;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Upload Section */
+.drop-zone {
+  border: 1px dashed #232323;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+  background-color: #1a1a1a;
+  border-color: #7a7a76;
+}
+
+.drop-zone-text {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #7a7a76;
+  pointer-events: none;
+}
+
+.hidden-input {
+  display: none !important;
+}
+
+.file-info-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #232323;
+  padding-top: 16px;
+}
+
+.file-meta {
+  display: flex;
+  gap: 12px;
+}
+
+.file-label {
+  color: #7a7a76;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  width: 90px;
+}
+
+.file-value {
+  color: #f2f2f0;
+  word-break: break-all;
+}
+
+/* Warnings and Errors */
+.warning-text {
+  color: #7a7a76;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.error-text {
+  color: #ff5555;
+  font-size: 12px;
+  border-top: 1px solid #232323;
+  padding-top: 16px;
+}
+
+.status-line {
+  color: #f2f2f0;
+  font-size: 12px;
+  border-top: 1px solid #232323;
+  padding-top: 16px;
+}
+
+/* Preview Section */
+.canvas-container {
+  width: 100%;
+  background-color: #000000;
+  border: 1px solid #232323;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+#previewCanvas {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  display: block;
+}
+
+/* Buttons */
+.controls-row {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #f2f2f0;
+  color: #0a0a0a;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: #f2f2f0;
+  border: 1px solid #232323;
+}
+
+/* Progress Area */
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #232323;
+  padding-top: 16px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.progress-label {
+  color: #7a7a76;
+}
+
+.progress-percentage {
+  color: #f2f2f0;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 2px;
+  background-color: #232323;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #f2f2f0;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* Downloads Section */
+.download-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid #232323;
+  padding-top: 16px;
+}
+
+.download-links {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.webm-notice {
+  color: #7a7a76;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 480px) {
+  body {
+    padding: 20px 12px;
+  }
+
+  .container {
+    gap: 20px;
+  }
+
+  .panel {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .download-links {
+    flex-direction: column;
+  }
+
+  .controls-row {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

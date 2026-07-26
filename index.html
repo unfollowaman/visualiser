@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waveform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <span class="eyebrow">Tool .001</span>
+      <h1 class="title">Waveform</h1>
+      <p class="description">
+        Upload audio, get a black-background bar visualizer as a downloadable MP4. No audio in the export, no captions, just the bars, matched to your clip's length.
+      </p>
+    </header>
+
+    <main class="app-content">
+      <!-- File Selection Area -->
+      <section class="panel upload-section">
+        <div id="dropZone" class="drop-zone">
+          <p class="drop-zone-text">DRAG & DROP AUDIO FILE OR CLICK TO BROWSE</p>
+          <input type="file" id="fileInput" accept="audio/*" class="hidden-input">
+        </div>
+
+        <div id="fileInfoContainer" class="file-info-container hidden">
+          <div class="file-meta">
+            <span class="file-label">FILE:</span>
+            <span id="fileName" class="file-value">filename.mp3</span>
+          </div>
+          <div class="file-meta">
+            <span class="file-label">DURATION:</span>
+            <span id="fileDuration" class="file-value">00:00</span>
+          </div>
+          <div id="durationWarning" class="warning-text hidden">
+            over about 2.5 minutes, export may take a while.
+          </div>
+        </div>
+        <div id="decodeError" class="error-text hidden">
+          Could not decode this audio file. Try MP3 or WAV.
+        </div>
+      </section>
+
+      <!-- Preview Section -->
+      <section class="panel preview-section">
+        <div class="canvas-container">
+          <canvas id="previewCanvas" width="1280" height="720"></canvas>
+        </div>
+
+        <div class="controls-row">
+          <button id="playPreviewBtn" class="btn btn-secondary" disabled>PLAY PREVIEW</button>
+        </div>
+      </section>
+
+      <!-- Export Section -->
+      <section class="panel export-section">
+        <div class="controls-row">
+          <button id="renderBtn" class="btn btn-primary" disabled>RENDER AND DOWNLOAD BOTH FORMATS</button>
+        </div>
+
+        <!-- Progress Area -->
+        <div id="progressContainer" class="progress-container hidden">
+          <div class="progress-header">
+            <span id="progressLabel" class="progress-label">RENDERING (16:9)...</span>
+            <span id="progressPercentage" class="progress-percentage">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Status/Error line -->
+        <div id="statusLine" class="status-line hidden"></div>
+
+        <!-- Download Links -->
+        <div id="downloadContainer" class="download-container hidden">
+          <div class="download-links">
+            <a id="download16x9" class="btn btn-primary" href="#" download>DOWNLOAD 16:9 MP4</a>
+            <a id="download9x16" class="btn btn-primary" href="#" download>DOWNLOAD 9:16 MP4</a>
+          </div>
+          <p id="webmNotice" class="webm-notice hidden">
+            exported as WebM because this browser cannot record MP4 directly, most players and editors accept this format.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
