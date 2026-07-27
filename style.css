@@ -8,7 +8,7 @@
 body {
   background-color: #0a0a0a;
   color: #f2f2f0;
-  font-family: ui-monospace, SF Mono, Cascadia Code, Consolas, monospace;
+  font-family: 'Playfair Display', serif;
   font-size: 14px;
   line-height: 1.5;
   padding: 40px 20px;
@@ -42,10 +42,11 @@ body {
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 700;
+  font-family: 'Instrument Serif', serif;
+  font-size: 36px;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
   color: #f2f2f0;
 }
 
@@ -179,9 +180,10 @@ body {
 }
 
 .aspect-card .card-title {
+  font-family: 'Instrument Serif', serif;
   color: #7a7a76;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 400;
+  font-size: 18px;
 }
 
 .aspect-card .card-subtitle {
@@ -218,10 +220,10 @@ body {
   justify-content: center;
   text-align: center;
   text-decoration: none;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-family: 'Instrument Serif', serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
   padding: 12px 24px;
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -268,11 +270,16 @@ body {
 }
 
 .progress-label {
+  font-family: 'Instrument Serif', serif;
   color: #7a7a76;
+  font-size: 14px;
 }
 
 .progress-percentage {
+  font-family: 'Instrument Serif', serif;
   color: #f2f2f0;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .progress-bar-bg {
