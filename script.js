@@ -7,6 +7,10 @@ let activePreviewAnalyser = null;
 let isPreviewPlaying = false;
 let previewAnimationId = null;
 
+// Aspect Ratio Config
+let chosenWidth = null;
+let chosenHeight = null;
+
 // UI Elements
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
@@ -24,9 +28,13 @@ const progressPercentage = document.getElementById("progressPercentage");
 const progressBarFill = document.getElementById("progressBarFill");
 const statusLine = document.getElementById("statusLine");
 const downloadContainer = document.getElementById("downloadContainer");
-const download16x9 = document.getElementById("download16x9");
-const download9x16 = document.getElementById("download9x16");
+const downloadVideo = document.getElementById("downloadVideo");
 const webmNotice = document.getElementById("webmNotice");
+
+// Aspect Ratio Cards UI
+const aspectRatioSection = document.getElementById("aspectRatioSection");
+const card16x9 = document.getElementById("card16x9");
+const card9x16 = document.getElementById("card9x16");
 
 // Canvas contexts and configurations
 const ctxPreview = previewCanvas.getContext("2d");
@@ -92,8 +100,41 @@ function drawIdleState() {
   drawBars(ctxPreview, idleAmplitudes, previewCanvas.width, previewCanvas.height);
 }
 
-// Initialize preview canvas with idle bars
+// Set initial size of preview canvas to 1280x720 and draw idle state
+previewCanvas.width = 1280;
+previewCanvas.height = 720;
 drawIdleState();
+
+// Card selection handling
+function selectAspectRatio(width, height, cardToSelect, cardToDeselect) {
+  if (renderBtn.disabled && decodedAudioBuffer === null) return; // Do not select if rendering or not loaded
+
+  chosenWidth = width;
+  chosenHeight = height;
+
+  cardToDeselect.classList.remove("selected");
+  cardToSelect.classList.add("selected");
+
+  // Re-size preview canvas and draw immediately
+  previewCanvas.width = chosenWidth;
+  previewCanvas.height = chosenHeight;
+  drawIdleState();
+
+  // Enable Render Button if we have audio decoded
+  if (decodedAudioBuffer) {
+    renderBtn.disabled = false;
+  }
+}
+
+card16x9.addEventListener("click", () => {
+  if (card16x9.classList.contains("disabled")) return;
+  selectAspectRatio(1280, 720, card16x9, card9x16);
+});
+
+card9x16.addEventListener("click", () => {
+  if (card9x16.classList.contains("disabled")) return;
+  selectAspectRatio(720, 1280, card9x16, card16x9);
+});
 
 // Handle reliable file click gesture
 dropZone.addEventListener("click", (e) => {
@@ -133,6 +174,10 @@ function handleSelectedFile(file) {
   stopPreview();
   decodedAudioBuffer = null;
   frameEnvelopeArray = null;
+  chosenWidth = null;
+  chosenHeight = null;
+  card16x9.classList.remove("selected", "disabled");
+  card9x16.classList.remove("selected", "disabled");
 
   fileInfoContainer.classList.add("hidden");
   durationWarning.classList.add("hidden");
@@ -142,6 +187,7 @@ function handleSelectedFile(file) {
   progressContainer.classList.add("hidden");
   downloadContainer.classList.add("hidden");
   statusLine.classList.add("hidden");
+  aspectRatioSection.classList.add("hidden");
 
   // Show selected info placeholder
   fileName.textContent = file.name;
@@ -170,9 +216,10 @@ function handleSelectedFile(file) {
         durationWarning.classList.add("hidden");
       }
 
-      // Enable relevant actions
+      // Enable relevant actions and show Aspect Ratio Selection
       playPreviewBtn.disabled = false;
-      renderBtn.disabled = false;
+      renderBtn.disabled = true; // stays disabled until ratio selection is made
+      aspectRatioSection.classList.remove("hidden");
     }, (err) => {
       console.error("Decode Audio Data Error: ", err);
       fileInfoContainer.classList.add("hidden");
@@ -290,6 +337,7 @@ playPreviewBtn.addEventListener("click", () => {
   }
 });
 
+// Custom helper to safely check state
 function startPreview() {
   if (!decodedAudioBuffer) return;
 
@@ -399,8 +447,8 @@ function getSupportedMimeType() {
   return null;
 }
 
-// Render loop that executes manually-triggered canvas capture
-function renderFormat(envelope, width, height, mimeType, progressCallback) {
+// Render loop that executes real-time canvas capture with captureStream(60)
+function renderFormat(envelope, width, height, mimeType, durationMs, progressCallback) {
   return new Promise((resolve, reject) => {
     try {
       const offscreenCanvas = document.createElement("canvas");
@@ -408,9 +456,8 @@ function renderFormat(envelope, width, height, mimeType, progressCallback) {
       offscreenCanvas.height = height;
       const offscreenCtx = offscreenCanvas.getContext("2d");
 
-      // Set stream using 0 to completely rely on manual requestFrame triggering
-      const stream = offscreenCanvas.captureStream(0);
-      const track = stream.getVideoTracks()[0];
+      // Use captureStream(60) with explicit 60fps frame rate
+      const stream = offscreenCanvas.captureStream(60);
 
       const options = {
         mimeType: mimeType,
@@ -435,68 +482,97 @@ function renderFormat(envelope, width, height, mimeType, progressCallback) {
         reject(err);
       };
 
-      // Start the manual frame timing loop using requestAnimationFrame
+      // Draw initial frame so capture is clean
+      drawBars(offscreenCtx, envelope[0], width, height);
+
+      // Start recorder
       recorder.start();
 
-      const totalFrames = envelope.length;
-      let frameIndex = 0;
       const startTime = performance.now();
+      let animId = null;
 
       function tick() {
-        if (frameIndex >= totalFrames) {
-          // Finish recording beautifully: wait 100 milliseconds then call recorder.stop() to flush
+        const elapsed = performance.now() - startTime;
+
+        if (elapsed >= durationMs) {
+          cancelAnimationFrame(animId);
+          // Wait 200ms to let final real-time frames flush, then stop
           setTimeout(() => {
             recorder.stop();
-          }, 100);
+          }, 200);
           return;
         }
 
-        const elapsed = performance.now() - startTime;
-        const targetFrameIndex = Math.floor(elapsed / (1000 / 60));
+        // Compute which frame index corresponds to the elapsed time
+        const frameIndex = Math.min(
+          envelope.length - 1,
+          Math.floor(elapsed / (1000 / 60))
+        );
 
-        // Draw and capture up to the target frame index to prevent frame drops
-        while (frameIndex <= targetFrameIndex && frameIndex < totalFrames) {
-          const frameEnvelope = envelope[frameIndex];
+        // Render frame on offscreen context
+        drawBars(offscreenCtx, envelope[frameIndex], width, height);
 
-          // Render frame on offscreen context
-          drawBars(offscreenCtx, frameEnvelope, width, height);
-
-          // Force precise track capture
-          track.requestFrame();
-
-          frameIndex++;
-        }
-
-        // Send progress updates
-        const progress = Math.round((frameIndex / totalFrames) * 100);
+        // Progress update
+        const progress = Math.min(100, Math.round((elapsed / durationMs) * 100));
         progressCallback(progress);
 
-        requestAnimationFrame(tick);
+        animId = requestAnimationFrame(tick);
       }
 
-      // Kickoff manual loop
-      requestAnimationFrame(tick);
+      // Kickoff loop
+      animId = requestAnimationFrame(tick);
     } catch (err) {
       reject(err);
     }
   });
 }
 
+// Diagnostic duration safeguard helper
+function checkBlobDuration(blob, expectedDurationSec) {
+  const videoEl = document.createElement("video");
+  videoEl.preload = "metadata";
+  videoEl.muted = true;
+  videoEl.playsInline = true;
+
+  videoEl.onloadedmetadata = () => {
+    const actualDuration = videoEl.duration;
+    if (Math.abs(actualDuration - expectedDurationSec) > 0.5) {
+      console.warn(
+        `Safeguard warning: Exported video duration (${actualDuration.toFixed(2)}s) differs from source audio duration (${expectedDurationSec.toFixed(2)}s) by more than 0.5s.`
+      );
+    }
+    // Cleanup URL
+    URL.revokeObjectURL(videoEl.src);
+  };
+
+  videoEl.onerror = () => {
+    console.warn("Safeguard warning: Could not load metadata to check video duration.");
+    URL.revokeObjectURL(videoEl.src);
+  };
+
+  videoEl.src = URL.createObjectURL(blob);
+}
+
 // Main Controller Render Trigger
 renderBtn.addEventListener("click", async () => {
-  if (!decodedAudioBuffer) return;
+  if (!decodedAudioBuffer || !chosenWidth || !chosenHeight) return;
 
   // Stop active preview
   stopPreview();
 
-  // Reset progress and disable actions during render
+  // Reset progress, disable buttons and aspect cards during render
   renderBtn.disabled = true;
   playPreviewBtn.disabled = true;
+  card16x9.classList.add("disabled");
+  card9x16.classList.add("disabled");
   progressContainer.classList.remove("hidden");
   downloadContainer.classList.add("hidden");
   statusLine.classList.add("hidden");
 
   try {
+    const duration = decodedAudioBuffer.duration;
+    const durationMs = duration * 1000;
+
     // Step 1: Run analytical audio decoder (cached or first-time)
     if (!frameEnvelopeArray) {
       statusLine.textContent = "Analyzing audio frequencies...";
@@ -523,53 +599,38 @@ renderBtn.addEventListener("click", async () => {
       webmNotice.classList.add("hidden");
     }
 
-    // Step 2: Render 16:9
-    progressLabel.textContent = "RENDERING 16:9 FORMAT...";
+    const ratioLabel = chosenWidth === 1280 ? "16:9" : "9:16";
+    progressLabel.textContent = `RENDERING ${ratioLabel} FORMAT...`;
     progressBarFill.style.width = "0%";
     progressPercentage.textContent = "0%";
     statusLine.classList.add("hidden");
 
-    const blob16x9 = await renderFormat(
+    // Step 2 & 3: Render only the chosen aspect ratio format
+    const blob = await renderFormat(
       frameEnvelopeArray,
-      1280,
-      720,
+      chosenWidth,
+      chosenHeight,
       mimeType,
+      durationMs,
       (progress) => {
         progressBarFill.style.width = `${progress}%`;
         progressPercentage.textContent = `${progress}%`;
       }
     );
 
-    // Step 3: Render 9:16
-    progressLabel.textContent = "RENDERING 9:16 FORMAT...";
-    progressBarFill.style.width = "0%";
-    progressPercentage.textContent = "0%";
-
-    const blob9x16 = await renderFormat(
-      frameEnvelopeArray,
-      720,
-      1280,
-      mimeType,
-      (progress) => {
-        progressBarFill.style.width = `${progress}%`;
-        progressPercentage.textContent = `${progress}%`;
-      }
-    );
+    // Safeguard duration check
+    checkBlobDuration(blob, duration);
 
     // Render Completed successfully!
     progressContainer.classList.add("hidden");
 
-    // Create Download Links
-    const url16x9 = URL.createObjectURL(blob16x9);
-    const url9x16 = URL.createObjectURL(blob9x16);
+    // Create Download Link
+    const url = URL.createObjectURL(blob);
+    const filenameLabel = chosenWidth === 1280 ? "16x9" : "9x16";
 
-    download16x9.href = url16x9;
-    download16x9.download = `visualizer-16x9${fileExtension}`;
-    download16x9.textContent = `DOWNLOAD 16:9 ${fileExtension.substring(1).toUpperCase()}`;
-
-    download9x16.href = url9x16;
-    download9x16.download = `visualizer-9x16${fileExtension}`;
-    download9x16.textContent = `DOWNLOAD 9:16 ${fileExtension.substring(1).toUpperCase()}`;
+    downloadVideo.href = url;
+    downloadVideo.download = `visualizer-${filenameLabel}${fileExtension}`;
+    downloadVideo.textContent = `DOWNLOAD VIDEO (${fileExtension.substring(1).toUpperCase()})`;
 
     downloadContainer.classList.remove("hidden");
     statusLine.textContent = "Rendering completed successfully!";
@@ -584,5 +645,7 @@ renderBtn.addEventListener("click", async () => {
     // Graceful recovery
     renderBtn.disabled = false;
     playPreviewBtn.disabled = false;
+    card16x9.classList.remove("disabled");
+    card9x16.classList.remove("disabled");
   }
 });
