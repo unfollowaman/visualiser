@@ -154,8 +154,56 @@ body {
   width: 100%;
   max-width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
   display: block;
+}
+
+/* Aspect Ratio Section Styling */
+.aspect-ratio-cards {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.aspect-card {
+  flex: 1;
+  border: 1px solid #232323;
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.aspect-card .card-title {
+  color: #7a7a76;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.aspect-card .card-subtitle {
+  color: #7a7a76;
+  font-size: 11px;
+}
+
+/* Selected state: border and text become white */
+.aspect-card.selected {
+  border-color: #f2f2f0;
+}
+
+.aspect-card.selected .card-title,
+.aspect-card.selected .card-subtitle {
+  color: #f2f2f0;
+}
+
+/* Disabled state when rendering */
+.aspect-card.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Buttons */

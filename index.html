@@ -42,6 +42,20 @@
         </div>
       </section>
 
+      <!-- Aspect Ratio Selection Section -->
+      <section id="aspectRatioSection" class="panel aspect-ratio-section hidden">
+        <div class="aspect-ratio-cards">
+          <div class="aspect-card" id="card16x9" data-ratio="16:9">
+            <span class="card-title">16:9</span>
+            <span class="card-subtitle">(Landscape)</span>
+          </div>
+          <div class="aspect-card" id="card9x16" data-ratio="9:16">
+            <span class="card-title">9:16</span>
+            <span class="card-subtitle">(Vertical)</span>
+          </div>
+        </div>
+      </section>
+
       <!-- Preview Section -->
       <section class="panel preview-section">
         <div class="canvas-container">
@@ -56,13 +70,13 @@
       <!-- Export Section -->
       <section class="panel export-section">
         <div class="controls-row">
-          <button id="renderBtn" class="btn btn-primary" disabled>RENDER AND DOWNLOAD BOTH FORMATS</button>
+          <button id="renderBtn" class="btn btn-primary" disabled>RENDER AND DOWNLOAD</button>
         </div>
 
         <!-- Progress Area -->
         <div id="progressContainer" class="progress-container hidden">
           <div class="progress-header">
-            <span id="progressLabel" class="progress-label">RENDERING (16:9)...</span>
+            <span id="progressLabel" class="progress-label">RENDERING...</span>
             <span id="progressPercentage" class="progress-percentage">0%</span>
           </div>
           <div class="progress-bar-bg">
@@ -76,8 +90,7 @@
         <!-- Download Links -->
         <div id="downloadContainer" class="download-container hidden">
           <div class="download-links">
-            <a id="download16x9" class="btn btn-primary" href="#" download>DOWNLOAD 16:9 MP4</a>
-            <a id="download9x16" class="btn btn-primary" href="#" download>DOWNLOAD 9:16 MP4</a>
+            <a id="downloadVideo" class="btn btn-primary" href="#" download>DOWNLOAD VIDEO</a>
           </div>
           <p id="webmNotice" class="webm-notice hidden">
             exported as WebM because this browser cannot record MP4 directly, most players and editors accept this format.
