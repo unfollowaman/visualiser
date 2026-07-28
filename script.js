@@ -618,14 +618,19 @@ renderBtn.addEventListener("click", async () => {
       }
     );
 
+    let finalBlob = blob;
+    if (!isMp4) {
+      finalBlob = await ysFixWebmDuration(blob, durationMs, { logger: false });
+    }
+
     // Safeguard duration check
-    checkBlobDuration(blob, duration);
+    checkBlobDuration(finalBlob, duration);
 
     // Render Completed successfully!
     progressContainer.classList.add("hidden");
 
     // Create Download Link
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(finalBlob);
     const filenameLabel = chosenWidth === 1280 ? "16x9" : "9x16";
 
     downloadVideo.href = url;
