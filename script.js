@@ -465,6 +465,13 @@ async function renderFormat(envelope, width, height, progressCallback) {
   videoEncoder.configure(videoConfig);
 
   for (let i = 0; i < totalFrames; i++) {
+    // Backpressure handling: wait if queue is too large
+    while (videoEncoder.encodeQueueSize > 2) {
+      await new Promise(resolve => {
+        videoEncoder.addEventListener("dequeue", resolve, { once: true });
+      });
+    }
+
     // Render frame on offscreen context
     drawBars(offscreenCtx, envelope[i], width, height);
 
