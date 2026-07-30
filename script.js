@@ -29,7 +29,6 @@ const progressBarFill = document.getElementById("progressBarFill");
 const statusLine = document.getElementById("statusLine");
 const downloadContainer = document.getElementById("downloadContainer");
 const downloadVideo = document.getElementById("downloadVideo");
-const webmNotice = document.getElementById("webmNotice");
 
 // Aspect Ratio Cards UI
 const aspectRatioSection = document.getElementById("aspectRatioSection");
@@ -430,101 +429,69 @@ function runPreviewLoop() {
   previewAnimationId = requestAnimationFrame(runPreviewLoop);
 }
 
-// MediaRecorder mime types prioritization logic
-function getSupportedMimeType() {
-  const mimeTypes = [
-    "video/mp4;codecs=avc1",
-    "video/mp4",
-    "video/webm;codecs=vp9",
-    "video/webm;codecs=vp8",
-    "video/webm"
-  ];
-  for (const mimeType of mimeTypes) {
-    if (MediaRecorder.isTypeSupported(mimeType)) {
-      return mimeType;
+// Render loop that executes fast canvas capture using WebCodecs
+async function renderFormat(envelope, width, height, progressCallback) {
+  const offscreenCanvas = document.createElement("canvas");
+  offscreenCanvas.width = width;
+  offscreenCanvas.height = height;
+  const offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true });
+
+  const fps = 60;
+  const frameDurationMicros = 1_000_000 / fps;
+  const totalFrames = envelope.length;
+
+  let muxer = new Mp4Muxer.Muxer({
+    target: new Mp4Muxer.ArrayBufferTarget(),
+    video: {
+      codec: 'avc',
+      width: width,
+      height: height
+    },
+    fastStart: 'in-memory'
+  });
+
+  let videoEncoder = new VideoEncoder({
+    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+    error: e => console.error(e)
+  });
+
+  const videoConfig = {
+    codec: 'avc1.420034', // Baseline profile, level 5.2 to support 1280x720 and 720x1280
+    width: width,
+    height: height,
+    bitrate: 8_000_000,
+    framerate: fps,
+  };
+  videoEncoder.configure(videoConfig);
+
+  for (let i = 0; i < totalFrames; i++) {
+    // Render frame on offscreen context
+    drawBars(offscreenCtx, envelope[i], width, height);
+
+    // Create VideoFrame and encode
+    const frame = new VideoFrame(offscreenCanvas, {
+      timestamp: i * frameDurationMicros,
+      duration: frameDurationMicros
+    });
+
+    videoEncoder.encode(frame);
+    frame.close();
+
+    if (i % 30 === 0) { // Update progress UI without blocking CPU forever
+      const progress = Math.min(100, Math.round((i / totalFrames) * 100));
+      progressCallback(progress);
+      await new Promise(r => setTimeout(r, 0));
     }
   }
-  return null;
-}
 
-// Render loop that executes real-time canvas capture with captureStream(60)
-function renderFormat(envelope, width, height, mimeType, durationMs, progressCallback) {
-  return new Promise((resolve, reject) => {
-    try {
-      const offscreenCanvas = document.createElement("canvas");
-      offscreenCanvas.width = width;
-      offscreenCanvas.height = height;
-      const offscreenCtx = offscreenCanvas.getContext("2d");
+  progressCallback(100);
 
-      // Use captureStream(60) with explicit 60fps frame rate
-      const stream = offscreenCanvas.captureStream(60);
+  await videoEncoder.flush();
+  videoEncoder.close();
+  muxer.finalize();
 
-      const options = {
-        mimeType: mimeType,
-        videoBitsPerSecond: 8000000
-      };
-
-      const recorder = new MediaRecorder(stream, options);
-      const chunks = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType });
-        resolve(blob);
-      };
-
-      recorder.onerror = (err) => {
-        reject(err);
-      };
-
-      // Draw initial frame so capture is clean
-      drawBars(offscreenCtx, envelope[0], width, height);
-
-      // Start recorder
-      recorder.start();
-
-      const startTime = performance.now();
-      let animId = null;
-
-      function tick() {
-        const elapsed = performance.now() - startTime;
-
-        if (elapsed >= durationMs) {
-          cancelAnimationFrame(animId);
-          // Wait 200ms to let final real-time frames flush, then stop
-          setTimeout(() => {
-            recorder.stop();
-          }, 200);
-          return;
-        }
-
-        // Compute which frame index corresponds to the elapsed time
-        const frameIndex = Math.min(
-          envelope.length - 1,
-          Math.floor(elapsed / (1000 / 60))
-        );
-
-        // Render frame on offscreen context
-        drawBars(offscreenCtx, envelope[frameIndex], width, height);
-
-        // Progress update
-        const progress = Math.min(100, Math.round((elapsed / durationMs) * 100));
-        progressCallback(progress);
-
-        animId = requestAnimationFrame(tick);
-      }
-
-      // Kickoff loop
-      animId = requestAnimationFrame(tick);
-    } catch (err) {
-      reject(err);
-    }
-  });
+  const buffer = muxer.target.buffer;
+  return new Blob([buffer], { type: 'video/mp4' });
 }
 
 // Diagnostic duration safeguard helper
@@ -571,7 +538,6 @@ renderBtn.addEventListener("click", async () => {
 
   try {
     const duration = decodedAudioBuffer.duration;
-    const durationMs = duration * 1000;
 
     // Step 1: Run analytical audio decoder (cached or first-time)
     if (!frameEnvelopeArray) {
@@ -583,21 +549,7 @@ renderBtn.addEventListener("click", async () => {
       frameEnvelopeArray = analyzeAudio(decodedAudioBuffer);
     }
 
-    // Determine target format
-    const mimeType = getSupportedMimeType();
-    if (!mimeType) {
-      throw new Error("No supported MediaRecorder video formats found in this browser.");
-    }
-
-    const isMp4 = mimeType.includes("video/mp4");
-    const fileExtension = isMp4 ? ".mp4" : ".webm";
-
-    // Setup WebM notice if fallback used
-    if (!isMp4) {
-      webmNotice.classList.remove("hidden");
-    } else {
-      webmNotice.classList.add("hidden");
-    }
+    const fileExtension = ".mp4";
 
     const ratioLabel = chosenWidth === 1280 ? "16:9" : "9:16";
     progressLabel.textContent = `RENDERING ${ratioLabel} FORMAT...`;
@@ -610,8 +562,6 @@ renderBtn.addEventListener("click", async () => {
       frameEnvelopeArray,
       chosenWidth,
       chosenHeight,
-      mimeType,
-      durationMs,
       (progress) => {
         progressBarFill.style.width = `${progress}%`;
         progressPercentage.textContent = `${progress}%`;
@@ -619,9 +569,6 @@ renderBtn.addEventListener("click", async () => {
     );
 
     let finalBlob = blob;
-    if (!isMp4) {
-      finalBlob = await ysFixWebmDuration(blob, durationMs, { logger: false });
-    }
 
     // Safeguard duration check
     checkBlobDuration(finalBlob, duration);

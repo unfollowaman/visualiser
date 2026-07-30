@@ -311,12 +311,6 @@ body {
   flex-wrap: wrap;
 }
 
-.webm-notice {
-  color: #7a7a76;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
 .hidden {
   display: none !important;
 }
