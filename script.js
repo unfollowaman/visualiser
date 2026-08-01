@@ -6,6 +6,12 @@ let activePreviewSource = null;
 let activePreviewAnalyser = null;
 let isPreviewPlaying = false;
 let previewAnimationId = null;
+let previewStartTime = 0;
+
+// Edit State
+let workingAudioBuffer = null;
+let keepRanges = []; // Array of {start: 0, end: 0}
+let editHistory = [];
 
 // Aspect Ratio Config
 let chosenWidth = null;
@@ -20,6 +26,26 @@ const fileDuration = document.getElementById("fileDuration");
 const durationWarning = document.getElementById("durationWarning");
 const decodeError = document.getElementById("decodeError");
 const previewCanvas = document.getElementById("previewCanvas");
+
+// Edit UI Elements
+const editSection = document.getElementById("editSection");
+const originalLengthEl = document.getElementById("originalLength");
+const editedLengthEl = document.getElementById("editedLength");
+const editDurationWarning = document.getElementById("editDurationWarning");
+const editorContainer = document.getElementById("editorContainer");
+const overviewCanvas = document.getElementById("overviewCanvas");
+const selectionHighlight = document.getElementById("selectionHighlight");
+const leftTrimHandle = document.getElementById("leftTrimHandle");
+const rightTrimHandle = document.getElementById("rightTrimHandle");
+const leftTrimReadout = document.getElementById("leftTrimReadout");
+const rightTrimReadout = document.getElementById("rightTrimReadout");
+const playheadLine = document.getElementById("playheadLine");
+const cutSelectedBtn = document.getElementById("cutSelectedBtn");
+const undoBtn = document.getElementById("undoBtn");
+const resetBtn = document.getElementById("resetBtn");
+const continueBtn = document.getElementById("continueBtn");
+
+const ctxOverview = overviewCanvas.getContext("2d");
 const playPreviewBtn = document.getElementById("playPreviewBtn");
 const renderBtn = document.getElementById("renderBtn");
 const progressContainer = document.getElementById("progressContainer");
@@ -43,6 +69,65 @@ function formatDuration(seconds) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
   const s = Math.floor(seconds % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
+}
+
+// Helper to format duration in mm:ss.s for trim handles
+function formatDurationDetailed(seconds) {
+  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const s = Math.floor(seconds % 60).toString().padStart(2, "0");
+  const ms = Math.floor((seconds % 1) * 10).toString();
+  return `${m}:${s}.${ms}`;
+}
+
+// Build the working audio buffer from decodedAudioBuffer based on keepRanges
+function buildWorkingAudioBuffer() {
+  if (!decodedAudioBuffer) return null;
+  if (keepRanges.length === 0) return decodedAudioBuffer;
+
+  const sampleRate = decodedAudioBuffer.sampleRate;
+  const numChannels = decodedAudioBuffer.numberOfChannels;
+
+  // Calculate total samples needed
+  let totalKeptSamples = 0;
+  for (const range of keepRanges) {
+    const rangeDuration = range.end - range.start;
+    totalKeptSamples += Math.floor(rangeDuration * sampleRate);
+  }
+
+  // Create new AudioBuffer
+  const newBuffer = audioCtx.createBuffer(numChannels, totalKeptSamples, sampleRate);
+  const fadeDuration = 0.008; // 8ms fade
+  const fadeSamples = Math.floor(fadeDuration * sampleRate);
+
+  for (let c = 0; c < numChannels; c++) {
+    const channelData = decodedAudioBuffer.getChannelData(c);
+    const newChannelData = newBuffer.getChannelData(c);
+
+    let destOffset = 0;
+    for (const range of keepRanges) {
+      const startSample = Math.floor(range.start * sampleRate);
+      const endSample = Math.floor(range.end * sampleRate);
+      const rangeSamples = endSample - startSample;
+
+      for (let i = 0; i < rangeSamples; i++) {
+        let sample = channelData[startSample + i];
+
+        // Apply fade-in
+        if (i < fadeSamples) {
+          sample *= (i / fadeSamples);
+        }
+        // Apply fade-out
+        else if (i > rangeSamples - fadeSamples - 1) {
+          const fadeIndex = rangeSamples - 1 - i;
+          sample *= (fadeIndex / fadeSamples);
+        }
+
+        newChannelData[destOffset++] = sample;
+      }
+    }
+  }
+
+  return newBuffer;
 }
 
 // Draw symmetric rounded bars matching the equalizer spec
@@ -69,6 +154,88 @@ function drawBars(ctx, amplitudes, w, h) {
     // Draw as rounded rectangle
     const radius = Math.min(barWidth / 2, 6);
     drawRoundedRect(ctx, x, y, barWidth, barHeight, radius);
+  }
+}
+
+// Draw static overview for edit section (200 bars)
+function drawOverview(audioBuffer) {
+  const w = overviewCanvas.width;
+  const h = overviewCanvas.height;
+
+  ctxOverview.fillStyle = "#000000";
+  ctxOverview.fillRect(0, 0, w, h);
+
+  const duration = audioBuffer.duration;
+  const numChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const totalSamples = audioBuffer.length;
+
+  const monoSamples = new Float32Array(totalSamples);
+  const channels = [];
+  for (let c = 0; c < numChannels; c++) {
+    channels.push(audioBuffer.getChannelData(c));
+  }
+
+  for (let s = 0; s < totalSamples; s++) {
+    let sum = 0;
+    for (let c = 0; c < numChannels; c++) {
+      sum += channels[c][s];
+    }
+    monoSamples[s] = sum / numChannels;
+  }
+
+  const numBars = 200;
+  const samplesPerBar = totalSamples / numBars;
+  const amplitudes = new Float32Array(numBars);
+  let globalMax = 0;
+
+  for (let i = 0; i < numBars; i++) {
+    const startSample = Math.floor(i * samplesPerBar);
+    const endSample = Math.floor((i + 1) * samplesPerBar);
+
+    let sumSquares = 0;
+    let count = 0;
+    for (let s = startSample; s < endSample && s < totalSamples; s++) {
+      const val = monoSamples[s];
+      sumSquares += val * val;
+      count++;
+    }
+    const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
+    amplitudes[i] = rms;
+    if (rms > globalMax) globalMax = rms;
+  }
+
+  if (globalMax === 0) globalMax = 1;
+
+  const gap = w * 0.003;
+  const totalGap = gap * (numBars - 1);
+  const barWidth = (w - totalGap) / numBars;
+  const maxBarHeight = h * 0.8;
+  const minBarHeight = h * 0.05;
+
+  for (let i = 0; i < numBars; i++) {
+    const amp = amplitudes[i] / globalMax;
+    const barHeight = Math.max(minBarHeight, amp * maxBarHeight);
+    const x = i * (barWidth + gap);
+    const y = (h - barHeight) / 2;
+
+    // Check if bar is in kept ranges
+    const barStartTime = (i / numBars) * duration;
+    const barEndTime = ((i + 1) / numBars) * duration;
+    const barCenterTime = (barStartTime + barEndTime) / 2;
+
+    let isKept = false;
+    for (const range of keepRanges) {
+      if (barCenterTime >= range.start && barCenterTime <= range.end) {
+        isKept = true;
+        break;
+      }
+    }
+
+    ctxOverview.fillStyle = isKept ? "#ffffff" : "#7a7a76";
+
+    const radius = Math.min(barWidth / 2, 2);
+    drawRoundedRect(ctxOverview, x, y, barWidth, barHeight, radius);
   }
 }
 
@@ -133,6 +300,339 @@ card16x9.addEventListener("click", () => {
 card9x16.addEventListener("click", () => {
   if (card9x16.classList.contains("disabled")) return;
   selectAspectRatio(720, 1280, card9x16, card16x9);
+});
+
+// Edit Interaction Logic
+let isDraggingLeftHandle = false;
+let isDraggingRightHandle = false;
+let isDraggingSelection = false;
+let selectionStartX = null;
+let selectionEndX = null;
+
+function updateEditStats() {
+  if (!decodedAudioBuffer) return;
+  const originalDuration = decodedAudioBuffer.duration;
+  let editedDuration = 0;
+  for (const range of keepRanges) {
+    editedDuration += (range.end - range.start);
+  }
+
+  originalLengthEl.textContent = formatDuration(originalDuration);
+  editedLengthEl.textContent = formatDuration(editedDuration);
+
+  if (editedDuration > 150) {
+    editDurationWarning.classList.remove("hidden");
+  } else {
+    editDurationWarning.classList.add("hidden");
+  }
+}
+
+function updateTrimHandles() {
+  if (!decodedAudioBuffer || keepRanges.length === 0) return;
+  const duration = decodedAudioBuffer.duration;
+  const w = editorContainer.clientWidth;
+
+  const firstRange = keepRanges[0];
+  const lastRange = keepRanges[keepRanges.length - 1];
+
+  const leftPx = (firstRange.start / duration) * w;
+  const rightPx = (lastRange.end / duration) * w;
+
+  leftTrimHandle.style.left = `${leftPx}px`;
+  rightTrimHandle.style.left = `${rightPx}px`;
+
+  leftTrimReadout.textContent = formatDurationDetailed(firstRange.start);
+  rightTrimReadout.textContent = formatDurationDetailed(lastRange.end);
+}
+
+function renderEditState() {
+  updateEditStats();
+  updateTrimHandles();
+  drawOverview(decodedAudioBuffer);
+
+  undoBtn.disabled = editHistory.length === 0;
+
+  // Disable reset if keepRanges is exactly one range covering full length
+  const isFull = keepRanges.length === 1 &&
+                 keepRanges[0].start === 0 &&
+                 keepRanges[0].end === decodedAudioBuffer.duration;
+  resetBtn.disabled = isFull;
+
+  if (decodedAudioBuffer) {
+    continueBtn.disabled = false;
+    playPreviewBtn.disabled = false;
+  }
+}
+
+function saveEditState() {
+  editHistory.push(JSON.parse(JSON.stringify(keepRanges)));
+}
+
+// Mouse / Touch Handlers for Editor
+function getCanvasX(e) {
+  const rect = editorContainer.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  return Math.max(0, Math.min(clientX - rect.left, rect.width));
+}
+
+// Left Handle Drag
+leftTrimHandle.addEventListener("mousedown", (e) => {
+  isDraggingLeftHandle = true;
+  leftTrimHandle.classList.add("dragging");
+  e.stopPropagation();
+});
+leftTrimHandle.addEventListener("touchstart", (e) => {
+  isDraggingLeftHandle = true;
+  leftTrimHandle.classList.add("dragging");
+  e.stopPropagation();
+});
+
+// Right Handle Drag
+rightTrimHandle.addEventListener("mousedown", (e) => {
+  isDraggingRightHandle = true;
+  rightTrimHandle.classList.add("dragging");
+  e.stopPropagation();
+});
+rightTrimHandle.addEventListener("touchstart", (e) => {
+  isDraggingRightHandle = true;
+  rightTrimHandle.classList.add("dragging");
+  e.stopPropagation();
+});
+
+// Selection Drag
+editorContainer.addEventListener("mousedown", (e) => {
+  if (isDraggingLeftHandle || isDraggingRightHandle) return;
+  isDraggingSelection = true;
+  selectionStartX = getCanvasX(e);
+  selectionEndX = selectionStartX;
+  updateSelectionHighlight();
+});
+editorContainer.addEventListener("touchstart", (e) => {
+  if (isDraggingLeftHandle || isDraggingRightHandle) return;
+  isDraggingSelection = true;
+  selectionStartX = getCanvasX(e);
+  selectionEndX = selectionStartX;
+  updateSelectionHighlight();
+});
+
+function updateSelectionHighlight() {
+  if (selectionStartX === null || selectionEndX === null) {
+    selectionHighlight.classList.add("hidden");
+    cutSelectedBtn.disabled = true;
+    return;
+  }
+
+  const minX = Math.min(selectionStartX, selectionEndX);
+  const maxX = Math.max(selectionStartX, selectionEndX);
+  const width = maxX - minX;
+
+  if (width > 0) {
+    selectionHighlight.style.left = `${minX}px`;
+    selectionHighlight.style.width = `${width}px`;
+    selectionHighlight.classList.remove("hidden");
+    cutSelectedBtn.disabled = false;
+  } else {
+    selectionHighlight.classList.add("hidden");
+    cutSelectedBtn.disabled = true;
+  }
+}
+
+window.addEventListener("mousemove", (e) => {
+  if (!decodedAudioBuffer) return;
+  const x = getCanvasX(e);
+  const duration = decodedAudioBuffer.duration;
+  const w = editorContainer.clientWidth;
+  let timePos = (x / w) * duration;
+  timePos = Math.max(0, Math.min(timePos, duration));
+
+  let totalDurationWithoutFirst = 0;
+  for (let i = 1; i < keepRanges.length; i++) {
+    totalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
+  }
+
+  let totalDurationWithoutLast = 0;
+  for (let i = 0; i < keepRanges.length - 1; i++) {
+    totalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
+  }
+
+  if (isDraggingLeftHandle) {
+    let maxStart = keepRanges[0].end - (1 - totalDurationWithoutFirst);
+    if (keepRanges.length === 1) {
+       maxStart = keepRanges[0].end - 1;
+    }
+    // Also enforce that the handle doesn't cross the end of its own range
+    maxStart = Math.min(maxStart, keepRanges[0].end - 0.05); // ensure start < end
+    const newStart = Math.min(timePos, maxStart);
+    keepRanges[0].start = Math.max(0, newStart);
+
+    // Auto-update while dragging without saving history
+    renderEditState();
+  } else if (isDraggingRightHandle) {
+    let minEnd = keepRanges[keepRanges.length - 1].start + (1 - totalDurationWithoutLast);
+    if (keepRanges.length === 1) {
+       minEnd = keepRanges[0].start + 1;
+    }
+    // Also enforce that the handle doesn't cross the start of its own range
+    minEnd = Math.max(minEnd, keepRanges[keepRanges.length - 1].start + 0.05); // ensure end > start
+    const newEnd = Math.max(timePos, minEnd);
+    keepRanges[keepRanges.length - 1].end = Math.min(duration, newEnd);
+
+    // Auto-update while dragging without saving history
+    renderEditState();
+  } else if (isDraggingSelection) {
+    selectionEndX = x;
+    updateSelectionHighlight();
+  }
+});
+
+window.addEventListener("touchmove", (e) => {
+  // exact same logic as mousemove
+  if (!decodedAudioBuffer) return;
+  const x = getCanvasX(e);
+  const duration = decodedAudioBuffer.duration;
+  const w = editorContainer.clientWidth;
+  let timePos = (x / w) * duration;
+  timePos = Math.max(0, Math.min(timePos, duration));
+
+  let totalDurationWithoutFirst = 0;
+  for (let i = 1; i < keepRanges.length; i++) {
+    totalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
+  }
+
+  let totalDurationWithoutLast = 0;
+  for (let i = 0; i < keepRanges.length - 1; i++) {
+    totalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
+  }
+
+  if (isDraggingLeftHandle) {
+    let maxStart = keepRanges[0].end - (1 - totalDurationWithoutFirst);
+    if (keepRanges.length === 1) {
+       maxStart = keepRanges[0].end - 1;
+    }
+    // Also enforce that the handle doesn't cross the end of its own range
+    maxStart = Math.min(maxStart, keepRanges[0].end - 0.05); // ensure start < end
+    const newStart = Math.min(timePos, maxStart);
+    keepRanges[0].start = Math.max(0, newStart);
+    renderEditState();
+  } else if (isDraggingRightHandle) {
+    let minEnd = keepRanges[keepRanges.length - 1].start + (1 - totalDurationWithoutLast);
+    if (keepRanges.length === 1) {
+       minEnd = keepRanges[0].start + 1;
+    }
+    // Also enforce that the handle doesn't cross the start of its own range
+    minEnd = Math.max(minEnd, keepRanges[keepRanges.length - 1].start + 0.05); // ensure end > start
+    const newEnd = Math.max(timePos, minEnd);
+    keepRanges[keepRanges.length - 1].end = Math.min(duration, newEnd);
+    renderEditState();
+  } else if (isDraggingSelection) {
+    selectionEndX = x;
+    updateSelectionHighlight();
+  }
+}, {passive: false});
+
+function stopDragging() {
+  if (isDraggingLeftHandle || isDraggingRightHandle) {
+    // Only push to history when they finish a drag to avoid massive history array
+    // Wait, requirement: "pushed onto it immediately before every trim or cut action is applied"
+    // For trim handles, it's smoother to push on mouseup *if* a change occurred. Let's do it simply on mouseup.
+    // Actually wait, let's push to history on mousedown if we want it *before*.
+    // To match requirement: we push to history when drag starts, in the event listeners.
+    // But since I didn't push in mousedown, I will just push to history *before* we modify it?
+    // Wait, the easiest is to just push on mouseup, but let's just make sure we capture it before the edit.
+  }
+
+  if (isDraggingLeftHandle) {
+    isDraggingLeftHandle = false;
+    leftTrimHandle.classList.remove("dragging");
+    renderEditState();
+  }
+  if (isDraggingRightHandle) {
+    isDraggingRightHandle = false;
+    rightTrimHandle.classList.remove("dragging");
+    renderEditState();
+  }
+  if (isDraggingSelection) {
+    isDraggingSelection = false;
+  }
+}
+
+// We need to fix the history requirement for dragging handles.
+// Add history save to mousedown:
+leftTrimHandle.addEventListener("mousedown", () => saveEditState());
+leftTrimHandle.addEventListener("touchstart", () => saveEditState());
+rightTrimHandle.addEventListener("mousedown", () => saveEditState());
+rightTrimHandle.addEventListener("touchstart", () => saveEditState());
+
+window.addEventListener("mouseup", stopDragging);
+window.addEventListener("touchend", stopDragging);
+
+
+// Cut Action
+cutSelectedBtn.addEventListener("click", () => {
+  if (selectionStartX === null || selectionEndX === null || !decodedAudioBuffer) return;
+
+  saveEditState();
+
+  const w = editorContainer.clientWidth;
+  const duration = decodedAudioBuffer.duration;
+
+  const minX = Math.min(selectionStartX, selectionEndX);
+  const maxX = Math.max(selectionStartX, selectionEndX);
+
+  const selectStart = (minX / w) * duration;
+  const selectEnd = (maxX / w) * duration;
+
+  const newRanges = [];
+
+  for (const range of keepRanges) {
+    if (selectEnd <= range.start || selectStart >= range.end) {
+      // No overlap
+      newRanges.push(range);
+    } else if (selectStart <= range.start && selectEnd >= range.end) {
+      // Fully covered, remove entirely
+    } else if (selectStart > range.start && selectEnd < range.end) {
+      // Falls entirely inside, split
+      newRanges.push({start: range.start, end: selectStart});
+      newRanges.push({start: selectEnd, end: range.end});
+    } else if (selectStart <= range.start && selectEnd < range.end) {
+      // Overlaps beginning, shrink start
+      newRanges.push({start: selectEnd, end: range.end});
+    } else if (selectStart > range.start && selectEnd >= range.end) {
+      // Overlaps end, shrink end
+      newRanges.push({start: range.start, end: selectStart});
+    }
+  }
+
+  // Discard < 0.05s
+  keepRanges = newRanges.filter(r => (r.end - r.start) >= 0.05);
+
+  // Clear selection
+  selectionStartX = null;
+  selectionEndX = null;
+  updateSelectionHighlight();
+
+  renderEditState();
+});
+
+undoBtn.addEventListener("click", () => {
+  if (editHistory.length > 0) {
+    keepRanges = editHistory.pop();
+    selectionStartX = null;
+    selectionEndX = null;
+    updateSelectionHighlight();
+    renderEditState();
+  }
+});
+
+resetBtn.addEventListener("click", () => {
+  if (decodedAudioBuffer) {
+    editHistory = [];
+    keepRanges = [{start: 0, end: decodedAudioBuffer.duration}];
+    selectionStartX = null;
+    selectionEndX = null;
+    updateSelectionHighlight();
+    renderEditState();
+  }
 });
 
 // Handle reliable file click gesture
@@ -205,6 +705,10 @@ function handleSelectedFile(file) {
 
     audioCtx.decodeAudioData(arrayBuffer, (audioBuffer) => {
       decodedAudioBuffer = audioBuffer;
+      workingAudioBuffer = null;
+      keepRanges = [{start: 0, end: audioBuffer.duration}];
+      editHistory = [];
+
       const duration = audioBuffer.duration;
       fileDuration.textContent = formatDuration(duration);
 
@@ -215,10 +719,9 @@ function handleSelectedFile(file) {
         durationWarning.classList.add("hidden");
       }
 
-      // Enable relevant actions and show Aspect Ratio Selection
-      playPreviewBtn.disabled = false;
-      renderBtn.disabled = true; // stays disabled until ratio selection is made
-      aspectRatioSection.classList.remove("hidden");
+      // Show Edit Section instead of Aspect Ratio
+      renderEditState();
+      editSection.classList.remove("hidden");
     }, (err) => {
       console.error("Decode Audio Data Error: ", err);
       fileInfoContainer.classList.add("hidden");
@@ -340,6 +843,8 @@ playPreviewBtn.addEventListener("click", () => {
 function startPreview() {
   if (!decodedAudioBuffer) return;
 
+  const bufferToPlay = buildWorkingAudioBuffer();
+
   // Context must be in running state (mobile gesture safety)
   if (audioCtx.state === "suspended") {
     audioCtx.resume();
@@ -347,7 +852,7 @@ function startPreview() {
 
   // Set up source node
   activePreviewSource = audioCtx.createBufferSource();
-  activePreviewSource.buffer = decodedAudioBuffer;
+  activePreviewSource.buffer = bufferToPlay;
 
   // Set up analyser
   activePreviewAnalyser = audioCtx.createAnalyser();
@@ -368,12 +873,14 @@ function startPreview() {
   };
 
   activePreviewSource.start(0);
+  previewStartTime = audioCtx.currentTime;
   runPreviewLoop();
 }
 
 function stopPreview() {
   isPreviewPlaying = false;
   playPreviewBtn.textContent = "PLAY PREVIEW";
+  playheadLine.classList.add("hidden");
 
   if (activePreviewSource) {
     try {
@@ -398,6 +905,34 @@ function stopPreview() {
 
 function runPreviewLoop() {
   if (!isPreviewPlaying || !activePreviewAnalyser) return;
+
+  if (audioCtx && activePreviewSource && decodedAudioBuffer) {
+    const elapsed = audioCtx.currentTime - previewStartTime;
+    let mappedTime = elapsed;
+
+    // Map elapsed time through keepRanges to original timeline position
+    let accumulatedDur = 0;
+    let found = false;
+    for (const range of keepRanges) {
+      const rangeDur = range.end - range.start;
+      if (mappedTime <= accumulatedDur + rangeDur) {
+        mappedTime = range.start + (mappedTime - accumulatedDur);
+        found = true;
+        break;
+      }
+      accumulatedDur += rangeDur;
+    }
+    if (!found) {
+      mappedTime = keepRanges[keepRanges.length - 1].end;
+    }
+
+    // Position playhead on overview
+    const duration = decodedAudioBuffer.duration;
+    const w = editorContainer.clientWidth;
+    const leftPx = (mappedTime / duration) * w;
+    playheadLine.style.left = `${leftPx}px`;
+    playheadLine.classList.remove("hidden");
+  }
 
   // Frequency analysis details: get Byte Frequency Data
   const bufferLength = activePreviewAnalyser.frequencyBinCount; // 128
@@ -527,9 +1062,28 @@ function checkBlobDuration(blob, expectedDurationSec) {
   videoEl.src = URL.createObjectURL(blob);
 }
 
+// Continue Button Handler
+continueBtn.addEventListener("click", () => {
+  stopPreview();
+
+  // Build the final working buffer to use downstream
+  workingAudioBuffer = buildWorkingAudioBuffer();
+
+  // Hide edit section, show next steps
+  editSection.classList.add("hidden");
+
+  // Aspect ratio section and Preview section are active now
+  aspectRatioSection.classList.remove("hidden");
+
+  // The downstream renderBtn only waits for Aspect Ratio selection
+  // It's disabled until selection happens
+  renderBtn.disabled = true;
+});
+
+
 // Main Controller Render Trigger
 renderBtn.addEventListener("click", async () => {
-  if (!decodedAudioBuffer || !chosenWidth || !chosenHeight) return;
+  if (!workingAudioBuffer || !chosenWidth || !chosenHeight) return;
 
   // Stop active preview
   stopPreview();
@@ -544,17 +1098,15 @@ renderBtn.addEventListener("click", async () => {
   statusLine.classList.add("hidden");
 
   try {
-    const duration = decodedAudioBuffer.duration;
+    const duration = workingAudioBuffer.duration;
 
-    // Step 1: Run analytical audio decoder (cached or first-time)
-    if (!frameEnvelopeArray) {
-      statusLine.textContent = "Analyzing audio frequencies...";
-      statusLine.classList.remove("hidden");
+    // Step 1: Run analytical audio decoder (always re-run to ensure edits are applied)
+    statusLine.textContent = "Analyzing audio frequencies...";
+    statusLine.classList.remove("hidden");
 
-      // Let layout update before blocking CPU slightly
-      await new Promise(r => setTimeout(r, 50));
-      frameEnvelopeArray = analyzeAudio(decodedAudioBuffer);
-    }
+    // Let layout update before blocking CPU slightly
+    await new Promise(r => setTimeout(r, 50));
+    frameEnvelopeArray = analyzeAudio(workingAudioBuffer);
 
     const fileExtension = ".mp4";
 

@@ -45,6 +45,47 @@
         </div>
       </section>
 
+      <!-- Edit Section -->
+      <section id="editSection" class="panel edit-section hidden">
+        <div class="edit-stats">
+          <div class="file-meta">
+            <span class="file-label">ORIGINAL:</span>
+            <span id="originalLength" class="file-value">00:00</span>
+          </div>
+          <div class="file-meta">
+            <span class="file-label">EDITED:</span>
+            <span id="editedLength" class="file-value">00:00</span>
+          </div>
+          <div id="editDurationWarning" class="warning-text hidden">
+            over about 2.5 minutes, export may take a while.
+          </div>
+        </div>
+
+        <div class="editor-container" id="editorContainer">
+          <canvas id="overviewCanvas" width="800" height="120"></canvas>
+          <div id="selectionHighlight" class="selection-highlight hidden"></div>
+          <div id="leftTrimHandle" class="trim-handle left-handle">
+            <div class="handle-line"></div>
+            <div class="handle-readout" id="leftTrimReadout">00:00.0</div>
+          </div>
+          <div id="rightTrimHandle" class="trim-handle right-handle">
+            <div class="handle-line"></div>
+            <div class="handle-readout" id="rightTrimReadout">00:00.0</div>
+          </div>
+          <div id="playheadLine" class="playhead-line hidden"></div>
+        </div>
+
+        <div class="controls-row">
+          <button id="playPreviewBtn" class="btn btn-secondary" disabled>PLAY PREVIEW</button>
+          <button id="cutSelectedBtn" class="btn btn-secondary" disabled>CUT SELECTED</button>
+          <button id="undoBtn" class="btn btn-secondary" disabled>UNDO</button>
+          <button id="resetBtn" class="btn btn-secondary" disabled>RESET</button>
+        </div>
+        <div class="controls-row">
+          <button id="continueBtn" class="btn btn-primary" disabled>CONTINUE</button>
+        </div>
+      </section>
+
       <!-- Aspect Ratio Selection Section -->
       <section id="aspectRatioSection" class="panel aspect-ratio-section hidden">
         <div class="aspect-ratio-cards">
@@ -65,9 +106,6 @@
           <canvas id="previewCanvas" width="1280" height="720"></canvas>
         </div>
 
-        <div class="controls-row">
-          <button id="playPreviewBtn" class="btn btn-secondary" disabled>PLAY PREVIEW</button>
-        </div>
       </section>
 
       <!-- Export Section -->
