@@ -401,6 +401,37 @@ body {
   display: none !important;
 }
 
+/* Navigation Links */
+.nav-container {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  border-top: 1px solid #232323;
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+.nav-link {
+  color: #7a7a76;
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+  transition: color 0.15s ease, border-bottom-color 0.15s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.nav-link:hover {
+  color: #f2f2f0;
+}
+
+.nav-link.active {
+  color: #f2f2f0;
+  border-bottom: 1px solid #f2f2f0;
+}
+
 /* Mobile Responsive Adjustments */
 @media (max-width: 480px) {
   body {
