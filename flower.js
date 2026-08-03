@@ -164,9 +164,9 @@ function startPreviewLoop() {
   if (previewAnimationId) cancelAnimationFrame(previewAnimationId);
 
   function loop(timestamp) {
-    // 720x1280 base bounds for preview
-    const width = 720;
-    const height = 1280;
+    // 1080x1080 base bounds for preview
+    const width = 1080;
+    const height = 1080;
 
     // Set internal canvas resolution
     if (previewCanvas.width !== width) previewCanvas.width = width;
@@ -200,22 +200,22 @@ function processOrganicWarp(timeMs, width, height) {
   offscreenCtx.clearRect(0, 0, width, height);
 
   // Draw the original image onto the offscreen canvas exactly sized to fit.
-  // The logic is: cover, or contain. We'll use a cover approach, centered.
+  // Scale the image so it fits entirely within the canvas (contain) while preserving its own aspect ratio,
+  // and additionally shrink it further so the flower occupies roughly 80 to 85 percent of the canvas's width/height.
+  const targetSize = Math.min(width, height) * 0.825;
   const imgRatio = baseImage.width / baseImage.height;
-  const canvasRatio = width / height;
 
-  let drawW = width;
-  let drawH = height;
-  let offsetX = 0;
-  let offsetY = 0;
+  let drawW = targetSize;
+  let drawH = targetSize;
 
-  if (imgRatio > canvasRatio) {
-    drawW = height * imgRatio;
-    offsetX = (width - drawW) / 2;
+  if (imgRatio > 1) {
+    drawH = targetSize / imgRatio;
   } else {
-    drawH = width / imgRatio;
-    offsetY = (height - drawH) / 2;
+    drawW = targetSize * imgRatio;
   }
+
+  const offsetX = (width - drawW) / 2;
+  const offsetY = (height - drawH) / 2;
 
   offscreenCtx.drawImage(baseImage, offsetX, offsetY, drawW, drawH);
 
@@ -341,9 +341,9 @@ function processHalftoneFilter(ctx, width, height) {
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, width, height);
 
-  // Grid sizing: ~9px at 1280px height
-  const baseSpacing = 9;
-  const spacing = Math.max(2, Math.round(baseSpacing * (height / 1280)));
+  // Grid sizing: ~7.6px at 1080px height (proportional to 9px at 1280px)
+  const baseSpacing = 7.6;
+  const spacing = Math.max(2, Math.round(baseSpacing * (height / 1080)));
   const halfSpacing = spacing / 2;
 
   // Render halftone dots
@@ -403,8 +403,8 @@ async function renderAndExportVideo() {
 
   try {
     const fps = 60;
-    const width = 720;
-    const height = 1280;
+    const width = 1080;
+    const height = 1080;
     const totalFrames = Math.ceil(effectiveDuration * fps);
     const frameDurationMicros = 1_000_000 / fps;
 
@@ -479,7 +479,7 @@ async function renderAndExportVideo() {
     const url = URL.createObjectURL(blob);
 
     downloadVideo.href = url;
-    downloadVideo.download = `flower-background-9x16.mp4`;
+    downloadVideo.download = `flower-background-1x1.mp4`;
 
     progressContainer.classList.add("hidden");
     downloadContainer.classList.remove("hidden");
