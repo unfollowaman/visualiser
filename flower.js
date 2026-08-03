@@ -1,6 +1,10 @@
 // Configuration
 const FLOWERS = [
-  { name: 'Rose', path: 'assets/flowers/rose.png' }
+  { name: 'Rose', path: 'assets/flowers/rose.png' },
+  { name: 'Hibiscus', path: 'assets/flowers/Hibiscus.png' },
+  { name: 'Blue Cosmos', path: 'assets/flowers/blue-cosmos.png' },
+  { name: 'Sunflower', path: 'assets/flowers/sunflower.png' },
+  { name: 'White Daisy', path: 'assets/flowers/white daisy.png' }
 ];
 
 // State
