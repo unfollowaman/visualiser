@@ -261,19 +261,15 @@ function startAllPreviews() {
   }
 }
 
-// Ensure flowerSection is unhidden when file is loaded and aspect ratio chosen
+// Ensure renderFlowerBtn is enabled when file is loaded and aspect ratio chosen
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     if (mutation.attributeName === "class") {
-       // If aspectRatioSection becomes unhidden, unhide flower section too
        const aspectRatioSection = document.getElementById("aspectRatioSection");
        if (!aspectRatioSection.classList.contains("hidden")) {
-          flowerSection.classList.remove("hidden");
           if (window.workingAudioBuffer) {
               renderFlowerBtn.disabled = false;
           }
-       } else {
-          flowerSection.classList.add("hidden");
        }
     }
   });
