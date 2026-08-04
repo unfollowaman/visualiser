@@ -12,11 +12,7 @@
 <body>
   <div class="container">
     <header class="app-header">
-      <span class="eyebrow">Tool .001</span>
       <h1 class="title">Waveform</h1>
-      <p class="description">
-        Upload audio, get a black-background bar visualizer as a downloadable MP4. No audio in the export, no captions, just the bars, matched to your clip's length.
-      </p>
     </header>
 
     <main class="app-content">
@@ -42,6 +38,9 @@
         </div>
         <div id="decodeError" class="error-text hidden">
           Could not decode this audio file. Try MP3 or WAV.
+        </div>
+        <div class="controls-row" style="margin-top: 16px;">
+          <button id="showEditBtn" class="btn btn-secondary hidden">EDIT AUDIO</button>
         </div>
       </section>
 
@@ -135,16 +134,50 @@
           </div>
         </div>
 
-        <!-- Navigation Links -->
-        <div class="nav-container">
-          <a href="index.html" class="nav-link active">Waveform</a>
-          <a href="flower.html" class="nav-link">Flower</a>
+      </section>
+
+      <!-- Flower Section -->
+      <section id="flowerSection" class="panel preview-section hidden">
+        <h2 class="title" style="font-size: 24px;">FLOWER</h2>
+
+        <div class="flower-grid" id="flowerGrid">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="controls-row" style="margin-top: 16px;">
+          <button id="renderFlowerBtn" class="btn btn-primary" disabled>RENDER AND DOWNLOAD</button>
+        </div>
+
+        <!-- Flower Progress Area -->
+        <div id="flowerProgressContainer" class="progress-container hidden">
+          <div class="progress-header">
+            <span id="flowerProgressLabel" class="progress-label">RENDERING...</span>
+            <span id="flowerProgressPercentage" class="progress-percentage">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="flowerProgressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Flower Status/Error line -->
+        <div id="flowerStatusLine" class="status-line hidden"></div>
+
+        <!-- Flower Download Links -->
+        <div id="flowerDownloadContainer" class="download-container hidden">
+          <div class="download-links">
+            <a id="flowerDownloadVideo" class="btn btn-primary" href="#" download>DOWNLOAD VIDEO</a>
+          </div>
         </div>
       </section>
+
+      <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+        <span class="eyebrow" style="letter-spacing: 0.1em; font-size: 10px;">@unfollowaman</span>
+      </div>
     </main>
   </div>
 
   <script src="mp4-muxer.js"></script>
   <script src="script.js"></script>
+  <script src="flower.js"></script>
 </body>
 </html>
