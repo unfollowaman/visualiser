@@ -9,7 +9,7 @@ let previewAnimationId = null;
 let previewStartTime = 0;
 
 // Edit State
-let workingAudioBuffer = null;
+window.workingAudioBuffer = null;
 let keepRanges = []; // Array of {start: 0, end: 0}
 let editHistory = [];
 
@@ -26,6 +26,7 @@ const fileDuration = document.getElementById("fileDuration");
 const durationWarning = document.getElementById("durationWarning");
 const decodeError = document.getElementById("decodeError");
 const previewCanvas = document.getElementById("previewCanvas");
+const showEditBtn = document.getElementById("showEditBtn");
 
 // Edit UI Elements
 const editSection = document.getElementById("editSection");
@@ -635,6 +636,13 @@ resetBtn.addEventListener("click", () => {
   }
 });
 
+showEditBtn.addEventListener("click", () => {
+  editSection.classList.remove("hidden");
+  showEditBtn.classList.add("hidden");
+  aspectRatioSection.classList.add("hidden"); // Optional, hide aspect ratio while editing
+  renderBtn.disabled = true; // Disable render until "Continue" is clicked
+});
+
 // Handle reliable file click gesture
 dropZone.addEventListener("click", (e) => {
   // Mobile browsers can block file inputs if triggered within async calls
@@ -677,6 +685,8 @@ function handleSelectedFile(file) {
   chosenHeight = null;
   card16x9.classList.remove("selected", "disabled");
   card9x16.classList.remove("selected", "disabled");
+  showEditBtn.classList.add("hidden");
+  editSection.classList.add("hidden");
 
   fileInfoContainer.classList.add("hidden");
   durationWarning.classList.add("hidden");
@@ -705,7 +715,7 @@ function handleSelectedFile(file) {
 
     audioCtx.decodeAudioData(arrayBuffer, (audioBuffer) => {
       decodedAudioBuffer = audioBuffer;
-      workingAudioBuffer = null;
+      window.workingAudioBuffer = null;
       keepRanges = [{start: 0, end: audioBuffer.duration}];
       editHistory = [];
 
@@ -719,9 +729,13 @@ function handleSelectedFile(file) {
         durationWarning.classList.add("hidden");
       }
 
-      // Show Edit Section instead of Aspect Ratio
+      // Enable Edit Audio button and move straight to Aspect Ratio Section
       renderEditState();
-      editSection.classList.remove("hidden");
+      showEditBtn.classList.remove("hidden");
+
+      // We automatically jump to aspect ratio section since edit is optional
+      window.workingAudioBuffer = buildWorkingAudioBuffer();
+      aspectRatioSection.classList.remove("hidden");
     }, (err) => {
       console.error("Decode Audio Data Error: ", err);
       fileInfoContainer.classList.add("hidden");
@@ -1067,23 +1081,28 @@ continueBtn.addEventListener("click", () => {
   stopPreview();
 
   // Build the final working buffer to use downstream
-  workingAudioBuffer = buildWorkingAudioBuffer();
+  window.workingAudioBuffer = buildWorkingAudioBuffer();
 
   // Hide edit section, show next steps
   editSection.classList.add("hidden");
+  showEditBtn.classList.remove("hidden");
 
   // Aspect ratio section and Preview section are active now
   aspectRatioSection.classList.remove("hidden");
 
-  // The downstream renderBtn only waits for Aspect Ratio selection
-  // It's disabled until selection happens
-  renderBtn.disabled = true;
+  // The downstream renderBtn is disabled until aspect ratio is selected
+  // unless an aspect ratio is already chosen.
+  if (chosenWidth && chosenHeight) {
+    renderBtn.disabled = false;
+  } else {
+    renderBtn.disabled = true;
+  }
 });
 
 
 // Main Controller Render Trigger
 renderBtn.addEventListener("click", async () => {
-  if (!workingAudioBuffer || !chosenWidth || !chosenHeight) return;
+  if (!window.workingAudioBuffer || !chosenWidth || !chosenHeight) return;
 
   // Stop active preview
   stopPreview();
@@ -1098,7 +1117,7 @@ renderBtn.addEventListener("click", async () => {
   statusLine.classList.add("hidden");
 
   try {
-    const duration = workingAudioBuffer.duration;
+    const duration = window.workingAudioBuffer.duration;
 
     // Step 1: Run analytical audio decoder (always re-run to ensure edits are applied)
     statusLine.textContent = "Analyzing audio frequencies...";
@@ -1106,7 +1125,7 @@ renderBtn.addEventListener("click", async () => {
 
     // Let layout update before blocking CPU slightly
     await new Promise(r => setTimeout(r, 50));
-    frameEnvelopeArray = analyzeAudio(workingAudioBuffer);
+    frameEnvelopeArray = analyzeAudio(window.workingAudioBuffer);
 
     const fileExtension = ".mp4";
 
