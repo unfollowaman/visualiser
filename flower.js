@@ -355,7 +355,6 @@ async function renderAndExportFlowerVideo() {
         const progress = Math.min(100, Math.round((i / totalFrames) * 100));
         flowerProgressBarFill.style.width = `${progress}%`;
         flowerProgressPercentage.textContent = `${progress}%`;
-        await new Promise(r => setTimeout(r, 0));
       }
     }
 

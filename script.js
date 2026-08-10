@@ -1036,7 +1036,6 @@ async function renderFormat(envelope, width, height, progressCallback) {
     if (i % 30 === 0) { // Update progress UI without blocking CPU forever
       const progress = Math.min(100, Math.round((i / totalFrames) * 100));
       progressCallback(progress);
-      await new Promise(r => setTimeout(r, 0));
     }
   }
 
