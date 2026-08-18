@@ -1085,7 +1085,10 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
     const sampleRate = audioBuffer.sampleRate;
     const numChannels = audioBuffer.numberOfChannels;
     const totalAudioFrames = audioBuffer.length;
-    const chunkSize = 1024; // standard chunk size
+    const chunkSize = 16384; // 16384 samples per AudioData object to prevent backpressure thrashing
+
+    statusLine.textContent = "Encoding audio...";
+    statusLine.classList.remove("hidden");
 
     for (let offset = 0; offset < totalAudioFrames; offset += chunkSize) {
       while (audioEncoder.encodeQueueSize > 2) {
@@ -1115,8 +1118,13 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
 
       audioEncoder.encode(audioData);
       audioData.close();
+
+      const audioProgress = Math.min(20, Math.round(((offset + numFrames) / totalAudioFrames) * 20));
+      progressCallback(audioProgress);
     }
   }
+
+  statusLine.classList.add("hidden");
 
   for (let i = 0; i < totalFrames; i++) {
     // Backpressure handling: wait if queue is too large
@@ -1139,7 +1147,7 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
     frame.close();
 
     if (i % 30 === 0) { // Update progress UI without blocking CPU forever
-      const progress = Math.min(100, Math.round((i / totalFrames) * 100));
+      const progress = 20 + Math.min(80, Math.round((i / totalFrames) * 80));
       progressCallback(progress);
     }
   }
