@@ -979,7 +979,7 @@ function runPreviewLoop() {
 }
 
 // Render loop that executes fast canvas capture using WebCodecs
-async function renderFormat(envelope, width, height, progressCallback) {
+async function renderFormat(envelope, width, height, progressCallback, audioBuffer = window.workingAudioBuffer) {
   const offscreenCanvas = document.createElement("canvas");
   offscreenCanvas.width = width;
   offscreenCanvas.height = height;
@@ -989,7 +989,7 @@ async function renderFormat(envelope, width, height, progressCallback) {
   const frameDurationMicros = 1_000_000 / fps;
   const totalFrames = envelope.length;
 
-  let muxer = new Mp4Muxer.Muxer({
+  const muxerOptions = {
     target: new Mp4Muxer.ArrayBufferTarget(),
     video: {
       codec: 'avc',
@@ -997,11 +997,65 @@ async function renderFormat(envelope, width, height, progressCallback) {
       height: height
     },
     fastStart: 'in-memory'
-  });
+  };
+
+  let selectedAudioCodec = null; // 'aac' or 'opus'
+  let encoderAudioCodecString = null; // 'mp4a.40.2' or 'opus'
+
+  if (audioBuffer) {
+    // Check supported audio codecs (defaulting to AAC, fallback to Opus for headless/unsupported builds)
+    const aacConfig = {
+      codec: 'mp4a.40.2',
+      sampleRate: audioBuffer.sampleRate,
+      numberOfChannels: audioBuffer.numberOfChannels,
+      bitrate: 128_000
+    };
+
+    let aacSupported = false;
+    try {
+      if (typeof AudioEncoder !== "undefined" && AudioEncoder.isConfigSupported) {
+        const support = await AudioEncoder.isConfigSupported(aacConfig);
+        aacSupported = !!support.supported;
+      }
+    } catch (e) {
+      aacSupported = false;
+    }
+
+    if (aacSupported) {
+      selectedAudioCodec = 'aac';
+      encoderAudioCodecString = 'mp4a.40.2';
+    } else {
+      const opusConfig = {
+        codec: 'opus',
+        sampleRate: audioBuffer.sampleRate,
+        numberOfChannels: audioBuffer.numberOfChannels,
+        bitrate: 128_000
+      };
+      try {
+        if (typeof AudioEncoder !== "undefined" && AudioEncoder.isConfigSupported) {
+          const support = await AudioEncoder.isConfigSupported(opusConfig);
+          if (support.supported) {
+            selectedAudioCodec = 'opus';
+            encoderAudioCodecString = 'opus';
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  if (selectedAudioCodec) {
+    muxerOptions.audio = {
+      codec: selectedAudioCodec,
+      numberOfChannels: audioBuffer.numberOfChannels,
+      sampleRate: audioBuffer.sampleRate
+    };
+  }
+
+  let muxer = new Mp4Muxer.Muxer(muxerOptions);
 
   let videoEncoder = new VideoEncoder({
     output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: e => console.error(e)
+    error: e => console.error("VideoEncoder error:", e)
   });
 
   const videoConfig = {
@@ -1012,6 +1066,57 @@ async function renderFormat(envelope, width, height, progressCallback) {
     framerate: fps,
   };
   videoEncoder.configure(videoConfig);
+
+  let audioEncoder = null;
+  if (selectedAudioCodec) {
+    audioEncoder = new AudioEncoder({
+      output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
+      error: e => console.error("AudioEncoder error:", e)
+    });
+
+    audioEncoder.configure({
+      codec: encoderAudioCodecString,
+      sampleRate: audioBuffer.sampleRate,
+      numberOfChannels: audioBuffer.numberOfChannels,
+      bitrate: 128_000
+    });
+
+    // Encode audio chunks from workingAudioBuffer
+    const sampleRate = audioBuffer.sampleRate;
+    const numChannels = audioBuffer.numberOfChannels;
+    const totalAudioFrames = audioBuffer.length;
+    const chunkSize = 1024; // standard chunk size
+
+    for (let offset = 0; offset < totalAudioFrames; offset += chunkSize) {
+      while (audioEncoder.encodeQueueSize > 2) {
+        await new Promise(resolve => {
+          audioEncoder.addEventListener("dequeue", resolve, { once: true });
+        });
+      }
+
+      const numFrames = Math.min(chunkSize, totalAudioFrames - offset);
+      const pcmData = new Float32Array(numChannels * numFrames);
+
+      for (let c = 0; c < numChannels; c++) {
+        const channelData = audioBuffer.getChannelData(c);
+        pcmData.set(channelData.subarray(offset, offset + numFrames), c * numFrames);
+      }
+
+      const timestampMicros = Math.round((offset / sampleRate) * 1_000_000);
+
+      const audioData = new AudioData({
+        format: 'f32-planar',
+        sampleRate: sampleRate,
+        numberOfFrames: numFrames,
+        numberOfChannels: numChannels,
+        timestamp: timestampMicros,
+        data: pcmData
+      });
+
+      audioEncoder.encode(audioData);
+      audioData.close();
+    }
+  }
 
   for (let i = 0; i < totalFrames; i++) {
     // Backpressure handling: wait if queue is too large
@@ -1040,6 +1145,11 @@ async function renderFormat(envelope, width, height, progressCallback) {
   }
 
   progressCallback(100);
+
+  if (audioEncoder) {
+    await audioEncoder.flush();
+    audioEncoder.close();
+  }
 
   await videoEncoder.flush();
   videoEncoder.close();
