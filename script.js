@@ -171,18 +171,31 @@ function drawOverview(audioBuffer) {
   const sampleRate = audioBuffer.sampleRate;
   const totalSamples = audioBuffer.length;
 
-  const monoSamples = new Float32Array(totalSamples);
-  const channels = [];
-  for (let c = 0; c < numChannels; c++) {
-    channels.push(audioBuffer.getChannelData(c));
-  }
-
-  for (let s = 0; s < totalSamples; s++) {
-    let sum = 0;
+  let monoSamples;
+  if (numChannels === 1) {
+    monoSamples = audioBuffer.getChannelData(0);
+  } else {
+    monoSamples = new Float32Array(totalSamples);
+    const channels = [];
     for (let c = 0; c < numChannels; c++) {
-      sum += channels[c][s];
+      channels.push(audioBuffer.getChannelData(c));
     }
-    monoSamples[s] = sum / numChannels;
+    if (numChannels === 2) {
+      const c0 = channels[0];
+      const c1 = channels[1];
+      for (let s = 0; s < totalSamples; s++) {
+        monoSamples[s] = (c0[s] + c1[s]) * 0.5;
+      }
+    } else {
+      const invNumChannels = 1 / numChannels;
+      for (let s = 0; s < totalSamples; s++) {
+        let sum = 0;
+        for (let c = 0; c < numChannels; c++) {
+          sum += channels[c][s];
+        }
+        monoSamples[s] = sum * invNumChannels;
+      }
+    }
   }
 
   const numBars = 200;
@@ -760,18 +773,31 @@ function analyzeAudio(audioBuffer) {
   const totalSamples = audioBuffer.length;
 
   // Mix down channels to single mono Float32Array
-  const monoSamples = new Float32Array(totalSamples);
-  const channels = [];
-  for (let c = 0; c < numChannels; c++) {
-    channels.push(audioBuffer.getChannelData(c));
-  }
-
-  for (let s = 0; s < totalSamples; s++) {
-    let sum = 0;
+  let monoSamples;
+  if (numChannels === 1) {
+    monoSamples = audioBuffer.getChannelData(0);
+  } else {
+    monoSamples = new Float32Array(totalSamples);
+    const channels = [];
     for (let c = 0; c < numChannels; c++) {
-      sum += channels[c][s];
+      channels.push(audioBuffer.getChannelData(c));
     }
-    monoSamples[s] = sum / numChannels;
+    if (numChannels === 2) {
+      const c0 = channels[0];
+      const c1 = channels[1];
+      for (let s = 0; s < totalSamples; s++) {
+        monoSamples[s] = (c0[s] + c1[s]) * 0.5;
+      }
+    } else {
+      const invNumChannels = 1 / numChannels;
+      for (let s = 0; s < totalSamples; s++) {
+        let sum = 0;
+        for (let c = 0; c < numChannels; c++) {
+          sum += channels[c][s];
+        }
+        monoSamples[s] = sum * invNumChannels;
+      }
+    }
   }
 
   // 60 frames per second logic
