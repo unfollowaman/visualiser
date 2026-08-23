@@ -451,7 +451,7 @@ function updateSelectionHighlight() {
   }
 }
 
-window.addEventListener("mousemove", (e) => {
+function handleDragMove(e) {
   if (!decodedAudioBuffer) return;
   const x = getCanvasX(e);
   const duration = decodedAudioBuffer.duration;
@@ -497,52 +497,10 @@ window.addEventListener("mousemove", (e) => {
     selectionEndX = x;
     updateSelectionHighlight();
   }
-});
+}
 
-window.addEventListener("touchmove", (e) => {
-  // exact same logic as mousemove
-  if (!decodedAudioBuffer) return;
-  const x = getCanvasX(e);
-  const duration = decodedAudioBuffer.duration;
-  const w = editorContainer.clientWidth;
-  let timePos = (x / w) * duration;
-  timePos = Math.max(0, Math.min(timePos, duration));
-
-  let totalDurationWithoutFirst = 0;
-  for (let i = 1; i < keepRanges.length; i++) {
-    totalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
-  }
-
-  let totalDurationWithoutLast = 0;
-  for (let i = 0; i < keepRanges.length - 1; i++) {
-    totalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
-  }
-
-  if (isDraggingLeftHandle) {
-    let maxStart = keepRanges[0].end - (1 - totalDurationWithoutFirst);
-    if (keepRanges.length === 1) {
-       maxStart = keepRanges[0].end - 1;
-    }
-    // Also enforce that the handle doesn't cross the end of its own range
-    maxStart = Math.min(maxStart, keepRanges[0].end - 0.05); // ensure start < end
-    const newStart = Math.min(timePos, maxStart);
-    keepRanges[0].start = Math.max(0, newStart);
-    renderEditState();
-  } else if (isDraggingRightHandle) {
-    let minEnd = keepRanges[keepRanges.length - 1].start + (1 - totalDurationWithoutLast);
-    if (keepRanges.length === 1) {
-       minEnd = keepRanges[0].start + 1;
-    }
-    // Also enforce that the handle doesn't cross the start of its own range
-    minEnd = Math.max(minEnd, keepRanges[keepRanges.length - 1].start + 0.05); // ensure end > start
-    const newEnd = Math.max(timePos, minEnd);
-    keepRanges[keepRanges.length - 1].end = Math.min(duration, newEnd);
-    renderEditState();
-  } else if (isDraggingSelection) {
-    selectionEndX = x;
-    updateSelectionHighlight();
-  }
-}, {passive: false});
+window.addEventListener("mousemove", handleDragMove);
+window.addEventListener("touchmove", handleDragMove, { passive: false });
 
 function stopDragging() {
   if (isDraggingLeftHandle || isDraggingRightHandle) {
