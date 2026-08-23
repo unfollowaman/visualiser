@@ -11,7 +11,7 @@ let selectedFlowerIndex = 0;
 let previewAnimationIds = [];
 let flowerBaseImages = [];
 let flowerCanvases = [];
-let flowerContexts = [];
+let flowerRenderers = [];
 
 // DOM Elements
 const flowerSection = document.getElementById("flowerSection");
@@ -26,42 +26,257 @@ const flowerStatusLine = document.getElementById("flowerStatusLine");
 const flowerDownloadContainer = document.getElementById("flowerDownloadContainer");
 const flowerDownloadVideo = document.getElementById("flowerDownloadVideo");
 
-let offscreenCanvas = document.createElement("canvas");
-let offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true });
+// GLSL Shader Sources for WebGL Halftone Dot Pipeline
+const VS_SOURCE = `
+attribute vec2 aPosition;
+varying vec2 vUv;
+void main() {
+  vUv = aPosition * 0.5 + 0.5;
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+`;
+
+const FS_SOURCE = `
+precision mediump float;
+varying vec2 vUv;
+
+uniform sampler2D uTexture;
+uniform vec2 uResolution;
+uniform vec2 uImgSize;
+uniform float uTime;
+uniform float uAmplitude;
+uniform float uFrequency;
+
+#define PI 3.141592653589793
+
+void main() {
+  float width = uResolution.x;
+  float height = uResolution.y;
+
+  float canvasX = vUv.x * width;
+  float canvasY = (1.0 - vUv.y) * height;
+
+  float baseSpacing = 7.6;
+  float spacing = max(2.0, floor(baseSpacing * (height / 1080.0) + 0.5));
+  float halfSpacing = spacing * 0.5;
+
+  float gx = floor(canvasX / spacing);
+  float gy = floor(canvasY / spacing);
+
+  float cx = (gx + 0.5) * spacing;
+  float cy = (gy + 0.5) * spacing;
+
+  if (cx >= width || cy >= height) {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
+  }
+
+  float normX = cx / width;
+  float normY = cy / height;
+  float edgeFalloff = sin(normX * PI) * sin(normY * PI);
+
+  float t = uTime;
+  float dx = sin(t * 0.8 + normY * 3.1) * 0.5 +
+             sin(t * 1.3 + normX * 2.5 + normY * 1.1) * 0.3 +
+             sin(t * 0.5 - normX * 4.0) * 0.2;
+
+  float dy = cos(t * 0.9 - normX * 3.5) * 0.5 +
+             sin(t * 1.1 + normY * 2.8 - normX * 1.5) * 0.3 +
+             cos(t * 0.6 + normY * 4.2) * 0.2;
+
+  float maxDisplacement = width * 0.015;
+  float offsetX = dx * maxDisplacement * edgeFalloff;
+  float offsetY = dy * maxDisplacement * edgeFalloff;
+
+  float sx = cx - offsetX;
+  float sy = cy - offsetY;
+
+  float targetSize = min(width, height) * 0.825;
+  float imgRatio = uImgSize.x / uImgSize.y;
+
+  float drawW = targetSize;
+  float drawH = targetSize;
+
+  if (imgRatio > 1.0) {
+    drawH = targetSize / imgRatio;
+  } else {
+    drawW = targetSize * imgRatio;
+  }
+
+  float imgOffsetX = (width - drawW) * 0.5;
+  float imgOffsetY = (height - drawH) * 0.5;
+
+  float texU = (sx - imgOffsetX) / drawW;
+  float texV = (sy - imgOffsetY) / drawH;
+
+  if (texU < 0.0 || texU > 1.0 || texV < 0.0 || texV > 1.0) {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
+  }
+
+  vec4 texColor = texture2D(uTexture, vec2(texU, texV));
+
+  if (texColor.a < 0.04) {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
+  }
+
+  float brightness = max(max(texColor.r, texColor.g), texColor.b);
+  float baseRadius = halfSpacing * pow(brightness, 0.8) * 1.25;
+
+  if (baseRadius < 0.1) {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
+  }
+
+  float audioMod = 1.0 + uAmplitude * 0.35 + uFrequency * 0.15;
+  float radius = min(baseRadius * audioMod, halfSpacing);
+
+  float dist = length(vec2(canvasX, canvasY) - vec2(cx, cy));
+
+  if (dist > radius + 0.5) {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
+  }
+
+  float delta = max(0.5, halfSpacing * 0.12);
+  float alpha = smoothstep(radius + 0.5, radius - delta, dist);
+
+  vec3 col = texColor.rgb * alpha;
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+function createWebGLRenderer(canvas) {
+  const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true, alpha: false }) ||
+             canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, alpha: false });
+  if (!gl) {
+    console.error("WebGL not supported");
+    return null;
+  }
+
+  function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.error("Shader compile error:", gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader);
+      return null;
+    }
+    return shader;
+  }
+
+  const vs = createShader(gl, gl.VERTEX_SHADER, VS_SOURCE);
+  const fs = createShader(gl, gl.FRAGMENT_SHADER, FS_SOURCE);
+  const program = gl.createProgram();
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error("Program link error:", gl.getProgramInfoLog(program));
+    return null;
+  }
+
+  gl.useProgram(program);
+
+  const positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,
+     1, -1,
+    -1,  1,
+     1,  1,
+  ]), gl.STATIC_DRAW);
+
+  const aPosition = gl.getAttribLocation(program, "aPosition");
+  gl.enableVertexAttribArray(aPosition);
+  gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+  const uTexture = gl.getUniformLocation(program, "uTexture");
+  const uResolution = gl.getUniformLocation(program, "uResolution");
+  const uImgSize = gl.getUniformLocation(program, "uImgSize");
+  const uTime = gl.getUniformLocation(program, "uTime");
+  const uAmplitude = gl.getUniformLocation(program, "uAmplitude");
+  const uFrequency = gl.getUniformLocation(program, "uFrequency");
+
+  gl.uniform1i(uTexture, 0);
+
+  let currentTexture = null;
+  let currentImgSize = { x: 1, y: 1 };
+
+  function setTexture(img) {
+    if (!img) return;
+    if (currentTexture) {
+      gl.deleteTexture(currentTexture);
+    }
+    currentTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, currentTexture);
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    currentImgSize = { x: img.width, y: img.height };
+  }
+
+  function render(timeSec, amplitude = 0, frequency = 0) {
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(program);
+
+    if (currentTexture) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, currentTexture);
+    }
+
+    gl.uniform2f(uResolution, canvas.width, canvas.height);
+    gl.uniform2f(uImgSize, currentImgSize.x, currentImgSize.y);
+    gl.uniform1f(uTime, timeSec);
+    gl.uniform1f(uAmplitude, amplitude);
+    gl.uniform1f(uFrequency, frequency);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  return { gl, setTexture, render };
+}
 
 function initFlowerGrid() {
   FLOWERS.forEach((flower, idx) => {
-    // Create card container
     const card = document.createElement("div");
     card.classList.add("flower-preview-card");
     if (idx === 0) card.classList.add("selected");
 
-    // Create canvas
     const canvas = document.createElement("canvas");
-    // Optimize performance: since cards are max ~200px wide, 256x256 is enough for preview.
-    // However, keeping exactly the same logic but smaller sizes to avoid CPU lag
     const PREVIEW_SIZE = 256;
     canvas.width = PREVIEW_SIZE;
     canvas.height = PREVIEW_SIZE;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
     card.appendChild(canvas);
     flowerGrid.appendChild(card);
 
     flowerCanvases.push(canvas);
-    flowerContexts.push(ctx);
 
-    // Click event to select
+    const renderer = createWebGLRenderer(canvas);
+    flowerRenderers.push(renderer);
+
     card.addEventListener("click", () => {
       document.querySelectorAll(".flower-preview-card").forEach(c => c.classList.remove("selected"));
       card.classList.add("selected");
       selectedFlowerIndex = idx;
     });
 
-    // Load image
     const img = new Image();
     img.onload = () => {
       flowerBaseImages[idx] = img;
+      if (renderer) {
+        renderer.setTexture(img);
+      }
       startPreviewLoop(idx);
     };
     img.onerror = () => {
@@ -71,177 +286,16 @@ function initFlowerGrid() {
   });
 }
 
-function processOrganicWarp(timeMs, width, height, baseImage, outCtx) {
-  if (!baseImage) return;
-
-  outCtx.clearRect(0, 0, width, height);
-
-  const targetSize = Math.min(width, height) * 0.825;
-  const imgRatio = baseImage.width / baseImage.height;
-
-  let drawW = targetSize;
-  let drawH = targetSize;
-
-  if (imgRatio > 1) {
-    drawH = targetSize / imgRatio;
-  } else {
-    drawW = targetSize * imgRatio;
-  }
-
-  const offsetX = (width - drawW) / 2;
-  const offsetY = (height - drawH) / 2;
-
-  outCtx.drawImage(baseImage, offsetX, offsetY, drawW, drawH);
-
-  const srcData = outCtx.getImageData(0, 0, width, height);
-  const srcPixels = srcData.data;
-
-  const dstData = outCtx.createImageData(width, height);
-  const dstPixels = dstData.data;
-
-  const gridCols = 12;
-  const gridRows = 12;
-  const cellW = width / (gridCols - 1);
-  const cellH = height / (gridRows - 1);
-
-  const t = timeMs / 1000;
-  const maxDisplacement = width * 0.015;
-
-  const gridOffsetsX = [];
-  const gridOffsetsY = [];
-
-  for (let r = 0; r < gridRows; r++) {
-    const rowX = [];
-    const rowY = [];
-    const normY = r / (gridRows - 1);
-
-    for (let c = 0; c < gridCols; c++) {
-      const normX = c / (gridCols - 1);
-      const edgeFalloff = Math.sin(normX * Math.PI) * Math.sin(normY * Math.PI);
-
-      let dx = Math.sin(t * 0.8 + normY * 3.1) * 0.5 +
-               Math.sin(t * 1.3 + normX * 2.5 + normY * 1.1) * 0.3 +
-               Math.sin(t * 0.5 - normX * 4.0) * 0.2;
-
-      let dy = Math.cos(t * 0.9 - normX * 3.5) * 0.5 +
-               Math.sin(t * 1.1 + normY * 2.8 - normX * 1.5) * 0.3 +
-               Math.cos(t * 0.6 + normY * 4.2) * 0.2;
-
-      rowX.push(dx * maxDisplacement * edgeFalloff);
-      rowY.push(dy * maxDisplacement * edgeFalloff);
-    }
-    gridOffsetsX.push(rowX);
-    gridOffsetsY.push(rowY);
-  }
-
-  for (let y = 0; y < height; y++) {
-    const gyF = y / cellH;
-    const r0 = Math.floor(gyF);
-    const r1 = Math.min(r0 + 1, gridRows - 1);
-    const ty = gyF - r0;
-
-    for (let x = 0; x < width; x++) {
-      const gxF = x / cellW;
-      const c0 = Math.floor(gxF);
-      const c1 = Math.min(c0 + 1, gridCols - 1);
-      const tx = gxF - c0;
-
-      const dx00 = gridOffsetsX[r0][c0], dx10 = gridOffsetsX[r0][c1];
-      const dx01 = gridOffsetsX[r1][c0], dx11 = gridOffsetsX[r1][c1];
-      const dxTop = dx00 + (dx10 - dx00) * tx;
-      const dxBot = dx01 + (dx11 - dx01) * tx;
-      const offsetX = dxTop + (dxBot - dxTop) * ty;
-
-      const dy00 = gridOffsetsY[r0][c0], dy10 = gridOffsetsY[r0][c1];
-      const dy01 = gridOffsetsY[r1][c0], dy11 = gridOffsetsY[r1][c1];
-      const dyTop = dy00 + (dy10 - dy00) * tx;
-      const dyBot = dy01 + (dy11 - dy01) * tx;
-      const offsetY = dyTop + (dyBot - dyTop) * ty;
-
-      const sx = x - offsetX;
-      const sy = y - offsetY;
-
-      let srcIdx = 0;
-      let dstIdx = (y * width + x) * 4;
-
-      if (sx >= 0 && sx < width - 1 && sy >= 0 && sy < height - 1) {
-        const sxi = Math.round(sx);
-        const syi = Math.round(sy);
-        srcIdx = (syi * width + sxi) * 4;
-
-        dstPixels[dstIdx] = srcPixels[srcIdx];
-        dstPixels[dstIdx + 1] = srcPixels[srcIdx + 1];
-        dstPixels[dstIdx + 2] = srcPixels[srcIdx + 2];
-        dstPixels[dstIdx + 3] = srcPixels[srcIdx + 3];
-      } else {
-        dstPixels[dstIdx + 3] = 0;
-      }
-    }
-  }
-
-  outCtx.putImageData(dstData, 0, 0);
-}
-
-function processHalftoneFilter(ctx, warpedCtx, width, height) {
-  const warpedData = warpedCtx.getImageData(0, 0, width, height);
-  const data = warpedData.data;
-
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, width, height);
-
-  const baseSpacing = 7.6;
-  const spacing = Math.max(2, Math.round(baseSpacing * (height / 1080)));
-  const halfSpacing = spacing / 2;
-
-  for (let y = 0; y < height; y += spacing) {
-    for (let x = 0; x < width; x += spacing) {
-      const cx = x + halfSpacing;
-      const cy = y + halfSpacing;
-
-      if (cx >= width || cy >= height) continue;
-
-      const sx = Math.floor(cx);
-      const sy = Math.floor(cy);
-      const idx = (sy * width + sx) * 4;
-
-      const r = data[idx];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      const a = data[idx + 3];
-
-      if (a < 10) continue;
-
-      const brightness = Math.max(r, g, b) / 255;
-      const radius = halfSpacing * Math.pow(brightness, 0.8) * 1.25;
-
-      if (radius < 0.5) continue;
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.min(radius, halfSpacing), 0, Math.PI * 2);
-      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-      ctx.fill();
-    }
-  }
-}
-
 function startPreviewLoop(idx) {
   if (previewAnimationIds[idx]) cancelAnimationFrame(previewAnimationIds[idx]);
 
-  // We use a separate offscreen canvas for each loop to prevent conflicts
-  const localOffscreenCanvas = document.createElement("canvas");
-  const PREVIEW_SIZE = 256;
-  localOffscreenCanvas.width = PREVIEW_SIZE;
-  localOffscreenCanvas.height = PREVIEW_SIZE;
-  const localOffscreenCtx = localOffscreenCanvas.getContext("2d", { willReadFrequently: true });
-
-  const ctx = flowerContexts[idx];
+  const renderer = flowerRenderers[idx];
   const baseImage = flowerBaseImages[idx];
 
   function loop(timestamp) {
-    if (!baseImage) return;
+    if (!baseImage || !renderer) return;
 
-    processOrganicWarp(timestamp, PREVIEW_SIZE, PREVIEW_SIZE, baseImage, localOffscreenCtx);
-    processHalftoneFilter(ctx, localOffscreenCtx, PREVIEW_SIZE, PREVIEW_SIZE);
+    renderer.render(timestamp / 1000, 0, 0);
 
     previewAnimationIds[idx] = requestAnimationFrame(loop);
   }
@@ -261,6 +315,90 @@ function startAllPreviews() {
   }
 }
 
+function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
+  if (!audioBuffer) {
+    return new Array(totalFrames).fill({ amplitude: 0, frequency: 0 });
+  }
+
+  const sampleRate = audioBuffer.sampleRate;
+  const numChannels = audioBuffer.numberOfChannels;
+  const totalSamples = audioBuffer.length;
+  const samplesPerFrame = sampleRate / fps;
+
+  let mono = audioBuffer.getChannelData(0);
+  if (numChannels > 1) {
+    mono = new Float32Array(totalSamples);
+    const c0 = audioBuffer.getChannelData(0);
+    const c1 = audioBuffer.getChannelData(1);
+    for (let s = 0; s < totalSamples; s++) {
+      mono[s] = (c0[s] + c1[s]) * 0.5;
+    }
+  }
+
+  const rawAmplitude = new Float32Array(totalFrames);
+  const rawFrequency = new Float32Array(totalFrames);
+
+  let maxRms = 0.0001;
+  let maxFreq = 0.0001;
+
+  for (let f = 0; f < totalFrames; f++) {
+    const startSample = Math.floor(f * samplesPerFrame);
+    const endSample = Math.min(totalSamples, Math.floor((f + 1) * samplesPerFrame));
+    const count = endSample - startSample;
+
+    if (count <= 0) {
+      rawAmplitude[f] = 0;
+      rawFrequency[f] = 0;
+      continue;
+    }
+
+    let sumSq = 0;
+    let diffSum = 0;
+
+    for (let s = startSample; s < endSample; s++) {
+      const val = mono[s];
+      sumSq += val * val;
+      if (s > startSample) {
+        diffSum += Math.abs(val - mono[s - 1]);
+      }
+    }
+
+    const rms = Math.sqrt(sumSq / count);
+    const freqMetric = count > 1 ? diffSum / (count - 1) : 0;
+
+    rawAmplitude[f] = rms;
+    rawFrequency[f] = freqMetric;
+
+    if (rms > maxRms) maxRms = rms;
+    if (freqMetric > maxFreq) maxFreq = freqMetric;
+  }
+
+  const metrics = [];
+  const smoothWindow = 2;
+
+  for (let f = 0; f < totalFrames; f++) {
+    let ampSum = 0;
+    let freqSum = 0;
+    let count = 0;
+
+    for (let off = -smoothWindow; off <= smoothWindow; off++) {
+      const tf = f + off;
+      if (tf >= 0 && tf < totalFrames) {
+        ampSum += rawAmplitude[tf];
+        freqSum += rawFrequency[tf];
+        count++;
+      }
+    }
+
+    const normAmp = Math.min(1.0, (ampSum / count) / maxRms);
+    const normFreq = Math.min(1.0, (freqSum / count) / maxFreq);
+
+    metrics.push({ amplitude: normAmp, frequency: normFreq });
+  }
+
+  return metrics;
+}
+
 // Ensure renderFlowerBtn is enabled when file is loaded and aspect ratio chosen
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
@@ -275,7 +413,6 @@ const observer = new MutationObserver((mutations) => {
   });
 });
 observer.observe(document.getElementById("aspectRatioSection"), { attributes: true });
-
 
 // Render Export
 async function renderAndExportFlowerVideo() {
@@ -295,21 +432,22 @@ async function renderAndExportFlowerVideo() {
     const width = 1080;
     const height = 1080;
 
-    // We get the duration from window.workingAudioBuffer
     const effectiveDuration = window.workingAudioBuffer.duration;
-
     const totalFrames = Math.ceil(effectiveDuration * fps);
     const frameDurationMicros = 1_000_000 / fps;
 
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = width;
     exportCanvas.height = height;
-    const exportCtx = exportCanvas.getContext("2d", { willReadFrequently: true });
 
-    const offscreenCanvas2 = document.createElement("canvas");
-    offscreenCanvas2.width = width;
-    offscreenCanvas2.height = height;
-    const offscreenCtx2 = offscreenCanvas2.getContext("2d", { willReadFrequently: true });
+    const exportRenderer = createWebGLRenderer(exportCanvas);
+    const baseImage = flowerBaseImages[selectedFlowerIndex];
+    if (exportRenderer && baseImage) {
+      exportRenderer.setTexture(baseImage);
+    }
+
+    // Extract audio metrics per frame
+    const audioMetrics = extractAudioMetrics(window.workingAudioBuffer, totalFrames, fps);
 
     let muxer = new Mp4Muxer.Muxer({
       target: new Mp4Muxer.ArrayBufferTarget(),
@@ -330,8 +468,6 @@ async function renderAndExportFlowerVideo() {
       framerate: fps,
     });
 
-    const baseImage = flowerBaseImages[selectedFlowerIndex];
-
     for (let i = 0; i < totalFrames; i++) {
       while (videoEncoder.encodeQueueSize > 2) {
         await new Promise(resolve => {
@@ -340,8 +476,11 @@ async function renderAndExportFlowerVideo() {
       }
 
       const simulationTimeMs = i * (1000 / fps);
-      processOrganicWarp(simulationTimeMs, width, height, baseImage, offscreenCtx2);
-      processHalftoneFilter(exportCtx, offscreenCtx2, width, height);
+      const { amplitude, frequency } = audioMetrics[i];
+
+      if (exportRenderer) {
+        exportRenderer.render(simulationTimeMs / 1000, amplitude, frequency);
+      }
 
       const frame = new VideoFrame(exportCanvas, {
         timestamp: i * frameDurationMicros,
