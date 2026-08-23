@@ -323,6 +323,26 @@ let isDraggingSelection = false;
 let selectionStartX = null;
 let selectionEndX = null;
 
+// Dimension caching for editorContainer to avoid layout thrashing in event handlers
+let cachedEditorRect = null;
+let cachedEditorWidth = 0;
+
+function updateEditorDimensions() {
+  if (editorContainer) {
+    cachedEditorRect = editorContainer.getBoundingClientRect();
+    cachedEditorWidth = cachedEditorRect.width || editorContainer.clientWidth;
+  }
+}
+
+function getEditorWidth() {
+  if (!cachedEditorWidth) {
+    updateEditorDimensions();
+  }
+  return cachedEditorWidth;
+}
+
+window.addEventListener("resize", updateEditorDimensions);
+
 function updateEditStats() {
   if (!decodedAudioBuffer) return;
   const originalDuration = decodedAudioBuffer.duration;
@@ -344,7 +364,7 @@ function updateEditStats() {
 function updateTrimHandles() {
   if (!decodedAudioBuffer || keepRanges.length === 0) return;
   const duration = decodedAudioBuffer.duration;
-  const w = editorContainer.clientWidth;
+  const w = getEditorWidth();
 
   const firstRange = keepRanges[0];
   const lastRange = keepRanges[keepRanges.length - 1];
@@ -384,18 +404,22 @@ function saveEditState() {
 
 // Mouse / Touch Handlers for Editor
 function getCanvasX(e) {
-  const rect = editorContainer.getBoundingClientRect();
+  if (!cachedEditorRect || cachedEditorRect.width === 0) {
+    updateEditorDimensions();
+  }
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  return Math.max(0, Math.min(clientX - rect.left, rect.width));
+  return Math.max(0, Math.min(clientX - cachedEditorRect.left, cachedEditorRect.width));
 }
 
 // Left Handle Drag
 leftTrimHandle.addEventListener("mousedown", (e) => {
+  updateEditorDimensions();
   isDraggingLeftHandle = true;
   leftTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
 leftTrimHandle.addEventListener("touchstart", (e) => {
+  updateEditorDimensions();
   isDraggingLeftHandle = true;
   leftTrimHandle.classList.add("dragging");
   e.stopPropagation();
@@ -403,11 +427,13 @@ leftTrimHandle.addEventListener("touchstart", (e) => {
 
 // Right Handle Drag
 rightTrimHandle.addEventListener("mousedown", (e) => {
+  updateEditorDimensions();
   isDraggingRightHandle = true;
   rightTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
 rightTrimHandle.addEventListener("touchstart", (e) => {
+  updateEditorDimensions();
   isDraggingRightHandle = true;
   rightTrimHandle.classList.add("dragging");
   e.stopPropagation();
@@ -416,6 +442,7 @@ rightTrimHandle.addEventListener("touchstart", (e) => {
 // Selection Drag
 editorContainer.addEventListener("mousedown", (e) => {
   if (isDraggingLeftHandle || isDraggingRightHandle) return;
+  updateEditorDimensions();
   isDraggingSelection = true;
   selectionStartX = getCanvasX(e);
   selectionEndX = selectionStartX;
@@ -423,6 +450,7 @@ editorContainer.addEventListener("mousedown", (e) => {
 });
 editorContainer.addEventListener("touchstart", (e) => {
   if (isDraggingLeftHandle || isDraggingRightHandle) return;
+  updateEditorDimensions();
   isDraggingSelection = true;
   selectionStartX = getCanvasX(e);
   selectionEndX = selectionStartX;
@@ -453,9 +481,11 @@ function updateSelectionHighlight() {
 
 function handleDragMove(e) {
   if (!decodedAudioBuffer) return;
+  if (!isDraggingLeftHandle && !isDraggingRightHandle && !isDraggingSelection) return;
+
   const x = getCanvasX(e);
   const duration = decodedAudioBuffer.duration;
-  const w = editorContainer.clientWidth;
+  const w = getEditorWidth();
   let timePos = (x / w) * duration;
   timePos = Math.max(0, Math.min(timePos, duration));
 
@@ -545,7 +575,7 @@ cutSelectedBtn.addEventListener("click", () => {
 
   saveEditState();
 
-  const w = editorContainer.clientWidth;
+  const w = getEditorWidth();
   const duration = decodedAudioBuffer.duration;
 
   const minX = Math.min(selectionStartX, selectionEndX);
@@ -612,6 +642,7 @@ showEditBtn.addEventListener("click", () => {
   showEditBtn.classList.add("hidden");
   aspectRatioSection.classList.add("hidden"); // Optional, hide aspect ratio while editing
   renderBtn.disabled = true; // Disable render until "Continue" is clicked
+  updateEditorDimensions();
 });
 
 // Handle reliable file click gesture
@@ -926,7 +957,7 @@ function runPreviewLoop() {
 
     // Position playhead on overview
     const duration = decodedAudioBuffer.duration;
-    const w = editorContainer.clientWidth;
+    const w = getEditorWidth();
     const leftPx = (mappedTime / duration) * w;
     playheadLine.style.left = `${leftPx}px`;
     playheadLine.classList.remove("hidden");
