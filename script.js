@@ -65,6 +65,43 @@ const card9x16 = document.getElementById("card9x16");
 // Canvas contexts and configurations
 const ctxPreview = previewCanvas.getContext("2d");
 
+// Helper to mix down audio channels to a single mono Float32Array
+function mixDownToMono(audioBuffer) {
+  if (!audioBuffer) return new Float32Array(0);
+
+  const numChannels = audioBuffer.numberOfChannels;
+  const totalSamples = audioBuffer.length;
+
+  if (numChannels === 1) {
+    return audioBuffer.getChannelData(0);
+  }
+
+  const monoSamples = new Float32Array(totalSamples);
+  const channels = [];
+  for (let c = 0; c < numChannels; c++) {
+    channels.push(audioBuffer.getChannelData(c));
+  }
+
+  if (numChannels === 2) {
+    const c0 = channels[0];
+    const c1 = channels[1];
+    for (let s = 0; s < totalSamples; s++) {
+      monoSamples[s] = (c0[s] + c1[s]) * 0.5;
+    }
+  } else {
+    const invNumChannels = 1 / numChannels;
+    for (let s = 0; s < totalSamples; s++) {
+      let sum = 0;
+      for (let c = 0; c < numChannels; c++) {
+        sum += channels[c][s];
+      }
+      monoSamples[s] = sum * invNumChannels;
+    }
+  }
+
+  return monoSamples;
+}
+
 // Helper to format duration in mm:ss
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -167,36 +204,8 @@ function drawOverview(audioBuffer) {
   ctxOverview.fillRect(0, 0, w, h);
 
   const duration = audioBuffer.duration;
-  const numChannels = audioBuffer.numberOfChannels;
-  const sampleRate = audioBuffer.sampleRate;
   const totalSamples = audioBuffer.length;
-
-  let monoSamples;
-  if (numChannels === 1) {
-    monoSamples = audioBuffer.getChannelData(0);
-  } else {
-    monoSamples = new Float32Array(totalSamples);
-    const channels = [];
-    for (let c = 0; c < numChannels; c++) {
-      channels.push(audioBuffer.getChannelData(c));
-    }
-    if (numChannels === 2) {
-      const c0 = channels[0];
-      const c1 = channels[1];
-      for (let s = 0; s < totalSamples; s++) {
-        monoSamples[s] = (c0[s] + c1[s]) * 0.5;
-      }
-    } else {
-      const invNumChannels = 1 / numChannels;
-      for (let s = 0; s < totalSamples; s++) {
-        let sum = 0;
-        for (let c = 0; c < numChannels; c++) {
-          sum += channels[c][s];
-        }
-        monoSamples[s] = sum * invNumChannels;
-      }
-    }
-  }
+  const monoSamples = mixDownToMono(audioBuffer);
 
   const numBars = 200;
   const samplesPerBar = totalSamples / numBars;
@@ -757,37 +766,9 @@ function handleSelectedFile(file) {
 // Mix channels to mono and run robust Root Mean Square (RMS) frame extraction
 function analyzeAudio(audioBuffer) {
   const duration = audioBuffer.duration;
-  const numChannels = audioBuffer.numberOfChannels;
   const sampleRate = audioBuffer.sampleRate;
   const totalSamples = audioBuffer.length;
-
-  // Mix down channels to single mono Float32Array
-  let monoSamples;
-  if (numChannels === 1) {
-    monoSamples = audioBuffer.getChannelData(0);
-  } else {
-    monoSamples = new Float32Array(totalSamples);
-    const channels = [];
-    for (let c = 0; c < numChannels; c++) {
-      channels.push(audioBuffer.getChannelData(c));
-    }
-    if (numChannels === 2) {
-      const c0 = channels[0];
-      const c1 = channels[1];
-      for (let s = 0; s < totalSamples; s++) {
-        monoSamples[s] = (c0[s] + c1[s]) * 0.5;
-      }
-    } else {
-      const invNumChannels = 1 / numChannels;
-      for (let s = 0; s < totalSamples; s++) {
-        let sum = 0;
-        for (let c = 0; c < numChannels; c++) {
-          sum += channels[c][s];
-        }
-        monoSamples[s] = sum * invNumChannels;
-      }
-    }
-  }
+  const monoSamples = mixDownToMono(audioBuffer);
 
   // 60 frames per second logic
   const fps = 60;
