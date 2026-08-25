@@ -321,19 +321,10 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   }
 
   const sampleRate = audioBuffer.sampleRate;
-  const numChannels = audioBuffer.numberOfChannels;
   const totalSamples = audioBuffer.length;
   const samplesPerFrame = sampleRate / fps;
 
-  let mono = audioBuffer.getChannelData(0);
-  if (numChannels > 1) {
-    mono = new Float32Array(totalSamples);
-    const c0 = audioBuffer.getChannelData(0);
-    const c1 = audioBuffer.getChannelData(1);
-    for (let s = 0; s < totalSamples; s++) {
-      mono[s] = (c0[s] + c1[s]) * 0.5;
-    }
-  }
+  const mono = mixDownToMono(audioBuffer);
 
   const rawAmplitude = new Float32Array(totalFrames);
   const rawFrequency = new Float32Array(totalFrames);
