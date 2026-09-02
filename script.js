@@ -1,3 +1,12 @@
+// Logging Utilities
+function logError(...args) {
+  console.error(...args);
+}
+
+function logWarn(...args) {
+  console.warn(...args);
+}
+
 // Web Audio context management
 let audioCtx = null;
 let decodedAudioBuffer = null;
@@ -740,14 +749,14 @@ function handleSelectedFile(file) {
       window.workingAudioBuffer = buildWorkingAudioBuffer();
       aspectRatioSection.classList.remove("hidden");
     }, (err) => {
-      console.error("Decode Audio Data Error: ", err);
+      logError("Decode Audio Data Error: ", err);
       fileInfoContainer.classList.add("hidden");
       decodeError.classList.remove("hidden");
     });
   };
 
   reader.onerror = function (err) {
-    console.error("FileReader Error: ", err);
+    logError("FileReader Error: ", err);
     fileInfoContainer.classList.add("hidden");
     decodeError.classList.remove("hidden");
   };
@@ -1044,7 +1053,7 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
 
   let videoEncoder = new VideoEncoder({
     output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: e => console.error("VideoEncoder error:", e)
+    error: e => logError("VideoEncoder error:", e)
   });
 
   const videoConfig = {
@@ -1060,7 +1069,7 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
   if (selectedAudioCodec) {
     audioEncoder = new AudioEncoder({
       output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
-      error: e => console.error("AudioEncoder error:", e)
+      error: e => logError("AudioEncoder error:", e)
     });
 
     audioEncoder.configure({
@@ -1166,7 +1175,7 @@ function checkBlobDuration(blob, expectedDurationSec) {
   videoEl.onloadedmetadata = () => {
     const actualDuration = videoEl.duration;
     if (Math.abs(actualDuration - expectedDurationSec) > 0.5) {
-      console.warn(
+      logWarn(
         `Safeguard warning: Exported video duration (${actualDuration.toFixed(2)}s) differs from source audio duration (${expectedDurationSec.toFixed(2)}s) by more than 0.5s.`
       );
     }
@@ -1175,7 +1184,7 @@ function checkBlobDuration(blob, expectedDurationSec) {
   };
 
   videoEl.onerror = () => {
-    console.warn("Safeguard warning: Could not load metadata to check video duration.");
+    logWarn("Safeguard warning: Could not load metadata to check video duration.");
     URL.revokeObjectURL(videoEl.src);
   };
 
@@ -1273,7 +1282,7 @@ renderBtn.addEventListener("click", async () => {
     statusLine.classList.remove("hidden");
 
   } catch (err) {
-    console.error("Export Error: ", err);
+    logError("Export Error: ", err);
     statusLine.textContent = `Error: ${err.message || err}`;
     statusLine.classList.remove("hidden");
     progressContainer.classList.add("hidden");

@@ -151,7 +151,7 @@ function createWebGLRenderer(canvas) {
   const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true, alpha: false }) ||
              canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, alpha: false });
   if (!gl) {
-    console.error("WebGL not supported");
+    logError("WebGL not supported");
     return null;
   }
 
@@ -160,7 +160,7 @@ function createWebGLRenderer(canvas) {
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error("Shader compile error:", gl.getShaderInfoLog(shader));
+      logError("Shader compile error:", gl.getShaderInfoLog(shader));
       gl.deleteShader(shader);
       return null;
     }
@@ -175,7 +175,7 @@ function createWebGLRenderer(canvas) {
   gl.linkProgram(program);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error("Program link error:", gl.getProgramInfoLog(program));
+    logError("Program link error:", gl.getProgramInfoLog(program));
     return null;
   }
 
@@ -280,7 +280,7 @@ function initFlowerGrid() {
       startPreviewLoop(idx);
     };
     img.onerror = () => {
-      console.error(`Failed to load flower image: ${flower.path}`);
+      logError(`Failed to load flower image: ${flower.path}`);
     };
     img.src = flower.path;
   });
@@ -448,7 +448,7 @@ async function renderAndExportFlowerVideo() {
 
     let videoEncoder = new VideoEncoder({
       output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-      error: e => console.error("Encoder Error:", e)
+      error: e => logError("Encoder Error:", e)
     });
 
     videoEncoder.configure({
@@ -508,7 +508,7 @@ async function renderAndExportFlowerVideo() {
     flowerStatusLine.classList.remove("hidden");
 
   } catch (err) {
-    console.error("Export Error:", err);
+    logError("Export Error:", err);
     flowerStatusLine.textContent = `Error: ${err.message || err}`;
     flowerStatusLine.classList.remove("hidden");
     flowerProgressContainer.classList.add("hidden");
