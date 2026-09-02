@@ -289,14 +289,15 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.fill();
 }
 
-// Generate static idle bars for the preview canvas on start/stop
+// Precomputed static idle bars for the preview canvas on start/stop
+const idleAmplitudes = new Float32Array(48);
+for (let i = 0; i < 48; i++) {
+  // Generate a beautiful, symmetric aesthetic wave shape
+  const distanceToCenter = Math.abs(i - 23.5) / 24;
+  idleAmplitudes[i] = 0.15 + 0.45 * Math.cos(distanceToCenter * Math.PI);
+}
+
 function drawIdleState() {
-  const idleAmplitudes = new Float32Array(48);
-  for (let i = 0; i < 48; i++) {
-    // Generate a beautiful, symmetric aesthetic wave shape
-    const distanceToCenter = Math.abs(i - 23.5) / 24;
-    idleAmplitudes[i] = 0.15 + 0.45 * Math.cos(distanceToCenter * Math.PI);
-  }
   drawBars(ctxPreview, idleAmplitudes, previewCanvas.width, previewCanvas.height);
 }
 
