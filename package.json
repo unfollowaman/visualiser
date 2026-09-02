@@ -4,7 +4,7 @@
   "description": "",
   "main": "flower.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test"
   },
   "repository": {
     "type": "git",
@@ -20,5 +20,8 @@
   "homepage": "https://github.com/unfollowaman/visualiser#readme",
   "dependencies": {
     "playwright": "^1.62.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
