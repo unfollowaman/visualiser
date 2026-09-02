@@ -101,12 +101,18 @@ function mixDownToMono(audioBuffer) {
     }
   } else {
     const invNumChannels = 1 / numChannels;
+    const c0 = channels[0];
     for (let s = 0; s < totalSamples; s++) {
-      let sum = 0;
-      for (let c = 0; c < numChannels; c++) {
-        sum += channels[c][s];
+      monoSamples[s] = c0[s];
+    }
+    for (let c = 1; c < numChannels; c++) {
+      const channel = channels[c];
+      for (let s = 0; s < totalSamples; s++) {
+        monoSamples[s] += channel[s];
       }
-      monoSamples[s] = sum * invNumChannels;
+    }
+    for (let s = 0; s < totalSamples; s++) {
+      monoSamples[s] *= invNumChannels;
     }
   }
 
