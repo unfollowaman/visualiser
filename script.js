@@ -544,16 +544,6 @@ window.addEventListener("mousemove", handleDragMove);
 window.addEventListener("touchmove", handleDragMove, { passive: false });
 
 function stopDragging() {
-  if (isDraggingLeftHandle || isDraggingRightHandle) {
-    // Only push to history when they finish a drag to avoid massive history array
-    // Wait, requirement: "pushed onto it immediately before every trim or cut action is applied"
-    // For trim handles, it's smoother to push on mouseup *if* a change occurred. Let's do it simply on mouseup.
-    // Actually wait, let's push to history on mousedown if we want it *before*.
-    // To match requirement: we push to history when drag starts, in the event listeners.
-    // But since I didn't push in mousedown, I will just push to history *before* we modify it?
-    // Wait, the easiest is to just push on mouseup, but let's just make sure we capture it before the edit.
-  }
-
   if (isDraggingLeftHandle) {
     isDraggingLeftHandle = false;
     leftTrimHandle.classList.remove("dragging");
