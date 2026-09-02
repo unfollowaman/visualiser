@@ -1084,6 +1084,8 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
     const numChannels = audioBuffer.numberOfChannels;
     const totalAudioFrames = audioBuffer.length;
     const chunkSize = 16384; // 16384 samples per AudioData object to prevent backpressure thrashing
+    const maxPcmSamples = numChannels * chunkSize;
+    const pcmDataBuffer = new Float32Array(maxPcmSamples);
 
     statusLine.textContent = "Encoding audio...";
     statusLine.classList.remove("hidden");
@@ -1096,7 +1098,9 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
       }
 
       const numFrames = Math.min(chunkSize, totalAudioFrames - offset);
-      const pcmData = new Float32Array(numChannels * numFrames);
+      const pcmData = (numFrames === chunkSize)
+        ? pcmDataBuffer
+        : pcmDataBuffer.subarray(0, numChannels * numFrames);
 
       for (let c = 0; c < numChannels; c++) {
         const channelData = audioBuffer.getChannelData(c);
