@@ -76,15 +76,24 @@ const card9x16 = document.getElementById("card9x16");
 // Canvas contexts and configurations
 const ctxPreview = previewCanvas.getContext("2d");
 
+// WeakMap cache for mixDownToMono results
+const monoCache = new WeakMap();
+
 // Helper to mix down audio channels to a single mono Float32Array
 function mixDownToMono(audioBuffer) {
   if (!audioBuffer) return new Float32Array(0);
+
+  if (monoCache.has(audioBuffer)) {
+    return monoCache.get(audioBuffer);
+  }
 
   const numChannels = audioBuffer.numberOfChannels;
   const totalSamples = audioBuffer.length;
 
   if (numChannels === 1) {
-    return audioBuffer.getChannelData(0);
+    const mono = audioBuffer.getChannelData(0);
+    monoCache.set(audioBuffer, mono);
+    return mono;
   }
 
   const monoSamples = new Float32Array(totalSamples);
@@ -116,6 +125,7 @@ function mixDownToMono(audioBuffer) {
     }
   }
 
+  monoCache.set(audioBuffer, monoSamples);
   return monoSamples;
 }
 
