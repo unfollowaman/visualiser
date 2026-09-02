@@ -7,6 +7,8 @@ let activePreviewAnalyser = null;
 let isPreviewPlaying = false;
 let previewAnimationId = null;
 let previewStartTime = 0;
+let previewFreqDataArray = null;
+let previewVisualAmplitudes = new Float32Array(48);
 
 // Edit State
 window.workingAudioBuffer = null;
@@ -946,11 +948,12 @@ function runPreviewLoop() {
 
   // Frequency analysis details: get Byte Frequency Data
   const bufferLength = activePreviewAnalyser.frequencyBinCount; // 128
-  const dataArray = new Uint8Array(bufferLength);
-  activePreviewAnalyser.getByteFrequencyData(dataArray);
+  if (!previewFreqDataArray || previewFreqDataArray.length !== bufferLength) {
+    previewFreqDataArray = new Uint8Array(bufferLength);
+  }
+  activePreviewAnalyser.getByteFrequencyData(previewFreqDataArray);
 
   // Group frequency bins (0 to 128) into 48 visualizer bars
-  const visualAmplitudes = new Float32Array(48);
   const binsPerBar = bufferLength / 48; // ~2.66 bins per bar
 
   for (let i = 0; i < 48; i++) {
@@ -960,16 +963,16 @@ function runPreviewLoop() {
     let sum = 0;
     let count = 0;
     for (let b = binStart; b < binEnd && b < bufferLength; b++) {
-      sum += dataArray[b];
+      sum += previewFreqDataArray[b];
       count++;
     }
 
     const averageVal = count > 0 ? sum / count : 0;
     // Scale 0-255 byte value to 0-1 amplitude representation
-    visualAmplitudes[i] = averageVal / 255;
+    previewVisualAmplitudes[i] = averageVal / 255;
   }
 
-  drawBars(ctxPreview, visualAmplitudes, previewCanvas.width, previewCanvas.height);
+  drawBars(ctxPreview, previewVisualAmplitudes, previewCanvas.width, previewCanvas.height);
 
   previewAnimationId = requestAnimationFrame(runPreviewLoop);
 }
