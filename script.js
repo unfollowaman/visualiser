@@ -791,18 +791,18 @@ function analyzeAudio(audioBuffer) {
   const totalFrames = Math.ceil(duration * fps);
   const samplesPerFrame = sampleRate / fps;
 
-  // Step 1: Compute raw RMS values for 48 bars per frame
-  const rawFrames = [];
+  // Step 1: Compute raw RMS values for 48 bars per frame into a single contiguous Float32Array
+  const rawBuffer = new Float32Array(totalFrames * 48);
   let globalMax = 0;
 
   for (let f = 0; f < totalFrames; f++) {
-    const frameAmps = new Float32Array(48);
     const frameStartSample = Math.floor(f * samplesPerFrame);
     const nextFrameStartSample = Math.floor((f + 1) * samplesPerFrame);
     const frameSamplesCount = nextFrameStartSample - frameStartSample;
 
     // Split the slice into 48 equal segments
     const segmentLength = frameSamplesCount / 48;
+    const baseIdx = f * 48;
 
     for (let barIdx = 0; barIdx < 48; barIdx++) {
       const segStart = Math.floor(frameStartSample + barIdx * segmentLength);
@@ -818,21 +818,18 @@ function analyzeAudio(audioBuffer) {
 
       // Root Mean Square
       const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
-      frameAmps[barIdx] = rms;
+      rawBuffer[baseIdx + barIdx] = rms;
 
       if (rms > globalMax) {
         globalMax = rms;
       }
     }
-    rawFrames.push(frameAmps);
   }
 
-  if (globalMax === 0) {
-    globalMax = 1;
-  }
+  const invGlobalMax = globalMax === 0 ? 1 : 1 / globalMax;
 
-  // Step 2: Temporal smoothing window: [f-2, f-1, f, f+1, f+2] per bar, normalized by globalMax
-  const smoothedFrames = [];
+  // Step 2: Temporal smoothing window: [f-2, f-1, f, f+1, f+2] per bar, normalized by invGlobalMax
+  const smoothedFrames = new Array(totalFrames);
   for (let f = 0; f < totalFrames; f++) {
     const smoothAmps = new Float32Array(48);
     for (let barIdx = 0; barIdx < 48; barIdx++) {
@@ -842,15 +839,15 @@ function analyzeAudio(audioBuffer) {
       for (let offset = -2; offset <= 2; offset++) {
         const targetFrame = f + offset;
         if (targetFrame >= 0 && targetFrame < totalFrames) {
-          sum += rawFrames[targetFrame][barIdx];
+          sum += rawBuffer[targetFrame * 48 + barIdx];
           count++;
         }
       }
 
       const averagedRms = sum / count;
-      smoothAmps[barIdx] = averagedRms / globalMax;
+      smoothAmps[barIdx] = averagedRms * invGlobalMax;
     }
-    smoothedFrames.push(smoothAmps);
+    smoothedFrames[f] = smoothAmps;
   }
 
   return smoothedFrames;
