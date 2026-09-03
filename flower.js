@@ -364,8 +364,10 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
     if (freqMetric > maxFreq) maxFreq = freqMetric;
   }
 
-  const metrics = [];
+  const metrics = new Array(totalFrames);
   const smoothWindow = 2;
+  const invMaxRms = 1.0 / maxRms;
+  const invMaxFreq = 1.0 / maxFreq;
 
   for (let f = 0; f < totalFrames; f++) {
     let ampSum = 0;
@@ -381,10 +383,10 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
       }
     }
 
-    const normAmp = Math.min(1.0, (ampSum / count) / maxRms);
-    const normFreq = Math.min(1.0, (freqSum / count) / maxFreq);
+    const normAmp = Math.min(1.0, (ampSum / count) * invMaxRms);
+    const normFreq = Math.min(1.0, (freqSum / count) * invMaxFreq);
 
-    metrics.push({ amplitude: normAmp, frequency: normFreq });
+    metrics[f] = { amplitude: normAmp, frequency: normFreq };
   }
 
   return metrics;
