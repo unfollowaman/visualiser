@@ -332,14 +332,15 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   let maxRms = 0.0001;
   let maxFreq = 0.0001;
 
+  let startSample = 0;
   for (let f = 0; f < totalFrames; f++) {
-    const startSample = Math.floor(f * samplesPerFrame);
     const endSample = Math.min(totalSamples, Math.floor((f + 1) * samplesPerFrame));
     const count = endSample - startSample;
 
     if (count <= 0) {
       rawAmplitude[f] = 0;
       rawFrequency[f] = 0;
+      startSample = endSample;
       continue;
     }
 
@@ -362,6 +363,8 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
 
     if (rms > maxRms) maxRms = rms;
     if (freqMetric > maxFreq) maxFreq = freqMetric;
+
+    startSample = endSample;
   }
 
   const metrics = new Array(totalFrames);
