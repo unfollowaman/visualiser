@@ -830,8 +830,10 @@ function analyzeAudio(audioBuffer) {
 
   // Step 2: Temporal smoothing window: [f-2, f-1, f, f+1, f+2] per bar, normalized by invGlobalMax
   const smoothedFrames = new Array(totalFrames);
+  const flatSmoothed = new Float32Array(totalFrames * 48);
+
   for (let f = 0; f < totalFrames; f++) {
-    const smoothAmps = new Float32Array(48);
+    const baseIdx = f * 48;
     for (let barIdx = 0; barIdx < 48; barIdx++) {
       let sum = 0;
       let count = 0;
@@ -845,9 +847,9 @@ function analyzeAudio(audioBuffer) {
       }
 
       const averagedRms = sum / count;
-      smoothAmps[barIdx] = averagedRms * invGlobalMax;
+      flatSmoothed[baseIdx + barIdx] = averagedRms * invGlobalMax;
     }
-    smoothedFrames[f] = smoothAmps;
+    smoothedFrames[f] = flatSmoothed.subarray(baseIdx, baseIdx + 48);
   }
 
   return smoothedFrames;
