@@ -423,7 +423,6 @@ function renderEditState() {
 
   undoBtn.disabled = editHistory.length === 0;
 
-  // Disable reset if keepRanges is exactly one range covering full length
   const isFull = keepRanges.length === 1 &&
                  keepRanges[0].start === 0 &&
                  keepRanges[0].end === decodedAudioBuffer.duration;
@@ -585,8 +584,7 @@ function stopDragging() {
   }
 }
 
-// We need to fix the history requirement for dragging handles.
-// Add history save to mousedown:
+// Save edit history on drag start for trim handles
 leftTrimHandle.addEventListener("mousedown", () => saveEditState());
 leftTrimHandle.addEventListener("touchstart", () => saveEditState());
 rightTrimHandle.addEventListener("mousedown", () => saveEditState());
