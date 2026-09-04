@@ -804,8 +804,8 @@ function analyzeAudio(audioBuffer) {
     const segmentLength = frameSamplesCount / 48;
     const baseIdx = f * 48;
 
+    let segStart = frameStartSample;
     for (let barIdx = 0; barIdx < 48; barIdx++) {
-      const segStart = Math.floor(frameStartSample + barIdx * segmentLength);
       const segEnd = Math.floor(frameStartSample + (barIdx + 1) * segmentLength);
 
       let sumSquares = 0;
@@ -823,6 +823,8 @@ function analyzeAudio(audioBuffer) {
       if (rms > globalMax) {
         globalMax = rms;
       }
+
+      segStart = segEnd;
     }
   }
 
@@ -834,19 +836,17 @@ function analyzeAudio(audioBuffer) {
 
   for (let f = 0; f < totalFrames; f++) {
     const baseIdx = f * 48;
+    const minF = Math.max(0, f - 2);
+    const maxF = Math.min(totalFrames - 1, f + 2);
+    const invCount = 1 / (maxF - minF + 1);
+
     for (let barIdx = 0; barIdx < 48; barIdx++) {
       let sum = 0;
-      let count = 0;
-
-      for (let offset = -2; offset <= 2; offset++) {
-        const targetFrame = f + offset;
-        if (targetFrame >= 0 && targetFrame < totalFrames) {
-          sum += rawBuffer[targetFrame * 48 + barIdx];
-          count++;
-        }
+      for (let tf = minF; tf <= maxF; tf++) {
+        sum += rawBuffer[tf * 48 + barIdx];
       }
 
-      const averagedRms = sum / count;
+      const averagedRms = sum * invCount;
       flatSmoothed[baseIdx + barIdx] = averagedRms * invGlobalMax;
     }
     smoothedFrames[f] = flatSmoothed.subarray(baseIdx, baseIdx + 48);
