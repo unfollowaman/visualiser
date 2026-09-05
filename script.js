@@ -717,6 +717,7 @@ function handleSelectedFile(file) {
 
   fileInfoContainer.classList.add("hidden");
   durationWarning.classList.add("hidden");
+  decodeError.textContent = "Could not decode this audio file. Try MP3 or WAV.";
   decodeError.classList.add("hidden");
   playPreviewBtn.disabled = true;
   renderBtn.disabled = true;
@@ -724,6 +725,25 @@ function handleSelectedFile(file) {
   downloadContainer.classList.add("hidden");
   statusLine.classList.add("hidden");
   aspectRatioSection.classList.add("hidden");
+
+  // File Validation: Type and Size checks
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  const ALLOWED_EXTENSIONS = [".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".weba", ".opus", ".mp4"];
+  const fileNameLower = file && file.name ? file.name.toLowerCase() : "";
+  const hasAudioExtension = ALLOWED_EXTENSIONS.some((ext) => fileNameLower.endsWith(ext));
+  const isAudioType = (file && file.type && file.type.startsWith("audio/")) || hasAudioExtension;
+
+  if (!isAudioType) {
+    decodeError.textContent = "Please select a valid audio file (MP3, WAV, etc.).";
+    decodeError.classList.remove("hidden");
+    return;
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    decodeError.textContent = "File size exceeds the 50MB limit.";
+    decodeError.classList.remove("hidden");
+    return;
+  }
 
   // Show selected info placeholder
   fileName.textContent = file.name;
