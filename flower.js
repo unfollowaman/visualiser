@@ -315,11 +315,7 @@ function startAllPreviews() {
   }
 }
 
-function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
-  if (!audioBuffer) {
-    return new Array(totalFrames).fill({ amplitude: 0, frequency: 0 });
-  }
-
+function computeRawAudioMetrics(audioBuffer, totalFrames, fps) {
   const sampleRate = audioBuffer.sampleRate;
   const totalSamples = audioBuffer.length;
   const samplesPerFrame = sampleRate / fps;
@@ -367,6 +363,10 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
     startSample = endSample;
   }
 
+  return { rawAmplitude, rawFrequency, maxRms, maxFreq };
+}
+
+function smoothAndNormalizeAudioMetrics(rawAmplitude, rawFrequency, maxRms, maxFreq, totalFrames) {
   const metrics = new Array(totalFrames);
   const smoothWindow = 2;
   const invMaxRms = 1.0 / maxRms;
@@ -393,6 +393,15 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   }
 
   return metrics;
+}
+
+function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
+  if (!audioBuffer) {
+    return new Array(totalFrames).fill({ amplitude: 0, frequency: 0 });
+  }
+
+  const { rawAmplitude, rawFrequency, maxRms, maxFreq } = computeRawAudioMetrics(audioBuffer, totalFrames, fps);
+  return smoothAndNormalizeAudioMetrics(rawAmplitude, rawFrequency, maxRms, maxFreq, totalFrames);
 }
 
 // Ensure renderFlowerBtn is enabled when file is loaded and aspect ratio chosen
