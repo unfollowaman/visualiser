@@ -357,6 +357,7 @@ card9x16.addEventListener("click", () => {
 let isDraggingLeftHandle = false;
 let isDraggingRightHandle = false;
 let isDraggingSelection = false;
+let dragStartState = null;
 let selectionStartX = null;
 let selectionEndX = null;
 
@@ -451,12 +452,14 @@ function getCanvasX(e) {
 leftTrimHandle.addEventListener("mousedown", (e) => {
   updateEditorDimensions();
   isDraggingLeftHandle = true;
+  dragStartState = JSON.parse(JSON.stringify(keepRanges));
   leftTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
 leftTrimHandle.addEventListener("touchstart", (e) => {
   updateEditorDimensions();
   isDraggingLeftHandle = true;
+  dragStartState = JSON.parse(JSON.stringify(keepRanges));
   leftTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
@@ -465,12 +468,14 @@ leftTrimHandle.addEventListener("touchstart", (e) => {
 rightTrimHandle.addEventListener("mousedown", (e) => {
   updateEditorDimensions();
   isDraggingRightHandle = true;
+  dragStartState = JSON.parse(JSON.stringify(keepRanges));
   rightTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
 rightTrimHandle.addEventListener("touchstart", (e) => {
   updateEditorDimensions();
   isDraggingRightHandle = true;
+  dragStartState = JSON.parse(JSON.stringify(keepRanges));
   rightTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
@@ -569,26 +574,27 @@ window.addEventListener("mousemove", handleDragMove);
 window.addEventListener("touchmove", handleDragMove, { passive: false });
 
 function stopDragging() {
+  if (isDraggingLeftHandle || isDraggingRightHandle) {
+    if (dragStartState && JSON.stringify(keepRanges) !== JSON.stringify(dragStartState)) {
+      editHistory.push(dragStartState);
+    }
+    dragStartState = null;
+  }
+
   if (isDraggingLeftHandle) {
     isDraggingLeftHandle = false;
     leftTrimHandle.classList.remove("dragging");
-    renderEditState();
   }
   if (isDraggingRightHandle) {
     isDraggingRightHandle = false;
     rightTrimHandle.classList.remove("dragging");
-    renderEditState();
   }
   if (isDraggingSelection) {
     isDraggingSelection = false;
   }
-}
 
-// Save edit history on drag start for trim handles
-leftTrimHandle.addEventListener("mousedown", () => saveEditState());
-leftTrimHandle.addEventListener("touchstart", () => saveEditState());
-rightTrimHandle.addEventListener("mousedown", () => saveEditState());
-rightTrimHandle.addEventListener("touchstart", () => saveEditState());
+  renderEditState();
+}
 
 window.addEventListener("mouseup", stopDragging);
 window.addEventListener("touchend", stopDragging);
