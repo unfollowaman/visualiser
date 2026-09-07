@@ -1218,9 +1218,10 @@ function checkBlobDuration(blob, expectedDurationSec) {
 
   videoEl.onloadedmetadata = () => {
     const actualDuration = videoEl.duration;
-    if (Math.abs(actualDuration - expectedDurationSec) > 0.5) {
+    if (isNaN(actualDuration) || Math.abs(actualDuration - expectedDurationSec) > 0.5) {
+      const actualStr = isNaN(actualDuration) ? "NaN" : actualDuration.toFixed(2);
       logWarn(
-        `Safeguard warning: Exported video duration (${actualDuration.toFixed(2)}s) differs from source audio duration (${expectedDurationSec.toFixed(2)}s) by more than 0.5s.`
+        `Safeguard warning: Exported video duration (${actualStr}s) differs from source audio duration (${expectedDurationSec.toFixed(2)}s) by more than 0.5s.`
       );
     }
     // Cleanup URL
