@@ -12,6 +12,8 @@ let previewAnimationIds = [];
 let flowerBaseImages = [];
 let flowerCanvases = [];
 let flowerRenderers = [];
+let cardVisibility = [];
+let flowerCardObserver = null;
 
 // DOM Elements
 const flowerSection = document.getElementById("flowerSection");
@@ -247,9 +249,32 @@ function createWebGLRenderer(canvas) {
 }
 
 function initFlowerGrid() {
+  cardVisibility = new Array(FLOWERS.length).fill(false);
+
+  if ("IntersectionObserver" in window) {
+    flowerCardObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const idx = Number(entry.target.dataset.index);
+        if (isNaN(idx)) return;
+
+        if (entry.isIntersecting) {
+          cardVisibility[idx] = true;
+          startPreviewLoop(idx);
+        } else {
+          cardVisibility[idx] = false;
+          stopPreviewLoop(idx);
+        }
+      });
+    }, {
+      root: null,
+      threshold: 0
+    });
+  }
+
   FLOWERS.forEach((flower, idx) => {
     const card = document.createElement("div");
     card.classList.add("flower-preview-card");
+    card.dataset.index = idx;
     if (idx === 0) card.classList.add("selected");
 
     const canvas = document.createElement("canvas");
@@ -265,6 +290,12 @@ function initFlowerGrid() {
     const renderer = createWebGLRenderer(canvas);
     flowerRenderers.push(renderer);
 
+    if (flowerCardObserver) {
+      flowerCardObserver.observe(card);
+    } else {
+      cardVisibility[idx] = true;
+    }
+
     card.addEventListener("click", () => {
       document.querySelectorAll(".flower-preview-card").forEach(c => c.classList.remove("selected"));
       card.classList.add("selected");
@@ -277,7 +308,9 @@ function initFlowerGrid() {
       if (renderer) {
         renderer.setTexture(img);
       }
-      startPreviewLoop(idx);
+      if (cardVisibility[idx]) {
+        startPreviewLoop(idx);
+      }
     };
     img.onerror = () => {
       logError(`Failed to load flower image: ${flower.path}`);
@@ -286,14 +319,26 @@ function initFlowerGrid() {
   });
 }
 
+function stopPreviewLoop(idx) {
+  if (previewAnimationIds[idx]) {
+    cancelAnimationFrame(previewAnimationIds[idx]);
+    previewAnimationIds[idx] = null;
+  }
+}
+
 function startPreviewLoop(idx) {
-  if (previewAnimationIds[idx]) cancelAnimationFrame(previewAnimationIds[idx]);
+  stopPreviewLoop(idx);
+
+  if (!cardVisibility[idx]) return;
 
   const renderer = flowerRenderers[idx];
   const baseImage = flowerBaseImages[idx];
 
   function loop(timestamp) {
-    if (!baseImage || !renderer) return;
+    if (!cardVisibility[idx] || !baseImage || !renderer) {
+      stopPreviewLoop(idx);
+      return;
+    }
 
     renderer.render(timestamp / 1000, 0, 0);
 
@@ -304,14 +349,16 @@ function startPreviewLoop(idx) {
 }
 
 function stopAllPreviews() {
-  previewAnimationIds.forEach(id => {
-    if (id) cancelAnimationFrame(id);
-  });
+  for (let i = 0; i < FLOWERS.length; i++) {
+    stopPreviewLoop(i);
+  }
 }
 
 function startAllPreviews() {
   for (let i = 0; i < FLOWERS.length; i++) {
-    startPreviewLoop(i);
+    if (cardVisibility[i]) {
+      startPreviewLoop(i);
+    }
   }
 }
 
