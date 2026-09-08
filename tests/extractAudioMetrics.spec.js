@@ -6,9 +6,9 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
   });
 
   test('returns array filled with zero metrics when audioBuffer is null or undefined', async ({ page }) => {
-    const result = await page.evaluate(() => {
-      const nullRes = extractAudioMetrics(null, 60, 60);
-      const undefRes = extractAudioMetrics(undefined, 30, 60);
+    const result = await page.evaluate(async () => {
+      const nullRes = await extractAudioMetrics(null, 60, 60);
+      const undefRes = await extractAudioMetrics(undefined, 30, 60);
       return {
         nullLength: nullRes.length,
         nullFirst: nullRes[0],
@@ -26,7 +26,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
   });
 
   test('extracts normalized amplitude and frequency metrics for standard audio signal', async ({ page }) => {
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -42,7 +42,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
         ch0[i] = Math.sin((i / sampleRate) * 2 * Math.PI * 440);
       }
 
-      const metrics = extractAudioMetrics(buffer, totalFrames, fps);
+      const metrics = await extractAudioMetrics(buffer, totalFrames, fps);
 
       let allValid = true;
       let minAmp = 1, maxAmp = 0;
@@ -81,7 +81,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
   });
 
   test('handles silent audio (all zeros) gracefully without NaN or infinity', async ({ page }) => {
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -89,7 +89,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
       const buffer = audioCtx.createBuffer(2, sampleRate, sampleRate);
       // Leaves channels filled with zeros
 
-      const metrics = extractAudioMetrics(buffer, 60, 60);
+      const metrics = await extractAudioMetrics(buffer, 60, 60);
 
       const hasNaN = metrics.some(m => Number.isNaN(m.amplitude) || Number.isNaN(m.frequency));
       const allZero = metrics.every(m => m.amplitude === 0 && m.frequency === 0);
@@ -107,7 +107,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
   });
 
   test('handles totalFrames exceeding sample count where count <= 0 for trailing frames', async ({ page }) => {
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -118,7 +118,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
 
       // Request 120 frames at 60fps (expects 2 seconds of audio, but buffer is much shorter)
       const totalFrames = 120;
-      const metrics = extractAudioMetrics(buffer, totalFrames, 60);
+      const metrics = await extractAudioMetrics(buffer, totalFrames, 60);
 
       const hasNaN = metrics.some(m => Number.isNaN(m.amplitude) || Number.isNaN(m.frequency));
 
@@ -139,7 +139,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
   });
 
   test('respects custom fps parameter', async ({ page }) => {
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -154,7 +154,7 @@ test.describe('extractAudioMetrics unit and edge case tests', () => {
         ch0[i] = Math.sin((i / sampleRate) * 2 * Math.PI * 220);
       }
 
-      const metrics = extractAudioMetrics(buffer, totalFrames, fps);
+      const metrics = await extractAudioMetrics(buffer, totalFrames, fps);
 
       return {
         length: metrics.length,

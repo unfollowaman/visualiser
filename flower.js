@@ -362,7 +362,16 @@ function startAllPreviews() {
   }
 }
 
-function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
+function yieldToMain() {
+  if (typeof requestIdleCallback === "function") {
+    return new Promise((resolve) => {
+      requestIdleCallback(() => resolve(), { timeout: 50 });
+    });
+  }
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   if (!audioBuffer) {
     return new Array(totalFrames).fill({ amplitude: 0, frequency: 0 });
   }
@@ -380,7 +389,14 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   let maxFreq = 0.0001;
 
   let startSample = 0;
+  let lastYield = performance.now();
+
   for (let f = 0; f < totalFrames; f++) {
+    if ((f & 31) === 0 && performance.now() - lastYield > 25) {
+      await yieldToMain();
+      lastYield = performance.now();
+    }
+
     const endSample = Math.min(totalSamples, Math.floor((f + 1) * samplesPerFrame));
     const count = endSample - startSample;
 
@@ -420,6 +436,11 @@ function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   const invMaxFreq = 1.0 / maxFreq;
 
   for (let f = 0; f < totalFrames; f++) {
+    if ((f & 63) === 0 && performance.now() - lastYield > 25) {
+      await yieldToMain();
+      lastYield = performance.now();
+    }
+
     let ampSum = 0;
     let freqSum = 0;
     let count = 0;
@@ -490,7 +511,7 @@ async function renderAndExportFlowerVideo() {
     }
 
     // Extract audio metrics per frame
-    const audioMetrics = extractAudioMetrics(window.workingAudioBuffer, totalFrames, fps);
+    const audioMetrics = await extractAudioMetrics(window.workingAudioBuffer, totalFrames, fps);
 
     let muxer = new Mp4Muxer.Muxer({
       target: new Mp4Muxer.ArrayBufferTarget(),
