@@ -107,6 +107,12 @@ test.describe('flower.js unit and integration tests', () => {
   });
 
   test('stopAllPreviews and startAllPreviews control preview animation loops', async ({ page }) => {
+    // Scroll flower grid into view so IntersectionObserver marks cards visible
+    await page.locator('#flowerGrid').scrollIntoViewIfNeeded();
+
+    // Wait briefly for IntersectionObserver entries to be processed
+    await page.waitForTimeout(100);
+
     const previewInfo = await page.evaluate(() => {
       // Stop all previews
       stopAllPreviews();
