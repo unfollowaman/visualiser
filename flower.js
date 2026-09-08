@@ -14,6 +14,7 @@ let flowerCanvases = [];
 let flowerRenderers = [];
 let cardVisibility = [];
 let flowerCardObserver = null;
+let flowerMp4MuxerPromise = null;
 
 // DOM Elements
 const flowerSection = document.getElementById("flowerSection");
@@ -512,6 +513,12 @@ async function renderAndExportFlowerVideo() {
 
     // Extract audio metrics per frame
     const audioMetrics = await extractAudioMetrics(window.workingAudioBuffer, totalFrames, fps);
+
+    if (!flowerMp4MuxerPromise) {
+      flowerMp4MuxerPromise = import('./mp4-muxer.js');
+    }
+    const mp4MuxerModule = await flowerMp4MuxerPromise;
+    const Mp4Muxer = mp4MuxerModule.Mp4Muxer || mp4MuxerModule.default || window.Mp4Muxer;
 
     let muxer = new Mp4Muxer.Muxer({
       target: new Mp4Muxer.ArrayBufferTarget(),

@@ -28,6 +28,8 @@ let editHistory = [];
 let chosenWidth = null;
 let chosenHeight = null;
 
+let mp4MuxerPromise = null;
+
 // UI Elements
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
@@ -1018,6 +1020,12 @@ function runPreviewLoop() {
 
 // Render loop that executes fast canvas capture using WebCodecs
 async function renderFormat(envelope, width, height, progressCallback, audioBuffer = window.workingAudioBuffer) {
+  if (!mp4MuxerPromise) {
+    mp4MuxerPromise = import('./mp4-muxer.js');
+  }
+  const mp4MuxerModule = await mp4MuxerPromise;
+  const Mp4Muxer = mp4MuxerModule.Mp4Muxer || mp4MuxerModule.default || window.Mp4Muxer;
+
   const offscreenCanvas = document.createElement("canvas");
   offscreenCanvas.width = width;
   offscreenCanvas.height = height;
