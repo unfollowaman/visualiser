@@ -220,7 +220,7 @@ function drawBars(ctx, amplitudes, w, h) {
 
     // Draw as rounded rectangle
     const radius = Math.min(barWidth / 2, 6);
-    drawRoundedRect(ctx, x, y, barWidth, barHeight, radius);
+    drawRoundedRect(ctx, { x, y, width: barWidth, height: barHeight, radius });
   }
 }
 
@@ -287,12 +287,13 @@ function drawOverview(audioBuffer) {
     ctxOverview.fillStyle = isKept ? "#ffffff" : "#7a7a76";
 
     const radius = Math.min(barWidth / 2, 2);
-    drawRoundedRect(ctxOverview, x, y, barWidth, barHeight, radius);
+    drawRoundedRect(ctxOverview, { x, y, width: barWidth, height: barHeight, radius });
   }
 }
 
 // Helper to draw a rounded rectangle
-function drawRoundedRect(ctx, x, y, width, height, radius) {
+function drawRoundedRect(ctx, rect) {
+  const { x, y, width, height, radius } = rect;
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
   ctx.lineTo(x + width - radius, y);
