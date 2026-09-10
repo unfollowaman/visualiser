@@ -1018,6 +1018,19 @@ function runPreviewLoop() {
   previewAnimationId = requestAnimationFrame(runPreviewLoop);
 }
 
+// Helper to check if AAC audio encoding is supported by the browser WebCodecs API
+async function isAACSupported(aacConfig) {
+  try {
+    if (typeof AudioEncoder !== "undefined" && AudioEncoder.isConfigSupported) {
+      const support = await AudioEncoder.isConfigSupported(aacConfig);
+      return !!support.supported;
+    }
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
+
 // Render loop that executes fast canvas capture using WebCodecs
 async function renderFormat(envelope, width, height, progressCallback, audioBuffer = window.workingAudioBuffer) {
   if (!mp4MuxerPromise) {
@@ -1057,15 +1070,7 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
       bitrate: 128_000
     };
 
-    let aacSupported = false;
-    try {
-      if (typeof AudioEncoder !== "undefined" && AudioEncoder.isConfigSupported) {
-        const support = await AudioEncoder.isConfigSupported(aacConfig);
-        aacSupported = !!support.supported;
-      }
-    } catch (e) {
-      aacSupported = false;
-    }
+    const aacSupported = await isAACSupported(aacConfig);
 
     if (aacSupported) {
       selectedAudioCodec = 'aac';
