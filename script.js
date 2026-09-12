@@ -869,10 +869,13 @@ function analyzeAudio(audioBuffer) {
     const maxF = Math.min(totalFrames - 1, f + 2);
     const invCount = 1 / (maxF - minF + 1);
 
+    const startOffset = minF * 48;
+    const endOffset = maxF * 48;
+
     for (let barIdx = 0; barIdx < 48; barIdx++) {
       let sum = 0;
-      for (let tf = minF; tf <= maxF; tf++) {
-        sum += rawBuffer[tf * 48 + barIdx];
+      for (let tfOffset = startOffset; tfOffset <= endOffset; tfOffset += 48) {
+        sum += rawBuffer[tfOffset + barIdx];
       }
 
       const averagedRms = sum * invCount;
