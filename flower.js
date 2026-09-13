@@ -12,6 +12,7 @@ let previewAnimationIds = [];
 let flowerBaseImages = [];
 let flowerCanvases = [];
 let flowerRenderers = [];
+let flowerCards = [];
 let cardVisibility = [];
 let flowerCardObserver = null;
 let flowerMp4MuxerPromise = null;
@@ -286,6 +287,7 @@ function initFlowerGrid() {
     card.appendChild(canvas);
     flowerGrid.appendChild(card);
 
+    flowerCards.push(card);
     flowerCanvases.push(canvas);
 
     const renderer = createWebGLRenderer(canvas);
@@ -298,7 +300,9 @@ function initFlowerGrid() {
     }
 
     card.addEventListener("click", () => {
-      document.querySelectorAll(".flower-preview-card").forEach(c => c.classList.remove("selected"));
+      if (selectedFlowerIndex !== idx && flowerCards[selectedFlowerIndex]) {
+        flowerCards[selectedFlowerIndex].classList.remove("selected");
+      }
       card.classList.add("selected");
       selectedFlowerIndex = idx;
     });
