@@ -148,6 +148,18 @@ function formatDurationDetailed(seconds) {
   return `${m}:${s}.${ms}`;
 }
 
+// Helper to apply fade-in and fade-out to a sample
+function applyFade(sample, index, rangeSamples, fadeSamples) {
+  if (index < fadeSamples) {
+    return sample * (index / fadeSamples);
+  }
+  if (index > rangeSamples - fadeSamples - 1) {
+    const fadeIndex = rangeSamples - 1 - index;
+    return sample * (fadeIndex / fadeSamples);
+  }
+  return sample;
+}
+
 // Build the working audio buffer from decodedAudioBuffer based on keepRanges
 function buildWorkingAudioBuffer() {
   if (!decodedAudioBuffer) return null;
@@ -179,19 +191,8 @@ function buildWorkingAudioBuffer() {
       const rangeSamples = endSample - startSample;
 
       for (let i = 0; i < rangeSamples; i++) {
-        let sample = channelData[startSample + i];
-
-        // Apply fade-in
-        if (i < fadeSamples) {
-          sample *= (i / fadeSamples);
-        }
-        // Apply fade-out
-        else if (i > rangeSamples - fadeSamples - 1) {
-          const fadeIndex = rangeSamples - 1 - i;
-          sample *= (fadeIndex / fadeSamples);
-        }
-
-        newChannelData[destOffset++] = sample;
+        const sample = channelData[startSample + i];
+        newChannelData[destOffset++] = applyFade(sample, i, rangeSamples, fadeSamples);
       }
     }
   }
