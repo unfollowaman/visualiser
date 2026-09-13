@@ -1073,6 +1073,19 @@ async function isAACSupported(aacConfig) {
   return false;
 }
 
+// Helper to check if Opus audio encoding is supported by the browser WebCodecs API
+async function isOpusSupported(opusConfig) {
+  try {
+    if (typeof AudioEncoder !== "undefined" && AudioEncoder.isConfigSupported) {
+      const support = await AudioEncoder.isConfigSupported(opusConfig);
+      return !!support.supported;
+    }
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
+
 // Render loop that executes fast canvas capture using WebCodecs
 async function renderFormat(envelope, width, height, progressCallback, audioBuffer = window.workingAudioBuffer) {
   if (!mp4MuxerPromise) {
@@ -1124,15 +1137,11 @@ async function renderFormat(envelope, width, height, progressCallback, audioBuff
         numberOfChannels: audioBuffer.numberOfChannels,
         bitrate: 128_000
       };
-      try {
-        if (typeof AudioEncoder !== "undefined" && AudioEncoder.isConfigSupported) {
-          const support = await AudioEncoder.isConfigSupported(opusConfig);
-          if (support.supported) {
-            selectedAudioCodec = 'opus';
-            encoderAudioCodecString = 'opus';
-          }
-        }
-      } catch (e) {}
+      const opusSupported = await isOpusSupported(opusConfig);
+      if (opusSupported) {
+        selectedAudioCodec = 'opus';
+        encoderAudioCodecString = 'opus';
+      }
     }
   }
 
