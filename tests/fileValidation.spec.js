@@ -55,4 +55,43 @@ test.describe('handleSelectedFile security and validation tests', () => {
     expect(fileInfo.decodeErrorHidden).toBe(true);
     expect(fileInfo.fileNameText).toBe('sample.mp3');
   });
+
+  test('handles FileReader onerror handler correctly', async ({ page }) => {
+    const errorResult = await page.evaluate(() => {
+      let loggedArgs = null;
+      const originalLogError = window.logError;
+      window.logError = (...args) => {
+        loggedArgs = args;
+        if (typeof originalLogError === 'function') {
+          originalLogError(...args);
+        }
+      };
+
+      const originalReadAsArrayBuffer = FileReader.prototype.readAsArrayBuffer;
+      FileReader.prototype.readAsArrayBuffer = function () {
+        if (typeof this.onerror === 'function') {
+          this.onerror(new Error('Mock FileReader failure'));
+        }
+      };
+
+      try {
+        const validFile = new File(['fake audio content'], 'sample.mp3', { type: 'audio/mp3' });
+        handleSelectedFile(validFile);
+
+        const decodeError = document.getElementById('decodeError');
+        return {
+          decodeErrorHidden: decodeError.classList.contains('hidden'),
+          loggedArgs: loggedArgs ? loggedArgs.map(String) : null
+        };
+      } finally {
+        FileReader.prototype.readAsArrayBuffer = originalReadAsArrayBuffer;
+        window.logError = originalLogError;
+      }
+    });
+
+    expect(errorResult.decodeErrorHidden).toBe(false);
+    expect(errorResult.loggedArgs).not.toBeNull();
+    expect(errorResult.loggedArgs[0]).toBe('FileReader Error: ');
+    expect(errorResult.loggedArgs[1]).toContain('Mock FileReader failure');
+  });
 });
