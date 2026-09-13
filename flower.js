@@ -276,6 +276,10 @@ function initFlowerGrid() {
     const card = document.createElement("div");
     card.classList.add("flower-preview-card");
     card.dataset.index = idx;
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("aria-label", `Select ${flower.name} flower pattern`);
+    card.setAttribute("aria-pressed", idx === 0 ? "true" : "false");
     if (idx === 0) card.classList.add("selected");
 
     const canvas = document.createElement("canvas");
@@ -297,10 +301,21 @@ function initFlowerGrid() {
       cardVisibility[idx] = true;
     }
 
-    card.addEventListener("click", () => {
-      document.querySelectorAll(".flower-preview-card").forEach(c => c.classList.remove("selected"));
-      card.classList.add("selected");
+    const selectCard = () => {
+      document.querySelectorAll(".flower-preview-card").forEach((c, cIdx) => {
+        const isSel = cIdx === idx;
+        c.classList.toggle("selected", isSel);
+        c.setAttribute("aria-pressed", isSel ? "true" : "false");
+      });
       selectedFlowerIndex = idx;
+    };
+
+    card.addEventListener("click", selectCard);
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        selectCard();
+      }
     });
 
     const img = new Image();

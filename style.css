@@ -294,6 +294,12 @@ body {
   pointer-events: none;
 }
 
+.flower-preview-card:focus-visible,
+.aspect-card:focus-visible {
+  outline: 2px solid #f2f2f0;
+  outline-offset: 2px;
+}
+
 /* Buttons */
 .controls-row {
   display: flex;

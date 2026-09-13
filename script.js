@@ -335,7 +335,9 @@ function selectAspectRatio(width, height, cardToSelect, cardToDeselect) {
   chosenHeight = height;
 
   cardToDeselect.classList.remove("selected");
+  cardToDeselect.setAttribute("aria-pressed", "false");
   cardToSelect.classList.add("selected");
+  cardToSelect.setAttribute("aria-pressed", "true");
 
   // Re-size preview canvas and draw immediately
   previewCanvas.width = chosenWidth;
@@ -348,14 +350,29 @@ function selectAspectRatio(width, height, cardToSelect, cardToDeselect) {
   }
 }
 
+const handleAspectKeydown = (e, action) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    action();
+  }
+};
+
 card16x9.addEventListener("click", () => {
   if (card16x9.classList.contains("disabled")) return;
   selectAspectRatio(1280, 720, card16x9, card9x16);
+});
+card16x9.addEventListener("keydown", (e) => {
+  if (card16x9.classList.contains("disabled")) return;
+  handleAspectKeydown(e, () => selectAspectRatio(1280, 720, card16x9, card9x16));
 });
 
 card9x16.addEventListener("click", () => {
   if (card9x16.classList.contains("disabled")) return;
   selectAspectRatio(720, 1280, card9x16, card16x9);
+});
+card9x16.addEventListener("keydown", (e) => {
+  if (card9x16.classList.contains("disabled")) return;
+  handleAspectKeydown(e, () => selectAspectRatio(720, 1280, card9x16, card16x9));
 });
 
 // Edit Interaction Logic
