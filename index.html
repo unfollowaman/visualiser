@@ -25,9 +25,9 @@
     <main class="app-content">
       <!-- File Selection Area -->
       <section class="panel upload-section">
-        <div id="dropZone" class="drop-zone">
+        <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Upload audio file">
           <p class="drop-zone-text">DRAG & DROP AUDIO FILE OR CLICK TO BROWSE</p>
-          <input type="file" id="fileInput" accept="audio/*" class="hidden-input">
+          <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
         </div>
 
         <div id="fileInfoContainer" class="file-info-container hidden">
