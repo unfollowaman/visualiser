@@ -17,6 +17,8 @@ let isPreviewPlaying = false;
 let previewAnimationId = null;
 let previewStartTime = 0;
 let previewFreqDataArray = null;
+let previewBinStarts = null;
+let previewBinEnds = null;
 let previewVisualAmplitudes = new Float32Array(48);
 
 // Edit State
@@ -995,15 +997,20 @@ function runPreviewLoop() {
   const bufferLength = activePreviewAnalyser.frequencyBinCount; // 128
   if (!previewFreqDataArray || previewFreqDataArray.length !== bufferLength) {
     previewFreqDataArray = new Uint8Array(bufferLength);
+    previewBinStarts = new Int32Array(48);
+    previewBinEnds = new Int32Array(48);
+    const binsPerBar = bufferLength / 48;
+    for (let i = 0; i < 48; i++) {
+      previewBinStarts[i] = Math.floor(i * binsPerBar);
+      previewBinEnds[i] = Math.floor((i + 1) * binsPerBar);
+    }
   }
   activePreviewAnalyser.getByteFrequencyData(previewFreqDataArray);
 
   // Group frequency bins (0 to 128) into 48 visualizer bars
-  const binsPerBar = bufferLength / 48; // ~2.66 bins per bar
-
   for (let i = 0; i < 48; i++) {
-    const binStart = Math.floor(i * binsPerBar);
-    const binEnd = Math.floor((i + 1) * binsPerBar);
+    const binStart = previewBinStarts[i];
+    const binEnd = previewBinEnds[i];
 
     let sum = 0;
     let count = 0;
