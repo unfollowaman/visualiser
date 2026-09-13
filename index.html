@@ -70,11 +70,11 @@
         <div class="editor-container" id="editorContainer">
           <canvas id="overviewCanvas" width="800" height="120"></canvas>
           <div id="selectionHighlight" class="selection-highlight hidden"></div>
-          <div id="leftTrimHandle" class="trim-handle left-handle">
+          <div id="leftTrimHandle" class="trim-handle left-handle" role="slider" aria-label="Left trim handle">
             <div class="handle-line"></div>
             <div class="handle-readout" id="leftTrimReadout">00:00.0</div>
           </div>
-          <div id="rightTrimHandle" class="trim-handle right-handle">
+          <div id="rightTrimHandle" class="trim-handle right-handle" role="slider" aria-label="Right trim handle">
             <div class="handle-line"></div>
             <div class="handle-readout" id="rightTrimReadout">00:00.0</div>
           </div>
@@ -95,11 +95,11 @@
       <!-- Aspect Ratio Selection Section -->
       <section id="aspectRatioSection" class="panel aspect-ratio-section hidden">
         <div class="aspect-ratio-cards">
-          <div class="aspect-card" id="card16x9" data-ratio="16:9">
+          <div class="aspect-card" id="card16x9" data-ratio="16:9" role="button" tabindex="0" aria-label="Select 16:9 aspect ratio (Landscape)" aria-pressed="false">
             <span class="card-title">16:9</span>
             <span class="card-subtitle">(Landscape)</span>
           </div>
-          <div class="aspect-card" id="card9x16" data-ratio="9:16">
+          <div class="aspect-card" id="card9x16" data-ratio="9:16" role="button" tabindex="0" aria-label="Select 9:16 aspect ratio (Vertical)" aria-pressed="false">
             <span class="card-title">9:16</span>
             <span class="card-subtitle">(Vertical)</span>
           </div>

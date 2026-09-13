@@ -31,7 +31,7 @@ test.describe('flower.js unit and integration tests', () => {
     expect(gridInfo.flowerRenderersCount).toBe(5);
   });
 
-  test('clicking flower preview card updates selectedFlowerIndex and CSS selection classes', async ({ page }) => {
+  test('clicking flower preview card updates selectedFlowerIndex, ARIA attributes, and CSS selection classes', async ({ page }) => {
     const selectionInfo = await page.evaluate(() => {
       const cards = document.querySelectorAll('.flower-preview-card');
 
@@ -41,17 +41,58 @@ test.describe('flower.js unit and integration tests', () => {
       const newIndex = selectedFlowerIndex;
       const card0Selected = cards[0].classList.contains('selected');
       const card2Selected = cards[2].classList.contains('selected');
+      const card0AriaPressed = cards[0].getAttribute('aria-pressed');
+      const card2AriaPressed = cards[2].getAttribute('aria-pressed');
 
       return {
         newIndex,
         card0Selected,
-        card2Selected
+        card2Selected,
+        card0AriaPressed,
+        card2AriaPressed
       };
     });
 
     expect(selectionInfo.newIndex).toBe(2);
     expect(selectionInfo.card0Selected).toBe(false);
     expect(selectionInfo.card2Selected).toBe(true);
+    expect(selectionInfo.card0AriaPressed).toBe('false');
+    expect(selectionInfo.card2AriaPressed).toBe('true');
+  });
+
+  test('keyboard interactions (Enter/Space) select flower preview cards and update ARIA attributes', async ({ page }) => {
+    const keyInfo = await page.evaluate(() => {
+      const cards = document.querySelectorAll('.flower-preview-card');
+
+      // Dispatch Enter key event on card 1 (Hibiscus)
+      cards[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      const indexAfterEnter = selectedFlowerIndex;
+      const card1SelectedAfterEnter = cards[1].classList.contains('selected');
+      const card1AriaPressedEnter = cards[1].getAttribute('aria-pressed');
+
+      // Dispatch Space key event on card 3 (Sunflower)
+      cards[3].dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      const indexAfterSpace = selectedFlowerIndex;
+      const card3SelectedAfterSpace = cards[3].classList.contains('selected');
+      const card3AriaPressedSpace = cards[3].getAttribute('aria-pressed');
+
+      return {
+        indexAfterEnter,
+        card1SelectedAfterEnter,
+        card1AriaPressedEnter,
+        indexAfterSpace,
+        card3SelectedAfterSpace,
+        card3AriaPressedSpace
+      };
+    });
+
+    expect(keyInfo.indexAfterEnter).toBe(1);
+    expect(keyInfo.card1SelectedAfterEnter).toBe(true);
+    expect(keyInfo.card1AriaPressedEnter).toBe('true');
+
+    expect(keyInfo.indexAfterSpace).toBe(3);
+    expect(keyInfo.card3SelectedAfterSpace).toBe(true);
+    expect(keyInfo.card3AriaPressedSpace).toBe('true');
   });
 
   test('createWebGLRenderer creates WebGL context, shaders, and renders frames', async ({ page }) => {
