@@ -218,4 +218,90 @@ test.describe('flower.js unit and integration tests', () => {
     expect(result.wasHiddenBefore).toBe(true);
     expect(result.isHiddenAfter).toBe(true);
   });
+
+  test('catches Error objects in renderAndExportFlowerVideo and resets UI state gracefully', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const mockBuffer = {
+        duration: 2.0,
+        sampleRate: 44100,
+        numberOfChannels: 1,
+        length: 88200,
+        getChannelData: () => new Float32Array(88200)
+      };
+      window.workingAudioBuffer = mockBuffer;
+
+      const renderFlowerBtn = document.getElementById('renderFlowerBtn');
+      const flowerProgressContainer = document.getElementById('flowerProgressContainer');
+      const flowerStatusLine = document.getElementById('flowerStatusLine');
+
+      renderFlowerBtn.disabled = false;
+
+      // Mock extractAudioMetrics to throw an Error object
+      const originalExtract = extractAudioMetrics;
+      extractAudioMetrics = async () => {
+        throw new Error('Flower audio metrics extraction failed due to corrupted audio data');
+      };
+
+      try {
+        await renderAndExportFlowerVideo();
+      } finally {
+        extractAudioMetrics = originalExtract;
+      }
+
+      return {
+        statusText: flowerStatusLine.textContent,
+        statusHidden: flowerStatusLine.classList.contains('hidden'),
+        progressHidden: flowerProgressContainer.classList.contains('hidden'),
+        btnDisabled: renderFlowerBtn.disabled
+      };
+    });
+
+    expect(result.statusText).toBe('Error: Flower audio metrics extraction failed due to corrupted audio data');
+    expect(result.statusHidden).toBe(false);
+    expect(result.progressHidden).toBe(true);
+    expect(result.btnDisabled).toBe(false);
+  });
+
+  test('catches non-Error string exceptions in renderAndExportFlowerVideo and resets UI state gracefully', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const mockBuffer = {
+        duration: 2.0,
+        sampleRate: 44100,
+        numberOfChannels: 1,
+        length: 88200,
+        getChannelData: () => new Float32Array(88200)
+      };
+      window.workingAudioBuffer = mockBuffer;
+
+      const renderFlowerBtn = document.getElementById('renderFlowerBtn');
+      const flowerProgressContainer = document.getElementById('flowerProgressContainer');
+      const flowerStatusLine = document.getElementById('flowerStatusLine');
+
+      renderFlowerBtn.disabled = false;
+
+      // Mock extractAudioMetrics to throw a non-Error string exception
+      const originalExtract = extractAudioMetrics;
+      extractAudioMetrics = async () => {
+        throw 'Uncaught string exception in flower video pipeline';
+      };
+
+      try {
+        await renderAndExportFlowerVideo();
+      } finally {
+        extractAudioMetrics = originalExtract;
+      }
+
+      return {
+        statusText: flowerStatusLine.textContent,
+        statusHidden: flowerStatusLine.classList.contains('hidden'),
+        progressHidden: flowerProgressContainer.classList.contains('hidden'),
+        btnDisabled: renderFlowerBtn.disabled
+      };
+    });
+
+    expect(result.statusText).toBe('Error: Uncaught string exception in flower video pipeline');
+    expect(result.statusHidden).toBe(false);
+    expect(result.progressHidden).toBe(true);
+    expect(result.btnDisabled).toBe(false);
+  });
 });

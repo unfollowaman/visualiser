@@ -303,11 +303,13 @@ function initFlowerGrid() {
       cardVisibility[idx] = true;
     }
 
-    card.addEventListener("click", () => {
+    const selectCard = () => {
       if (selectedFlowerIndex !== idx && flowerCards[selectedFlowerIndex]) {
         flowerCards[selectedFlowerIndex].classList.remove("selected");
+        flowerCards[selectedFlowerIndex].setAttribute("aria-pressed", "false");
       }
       card.classList.add("selected");
+      card.setAttribute("aria-pressed", "true");
       selectedFlowerIndex = idx;
     };
 
