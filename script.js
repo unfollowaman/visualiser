@@ -363,6 +363,8 @@ let isDraggingLeftHandle = false;
 let isDraggingRightHandle = false;
 let isDraggingSelection = false;
 let dragStartState = null;
+let dragTotalDurationWithoutFirst = 0;
+let dragTotalDurationWithoutLast = 0;
 let selectionStartX = null;
 let selectionEndX = null;
 
@@ -458,6 +460,10 @@ leftTrimHandle.addEventListener("mousedown", (e) => {
   updateEditorDimensions();
   isDraggingLeftHandle = true;
   dragStartState = JSON.parse(JSON.stringify(keepRanges));
+  dragTotalDurationWithoutFirst = 0;
+  for (let i = 1; i < keepRanges.length; i++) {
+    dragTotalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
+  }
   leftTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
@@ -465,6 +471,10 @@ leftTrimHandle.addEventListener("touchstart", (e) => {
   updateEditorDimensions();
   isDraggingLeftHandle = true;
   dragStartState = JSON.parse(JSON.stringify(keepRanges));
+  dragTotalDurationWithoutFirst = 0;
+  for (let i = 1; i < keepRanges.length; i++) {
+    dragTotalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
+  }
   leftTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
@@ -474,6 +484,10 @@ rightTrimHandle.addEventListener("mousedown", (e) => {
   updateEditorDimensions();
   isDraggingRightHandle = true;
   dragStartState = JSON.parse(JSON.stringify(keepRanges));
+  dragTotalDurationWithoutLast = 0;
+  for (let i = 0; i < keepRanges.length - 1; i++) {
+    dragTotalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
+  }
   rightTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
@@ -481,6 +495,10 @@ rightTrimHandle.addEventListener("touchstart", (e) => {
   updateEditorDimensions();
   isDraggingRightHandle = true;
   dragStartState = JSON.parse(JSON.stringify(keepRanges));
+  dragTotalDurationWithoutLast = 0;
+  for (let i = 0; i < keepRanges.length - 1; i++) {
+    dragTotalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
+  }
   rightTrimHandle.classList.add("dragging");
   e.stopPropagation();
 });
@@ -530,23 +548,14 @@ function handleDragMove(e) {
   if (!isDraggingLeftHandle && !isDraggingRightHandle && !isDraggingSelection) return;
 
   const x = getCanvasX(e);
-  const duration = decodedAudioBuffer.duration;
-  const w = getEditorWidth();
-  let timePos = (x / w) * duration;
-  timePos = Math.max(0, Math.min(timePos, duration));
-
-  let totalDurationWithoutFirst = 0;
-  for (let i = 1; i < keepRanges.length; i++) {
-    totalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
-  }
-
-  let totalDurationWithoutLast = 0;
-  for (let i = 0; i < keepRanges.length - 1; i++) {
-    totalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
-  }
 
   if (isDraggingLeftHandle) {
-    let maxStart = keepRanges[0].end - (1 - totalDurationWithoutFirst);
+    const duration = decodedAudioBuffer.duration;
+    const w = getEditorWidth();
+    let timePos = (x / w) * duration;
+    timePos = Math.max(0, Math.min(timePos, duration));
+
+    let maxStart = keepRanges[0].end - (1 - dragTotalDurationWithoutFirst);
     if (keepRanges.length === 1) {
        maxStart = keepRanges[0].end - 1;
     }
@@ -558,7 +567,12 @@ function handleDragMove(e) {
     // Auto-update while dragging without saving history
     renderEditState();
   } else if (isDraggingRightHandle) {
-    let minEnd = keepRanges[keepRanges.length - 1].start + (1 - totalDurationWithoutLast);
+    const duration = decodedAudioBuffer.duration;
+    const w = getEditorWidth();
+    let timePos = (x / w) * duration;
+    timePos = Math.max(0, Math.min(timePos, duration));
+
+    let minEnd = keepRanges[keepRanges.length - 1].start + (1 - dragTotalDurationWithoutLast);
     if (keepRanges.length === 1) {
        minEnd = keepRanges[0].start + 1;
     }

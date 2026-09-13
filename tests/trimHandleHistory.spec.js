@@ -52,6 +52,51 @@ test.describe('trimHandleHistory unit and integration tests', () => {
     expect(historyInfo.undoDisabledAfterTouch).toBe(true);
   });
 
+  test('drag handle move uses pre-calculated total durations when multiple keep ranges exist', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      document.getElementById('editSection').classList.remove('hidden');
+      const editorContainer = document.getElementById('editorContainer');
+      editorContainer.getBoundingClientRect = () => ({
+        left: 0, top: 0, width: 1000, height: 100, right: 1000, bottom: 100, x: 0, y: 0, toJSON: () => {}
+      });
+
+      decodedAudioBuffer = audioCtx.createBuffer(1, 44100 * 20, 44100); // 20s
+      // Multiple keep ranges: [0..5s], [10..15s]
+      keepRanges = [{ start: 0, end: 5 }, { start: 10, end: 15 }];
+      editHistory = [];
+      renderEditState();
+      updateEditorDimensions();
+
+      const leftHandle = document.getElementById('leftTrimHandle');
+      const rightHandle = document.getElementById('rightTrimHandle');
+
+      // Test left handle drag start & move with precalculated duration without first range (15-10 = 5s)
+      leftHandle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 0 }));
+      window.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 100 })); // x=100 -> 2s
+      const leftDragStart = keepRanges[0].start;
+      window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+
+      // Test right handle drag start & move with precalculated duration without last range (5-0 = 5s)
+      rightHandle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 750 })); // x=750 -> 15s
+      window.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 650 })); // x=650 -> 13s
+      const rightDragEnd = keepRanges[1].end;
+      window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+
+      return {
+        leftDragStart,
+        rightDragEnd,
+        finalKeepRanges: keepRanges
+      };
+    });
+
+    expect(result.leftDragStart).toBeCloseTo(2.0, 1);
+    expect(result.rightDragEnd).toBeCloseTo(13.0, 1);
+    expect(result.finalKeepRanges.length).toBe(2);
+  });
+
   test('dragging left trim handle saves history state and enables undo button', async ({ page }) => {
     const result = await page.evaluate(() => {
       if (!audioCtx) {
