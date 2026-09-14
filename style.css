@@ -294,6 +294,7 @@ body {
   pointer-events: none;
 }
 
+.drop-zone:focus-visible,
 .flower-preview-card:focus-visible,
 .aspect-card:focus-visible {
   outline: 2px solid #f2f2f0;

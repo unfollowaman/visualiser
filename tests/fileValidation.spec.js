@@ -56,6 +56,48 @@ test.describe('handleSelectedFile security and validation tests', () => {
     expect(fileInfo.fileNameText).toBe('sample.mp3');
   });
 
+  test('has accessible role, tabindex, aria-label, and responds to keyboard Enter and Space keys on dropZone', async ({ page }) => {
+    const dropZoneAttrs = await page.evaluate(() => {
+      const dropZone = document.getElementById('dropZone');
+      return {
+        role: dropZone.getAttribute('role'),
+        tabIndex: dropZone.getAttribute('tabindex'),
+        ariaLabel: dropZone.getAttribute('aria-label')
+      };
+    });
+
+    expect(dropZoneAttrs.role).toBe('button');
+    expect(dropZoneAttrs.tabIndex).toBe('0');
+    expect(dropZoneAttrs.ariaLabel).toBe('Upload audio file');
+
+    const keyResults = await page.evaluate(() => {
+      let enterClicked = false;
+      let spaceClicked = false;
+
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+
+      const originalClick = fileInput.click;
+      fileInput.click = () => {
+        if (currentKey === 'Enter') enterClicked = true;
+        if (currentKey === ' ') spaceClicked = true;
+      };
+
+      let currentKey = 'Enter';
+      dropZone.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      currentKey = ' ';
+      dropZone.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+
+      fileInput.click = originalClick;
+
+      return { enterClicked, spaceClicked };
+    });
+
+    expect(keyResults.enterClicked).toBe(true);
+    expect(keyResults.spaceClicked).toBe(true);
+  });
+
   test('handles FileReader onerror handler correctly', async ({ page }) => {
     const errorResult = await page.evaluate(() => {
       let loggedArgs = null;

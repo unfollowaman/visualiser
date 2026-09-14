@@ -713,11 +713,18 @@ showEditBtn.addEventListener("click", () => {
   updateEditorDimensions();
 });
 
-// Handle reliable file click gesture
+// Handle reliable file click and keyboard gestures
 dropZone.addEventListener("click", (e) => {
   // Mobile browsers can block file inputs if triggered within async calls
   // Keep this direct synchronous call
   fileInput.click();
+});
+
+dropZone.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    fileInput.click();
+  }
 });
 
 // Drag and drop events
