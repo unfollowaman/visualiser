@@ -296,7 +296,8 @@ body {
 
 .drop-zone:focus-visible,
 .flower-preview-card:focus-visible,
-.aspect-card:focus-visible {
+.aspect-card:focus-visible,
+.trim-handle:focus-visible {
   outline: 2px solid #f2f2f0;
   outline-offset: 2px;
 }

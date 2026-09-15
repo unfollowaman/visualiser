@@ -440,7 +440,73 @@ function updateTrimHandles() {
 
   leftTrimReadout.textContent = formatDurationDetailed(firstRange.start);
   rightTrimReadout.textContent = formatDurationDetailed(lastRange.end);
+
+  // Update slider ARIA attributes
+  leftTrimHandle.setAttribute("aria-valuenow", firstRange.start.toFixed(1));
+  leftTrimHandle.setAttribute("aria-valuemin", "0");
+  const leftMax = firstRange.end - 0.05;
+  leftTrimHandle.setAttribute("aria-valuemax", leftMax.toFixed(1));
+  leftTrimHandle.setAttribute("aria-valuetext", `${formatDurationDetailed(firstRange.start)} start time`);
+
+  rightTrimHandle.setAttribute("aria-valuenow", lastRange.end.toFixed(1));
+  const rightMin = lastRange.start + 0.05;
+  rightTrimHandle.setAttribute("aria-valuemin", rightMin.toFixed(1));
+  rightTrimHandle.setAttribute("aria-valuemax", duration.toFixed(1));
+  rightTrimHandle.setAttribute("aria-valuetext", `${formatDurationDetailed(lastRange.end)} end time`);
 }
+
+function handleTrimKeydown(e, isLeft) {
+  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) {
+    return;
+  }
+  if (!decodedAudioBuffer || keepRanges.length === 0) return;
+
+  e.preventDefault();
+  const duration = decodedAudioBuffer.duration;
+  const step = e.shiftKey ? 1.0 : 0.1;
+
+  saveEditState();
+
+  if (isLeft) {
+    let current = keepRanges[0].start;
+    let next = current;
+
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      next = current - step;
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      next = current + step;
+    } else if (e.key === "Home") {
+      next = 0;
+    } else if (e.key === "End") {
+      next = keepRanges[0].end - 0.05;
+    }
+
+    const maxStart = Math.max(0, keepRanges[0].end - 0.05);
+    keepRanges[0].start = Math.max(0, Math.min(next, maxStart));
+  } else {
+    const lastIdx = keepRanges.length - 1;
+    let current = keepRanges[lastIdx].end;
+    let next = current;
+
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      next = current - step;
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      next = current + step;
+    } else if (e.key === "Home") {
+      next = keepRanges[lastIdx].start + 0.05;
+    } else if (e.key === "End") {
+      next = duration;
+    }
+
+    const minEnd = Math.min(duration, keepRanges[lastIdx].start + 0.05);
+    keepRanges[lastIdx].end = Math.max(minEnd, Math.min(next, duration));
+  }
+
+  renderEditState();
+}
+
+leftTrimHandle.addEventListener("keydown", (e) => handleTrimKeydown(e, true));
+rightTrimHandle.addEventListener("keydown", (e) => handleTrimKeydown(e, false));
 
 function renderEditState() {
   updateEditStats();
