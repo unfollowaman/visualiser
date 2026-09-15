@@ -83,6 +83,11 @@ const ctxPreview = previewCanvas.getContext("2d");
 // WeakMap cache for mixDownToMono results
 const monoCache = new WeakMap();
 
+// Cached Overview waveform amplitudes per AudioBuffer to avoid re-computation during dragging
+let cachedOverviewBuffer = null;
+let cachedOverviewAmplitudes = null;
+let cachedOverviewGlobalMax = 1;
+
 // Helper to mix down audio channels to a single mono Float32Array
 function mixDownToMono(audioBuffer) {
   if (!audioBuffer) return new Float32Array(0);
@@ -229,6 +234,8 @@ function drawBars(ctx, amplitudes, w, h) {
 
 // Draw static overview for edit section (200 bars)
 function drawOverview(audioBuffer) {
+  if (!audioBuffer) return;
+
   const w = overviewCanvas.width;
   const h = overviewCanvas.height;
 
@@ -236,31 +243,37 @@ function drawOverview(audioBuffer) {
   ctxOverview.fillRect(0, 0, w, h);
 
   const duration = audioBuffer.duration;
-  const totalSamples = audioBuffer.length;
-  const monoSamples = mixDownToMono(audioBuffer);
-
   const numBars = 200;
-  const samplesPerBar = totalSamples / numBars;
-  const amplitudes = new Float32Array(numBars);
-  let globalMax = 0;
 
-  for (let i = 0; i < numBars; i++) {
-    const startSample = Math.floor(i * samplesPerBar);
-    const endSample = Math.floor((i + 1) * samplesPerBar);
+  // Memoize overview 200-bar RMS computation per AudioBuffer
+  // During drag moves (handleDragMove), renderEditState triggers drawOverview on every mousemove.
+  // Reusing precalculated amplitudes prevents iterating over millions of PCM audio samples on every frame.
+  if (cachedOverviewBuffer !== audioBuffer) {
+    cachedOverviewBuffer = audioBuffer;
+    const totalSamples = audioBuffer.length;
+    const monoSamples = mixDownToMono(audioBuffer);
+    const samplesPerBar = totalSamples / numBars;
+    cachedOverviewAmplitudes = new Float32Array(numBars);
+    let globalMax = 0;
 
-    let sumSquares = 0;
-    let count = 0;
-    for (let s = startSample; s < endSample && s < totalSamples; s++) {
-      const val = monoSamples[s];
-      sumSquares += val * val;
-      count++;
+    for (let i = 0; i < numBars; i++) {
+      const startSample = Math.floor(i * samplesPerBar);
+      const endSample = Math.floor((i + 1) * samplesPerBar);
+
+      let sumSquares = 0;
+      let count = 0;
+      for (let s = startSample; s < endSample && s < totalSamples; s++) {
+        const val = monoSamples[s];
+        sumSquares += val * val;
+        count++;
+      }
+      const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
+      cachedOverviewAmplitudes[i] = rms;
+      if (rms > globalMax) globalMax = rms;
     }
-    const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
-    amplitudes[i] = rms;
-    if (rms > globalMax) globalMax = rms;
-  }
 
-  if (globalMax === 0) globalMax = 1;
+    cachedOverviewGlobalMax = globalMax === 0 ? 1 : globalMax;
+  }
 
   const gap = w * 0.003;
   const totalGap = gap * (numBars - 1);
@@ -269,7 +282,7 @@ function drawOverview(audioBuffer) {
   const minBarHeight = h * 0.05;
 
   for (let i = 0; i < numBars; i++) {
-    const amp = amplitudes[i] / globalMax;
+    const amp = cachedOverviewAmplitudes[i] / cachedOverviewGlobalMax;
     const barHeight = Math.max(minBarHeight, amp * maxBarHeight);
     const x = i * (barWidth + gap);
     const y = (h - barHeight) / 2;
@@ -450,7 +463,7 @@ function updateTrimHandles() {
 
   rightTrimHandle.setAttribute("aria-valuenow", lastRange.end.toFixed(1));
   const rightMin = lastRange.start + 0.05;
-  rightTrimHandle.setAttribute("aria-valuemin", rightMin.toFixed(1));
+  rightTrimHandle.setAttribute("aria-valuemin", rightMin.toString());
   rightTrimHandle.setAttribute("aria-valuemax", duration.toFixed(1));
   rightTrimHandle.setAttribute("aria-valuetext", `${formatDurationDetailed(lastRange.end)} end time`);
 }
