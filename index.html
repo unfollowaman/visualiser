@@ -44,7 +44,7 @@
             over about 2.5 minutes, export may take a while.
           </div>
         </div>
-        <div id="decodeError" class="error-text hidden">
+        <div id="decodeError" class="error-text hidden" role="alert" aria-live="assertive">
           Could not decode this audio file. Try MP3 or WAV.
         </div>
         <div class="controls-row" style="margin-top: 16px;">
@@ -69,7 +69,7 @@
         </div>
 
         <div class="editor-container" id="editorContainer">
-          <canvas id="overviewCanvas" width="800" height="120"></canvas>
+          <canvas id="overviewCanvas" width="800" height="120" role="img" aria-label="Audio waveform timeline overview"></canvas>
           <div id="selectionHighlight" class="selection-highlight hidden"></div>
           <div id="leftTrimHandle" class="trim-handle left-handle" role="slider" aria-label="Left trim handle" tabindex="0">
             <div class="handle-line"></div>
@@ -110,7 +110,7 @@
       <!-- Preview Section -->
       <section class="panel preview-section">
         <div class="canvas-container">
-          <canvas id="previewCanvas" width="1280" height="720"></canvas>
+          <canvas id="previewCanvas" width="1280" height="720" role="img" aria-label="Audio visualizer preview canvas"></canvas>
         </div>
 
       </section>
@@ -122,7 +122,7 @@
         </div>
 
         <!-- Progress Area -->
-        <div id="progressContainer" class="progress-container hidden">
+        <div id="progressContainer" class="progress-container hidden" role="progressbar" aria-label="Video rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
           <div class="progress-header">
             <span id="progressLabel" class="progress-label">RENDERING...</span>
             <span id="progressPercentage" class="progress-percentage">0%</span>
@@ -133,7 +133,7 @@
         </div>
 
         <!-- Status/Error line -->
-        <div id="statusLine" class="status-line hidden"></div>
+        <div id="statusLine" class="status-line hidden" role="status" aria-live="polite"></div>
 
         <!-- Download Links -->
         <div id="downloadContainer" class="download-container hidden">
@@ -157,7 +157,7 @@
         </div>
 
         <!-- Flower Progress Area -->
-        <div id="flowerProgressContainer" class="progress-container hidden">
+        <div id="flowerProgressContainer" class="progress-container hidden" role="progressbar" aria-label="Flower rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
           <div class="progress-header">
             <span id="flowerProgressLabel" class="progress-label">RENDERING...</span>
             <span id="flowerProgressPercentage" class="progress-percentage">0%</span>
@@ -168,7 +168,7 @@
         </div>
 
         <!-- Flower Status/Error line -->
-        <div id="flowerStatusLine" class="status-line hidden"></div>
+        <div id="flowerStatusLine" class="status-line hidden" role="status" aria-live="polite"></div>
 
         <!-- Flower Download Links -->
         <div id="flowerDownloadContainer" class="download-container hidden">

@@ -1444,6 +1444,7 @@ renderBtn.addEventListener("click", async () => {
     progressLabel.textContent = `RENDERING ${ratioLabel} FORMAT...`;
     progressBarFill.style.width = "0%";
     progressPercentage.textContent = "0%";
+    progressContainer.setAttribute("aria-valuenow", "0");
     statusLine.classList.add("hidden");
 
     // Step 2 & 3: Render only the chosen aspect ratio format
@@ -1454,6 +1455,7 @@ renderBtn.addEventListener("click", async () => {
       (progress) => {
         progressBarFill.style.width = `${progress}%`;
         progressPercentage.textContent = `${progress}%`;
+        progressContainer.setAttribute("aria-valuenow", progress.toString());
       }
     );
 
