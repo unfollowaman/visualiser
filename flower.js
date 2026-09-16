@@ -426,15 +426,17 @@ async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
       continue;
     }
 
-    let sumSq = 0;
+    // Hoist initial sample to eliminate branch check and redundant array indexing in inner loop
+    const firstVal = mono[startSample];
+    let sumSq = firstVal * firstVal;
     let diffSum = 0;
+    let prevVal = firstVal;
 
-    for (let s = startSample; s < endSample; s++) {
+    for (let s = startSample + 1; s < endSample; s++) {
       const val = mono[s];
       sumSq += val * val;
-      if (s > startSample) {
-        diffSum += Math.abs(val - mono[s - 1]);
-      }
+      diffSum += Math.abs(val - prevVal);
+      prevVal = val;
     }
 
     const rms = Math.sqrt(sumSq / count);
