@@ -185,6 +185,9 @@ function buildWorkingAudioBuffer() {
   const fadeDuration = 0.008; // 8ms fade
   const fadeSamples = Math.floor(fadeDuration * sampleRate);
 
+  // Performance optimization: Instead of iterating per-sample and executing applyFade()
+  // over millions of samples in JS, use bulk TypedArray.prototype.set() for unfaded middle samples
+  // and process only the short ~8ms boundary samples for fade-in and fade-out.
   for (let c = 0; c < numChannels; c++) {
     const channelData = decodedAudioBuffer.getChannelData(c);
     const newChannelData = newBuffer.getChannelData(c);
@@ -195,10 +198,34 @@ function buildWorkingAudioBuffer() {
       const endSample = Math.floor(range.end * sampleRate);
       const rangeSamples = endSample - startSample;
 
-      for (let i = 0; i < rangeSamples; i++) {
+      if (rangeSamples <= 0) continue;
+
+      const actualFadeSamples = Math.min(fadeSamples, Math.floor(rangeSamples / 2));
+
+      // 1. Process fade-in boundary samples
+      for (let i = 0; i < actualFadeSamples; i++) {
         const sample = channelData[startSample + i];
-        newChannelData[destOffset++] = applyFade(sample, i, rangeSamples, fadeSamples);
+        newChannelData[destOffset + i] = sample * (i / actualFadeSamples);
       }
+
+      // 2. Bulk memory copy unfaded inner samples using native TypedArray method
+      const middleSamplesCount = rangeSamples - 2 * actualFadeSamples;
+      if (middleSamplesCount > 0) {
+        const middleSrc = channelData.subarray(
+          startSample + actualFadeSamples,
+          startSample + actualFadeSamples + middleSamplesCount
+        );
+        newChannelData.set(middleSrc, destOffset + actualFadeSamples);
+      }
+
+      // 3. Process fade-out boundary samples
+      for (let i = rangeSamples - actualFadeSamples; i < rangeSamples; i++) {
+        const sample = channelData[startSample + i];
+        const fadeIndex = rangeSamples - 1 - i;
+        newChannelData[destOffset + i] = sample * (fadeIndex / actualFadeSamples);
+      }
+
+      destOffset += rangeSamples;
     }
   }
 
