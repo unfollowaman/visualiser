@@ -5,11 +5,19 @@ test.describe('flower.js unit and integration tests', () => {
     await page.goto('http://localhost:3000/index.html');
   });
 
-  test('FLOWERS array and initFlowerGrid setup flower preview cards', async ({ page }) => {
+  test('FLOWERS array and initFlowerGrid setup flower preview cards with labels and titles', async ({ page }) => {
     const gridInfo = await page.evaluate(() => {
       const cards = document.querySelectorAll('.flower-preview-card');
       const card0Selected = cards[0].classList.contains('selected');
       const card1Selected = cards[1].classList.contains('selected');
+
+      const cardDetails = Array.from(cards).map(card => {
+        const labelEl = card.querySelector('.flower-card-label');
+        return {
+          title: card.getAttribute('title'),
+          labelText: labelEl ? labelEl.textContent.trim() : null
+        };
+      });
 
       return {
         flowersLength: FLOWERS.length,
@@ -18,7 +26,8 @@ test.describe('flower.js unit and integration tests', () => {
         card0Selected,
         card1Selected,
         flowerCanvasesCount: flowerCanvases.length,
-        flowerRenderersCount: flowerRenderers.length
+        flowerRenderersCount: flowerRenderers.length,
+        cardDetails
       };
     });
 
@@ -29,6 +38,14 @@ test.describe('flower.js unit and integration tests', () => {
     expect(gridInfo.card1Selected).toBe(false);
     expect(gridInfo.flowerCanvasesCount).toBe(5);
     expect(gridInfo.flowerRenderersCount).toBe(5);
+
+    expect(gridInfo.cardDetails).toEqual([
+      { title: 'Rose', labelText: 'Rose' },
+      { title: 'Hibiscus', labelText: 'Hibiscus' },
+      { title: 'Blue Cosmos', labelText: 'Blue Cosmos' },
+      { title: 'Sunflower', labelText: 'Sunflower' },
+      { title: 'White Daisy', labelText: 'White Daisy' }
+    ]);
   });
 
   test('clicking flower preview card updates selectedFlowerIndex, ARIA attributes, and CSS selection classes', async ({ page }) => {

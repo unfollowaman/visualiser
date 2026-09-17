@@ -281,6 +281,7 @@ function initFlowerGrid() {
     card.setAttribute("tabindex", "0");
     card.setAttribute("aria-label", `Select ${flower.name} flower pattern`);
     card.setAttribute("aria-pressed", idx === 0 ? "true" : "false");
+    card.setAttribute("title", flower.name);
     if (idx === 0) card.classList.add("selected");
 
     const canvas = document.createElement("canvas");
@@ -288,7 +289,12 @@ function initFlowerGrid() {
     canvas.width = PREVIEW_SIZE;
     canvas.height = PREVIEW_SIZE;
 
+    const label = document.createElement("span");
+    label.classList.add("flower-card-label");
+    label.textContent = flower.name;
+
     card.appendChild(canvas);
+    card.appendChild(label);
     flowerGrid.appendChild(card);
 
     flowerCards.push(card);
