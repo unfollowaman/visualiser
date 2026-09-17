@@ -511,6 +511,7 @@ async function renderAndExportFlowerVideo() {
   flowerStatusLine.classList.add("hidden");
   flowerProgressBarFill.style.width = "0%";
   flowerProgressPercentage.textContent = "0%";
+  flowerProgressContainer.setAttribute("aria-valuenow", "0");
 
   try {
     const fps = 60;
@@ -585,11 +586,13 @@ async function renderAndExportFlowerVideo() {
         const progress = Math.min(100, Math.round((i / totalFrames) * 100));
         flowerProgressBarFill.style.width = `${progress}%`;
         flowerProgressPercentage.textContent = `${progress}%`;
+        flowerProgressContainer.setAttribute("aria-valuenow", progress.toString());
       }
     }
 
     flowerProgressBarFill.style.width = "100%";
     flowerProgressPercentage.textContent = "100%";
+    flowerProgressContainer.setAttribute("aria-valuenow", "100");
 
     await videoEncoder.flush();
     videoEncoder.close();
