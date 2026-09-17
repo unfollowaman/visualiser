@@ -15,3 +15,9 @@
 **Learning:** In audio analysis loops over large `Float32Array` PCM buffers (e.g. `extractAudioMetrics` processing millions of samples), executing a conditional check `if (s > startSample)` and accessing `mono[s - 1]` inside the loop adds millions of branch instruction checks and redundant array index lookups. Hoisting the initial sample (`firstVal = mono[startSample]`), initializing `prevVal`, and starting the loop from `startSample + 1` completely removes branch checks and reduces array lookups by 50% in the hot path.
 
 **Action:** Always hoist boundary conditions and prior-element references when processing flat typed arrays in tight mathematical loops.
+
+## 2026-09-17 - Bulk Memory Copy for Audio Buffer Reconstruction using TypedArray.prototype.set()
+
+**Learning:** In `buildWorkingAudioBuffer()`, iterating sample-by-sample in JS and executing function calls (`applyFade()`) over millions of Float32Array PCM samples when constructing trimmed AudioBuffers created significant main-thread execution overhead. Since fade-in and fade-out effects apply only to short 8ms boundary windows (~352 samples at 44.1kHz), the vast majority of samples are copied without alteration. Restructuring the copy loop to perform bulk memory transfers via `Float32Array.prototype.set()` for the middle samples and processing only boundary samples dramatically speeds up audio trimming and buffer construction.
+
+**Action:** Use native `TypedArray.prototype.set()` or `.subarray()` for bulk array segment copies in audio and binary data processing, isolating custom transformations to boundary elements.
