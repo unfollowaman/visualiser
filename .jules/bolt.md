@@ -21,3 +21,9 @@
 **Learning:** In `buildWorkingAudioBuffer()`, iterating sample-by-sample in JS and executing function calls (`applyFade()`) over millions of Float32Array PCM samples when constructing trimmed AudioBuffers created significant main-thread execution overhead. Since fade-in and fade-out effects apply only to short 8ms boundary windows (~352 samples at 44.1kHz), the vast majority of samples are copied without alteration. Restructuring the copy loop to perform bulk memory transfers via `Float32Array.prototype.set()` for the middle samples and processing only boundary samples dramatically speeds up audio trimming and buffer construction.
 
 **Action:** Use native `TypedArray.prototype.set()` or `.subarray()` for bulk array segment copies in audio and binary data processing, isolating custom transformations to boundary elements.
+
+## 2026-09-18 - Eliminate Temporary Heap Object Allocations in 60 FPS Canvas Drawing Loops
+
+**Learning:** Creating temporary `{ x, y, width, height, radius }` option objects on every bar inside 60 FPS canvas drawing loops (`drawBars` rendering 48 bars/frame and `drawOverview` rendering 200 bars) allocated over 500,000 temporary heap objects during a single 3-minute video export (10,800 frames). In single-threaded synchronous canvas drawing calls, mutating a single module-level persistent rect object (`reusableBarRect` and `reusableOverviewRect`) and hoisting loop-invariant layout calculations (`radius`, `stepX`, vertical center offsets) completely eliminates heap allocations and GC pressure without affecting rendering accuracy or API compatibility.
+
+**Action:** Re-use mutable persistent objects for option parameter signatures in high-frequency frame drawing loops.
