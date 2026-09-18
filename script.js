@@ -838,6 +838,7 @@ resetBtn.addEventListener("click", () => {
 showEditBtn.addEventListener("click", () => {
   editSection.classList.remove("hidden");
   showEditBtn.classList.add("hidden");
+  showEditBtn.setAttribute("aria-expanded", "true");
   aspectRatioSection.classList.add("hidden"); // Optional, hide aspect ratio while editing
   renderBtn.disabled = true; // Disable render until "Continue" is clicked
   updateEditorDimensions();
@@ -1092,6 +1093,8 @@ function startPreview() {
 
   isPreviewPlaying = true;
   playPreviewBtn.textContent = "STOP PREVIEW";
+  playPreviewBtn.setAttribute("aria-pressed", "true");
+  playPreviewBtn.setAttribute("aria-label", "Stop audio preview");
 
   // Revert preview on natural audio completion
   activePreviewSource.onended = () => {
@@ -1108,6 +1111,8 @@ function startPreview() {
 function stopPreview() {
   isPreviewPlaying = false;
   playPreviewBtn.textContent = "PLAY PREVIEW";
+  playPreviewBtn.setAttribute("aria-pressed", "false");
+  playPreviewBtn.setAttribute("aria-label", "Play audio preview");
   playheadLine.classList.add("hidden");
 
   if (activePreviewSource) {
@@ -1448,6 +1453,7 @@ continueBtn.addEventListener("click", () => {
   // Hide edit section, show next steps
   editSection.classList.add("hidden");
   showEditBtn.classList.remove("hidden");
+  showEditBtn.setAttribute("aria-expanded", "false");
 
   // Aspect ratio section and Preview section are active now
   aspectRatioSection.classList.remove("hidden");
