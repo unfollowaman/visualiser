@@ -184,6 +184,30 @@ body {
   display: block;
 }
 
+.flower-card-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 10, 10, 0.75);
+  color: #7a7a76;
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 4px 2px;
+  pointer-events: none;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.flower-preview-card:hover .flower-card-label,
+.flower-preview-card:focus-visible .flower-card-label,
+.flower-preview-card.selected .flower-card-label {
+  color: #f2f2f0;
+  background: rgba(10, 10, 10, 0.9);
+}
+
 .selection-highlight {
   position: absolute;
   top: 0;
