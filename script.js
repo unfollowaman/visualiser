@@ -88,6 +88,10 @@ let cachedOverviewBuffer = null;
 let cachedOverviewAmplitudes = null;
 let cachedOverviewGlobalMax = 1;
 
+// Reusable rect objects for drawBars and drawOverview to eliminate per-bar heap allocations
+const reusableBarRect = { x: 0, y: 0, width: 0, height: 0, radius: 0 };
+const reusableOverviewRect = { x: 0, y: 0, width: 0, height: 0, radius: 0 };
+
 // Helper to mix down audio channels to a single mono Float32Array
 function mixDownToMono(audioBuffer) {
   if (!audioBuffer) return new Float32Array(0);
@@ -242,20 +246,29 @@ function drawBars(ctx, amplitudes, w, h) {
   const gap = w * 0.006;
   const totalGap = gap * 47;
   const barWidth = (w * 0.82 - totalGap) / 48;
-  const startX = (w - (barWidth * 48 + totalGap)) / 2;
+  const stepX = barWidth + gap;
+  const startX = (w - (barWidth * 48 + totalGap)) * 0.5;
 
   const maxBarHeight = h * 0.78;
   const minBarHeight = h * 0.012;
+  const radius = Math.min(barWidth * 0.5, 6);
+  const halfH = h * 0.5;
+
+  // Performance optimization: Reuse module-scoped bar rect object and hoist constant layout math
+  // to eliminate 48 temporary object allocations per frame during 60 FPS previews and video exports.
+  reusableBarRect.width = barWidth;
+  reusableBarRect.radius = radius;
 
   for (let i = 0; i < 48; i++) {
-    const amp = Math.max(0, Math.min(1, amplitudes[i] || 0));
-    const barHeight = Math.max(minBarHeight, amp * maxBarHeight);
-    const x = startX + i * (barWidth + gap);
-    const y = (h - barHeight) / 2;
+    const amp = amplitudes[i] || 0;
+    const clampedAmp = amp < 0 ? 0 : (amp > 1 ? 1 : amp);
+    const barHeight = Math.max(minBarHeight, clampedAmp * maxBarHeight);
 
-    // Draw as rounded rectangle
-    const radius = Math.min(barWidth / 2, 6);
-    drawRoundedRect(ctx, { x, y, width: barWidth, height: barHeight, radius });
+    reusableBarRect.x = startX + i * stepX;
+    reusableBarRect.y = halfH - barHeight * 0.5;
+    reusableBarRect.height = barHeight;
+
+    drawRoundedRect(ctx, reusableBarRect);
   }
 }
 
@@ -305,19 +318,27 @@ function drawOverview(audioBuffer) {
   const gap = w * 0.003;
   const totalGap = gap * (numBars - 1);
   const barWidth = (w - totalGap) / numBars;
+  const stepX = barWidth + gap;
   const maxBarHeight = h * 0.8;
   const minBarHeight = h * 0.05;
+  const radius = Math.min(barWidth * 0.5, 2);
+  const halfH = h * 0.5;
+
+  // Performance optimization: Reuse module-scoped overview rect object and hoist radius calculation
+  // to avoid 200 heap object allocations per drawOverview call during handle dragging.
+  reusableOverviewRect.width = barWidth;
+  reusableOverviewRect.radius = radius;
 
   for (let i = 0; i < numBars; i++) {
     const amp = cachedOverviewAmplitudes[i] / cachedOverviewGlobalMax;
     const barHeight = Math.max(minBarHeight, amp * maxBarHeight);
-    const x = i * (barWidth + gap);
-    const y = (h - barHeight) / 2;
+    const x = i * stepX;
+    const y = halfH - barHeight * 0.5;
 
     // Check if bar is in kept ranges
     const barStartTime = (i / numBars) * duration;
     const barEndTime = ((i + 1) / numBars) * duration;
-    const barCenterTime = (barStartTime + barEndTime) / 2;
+    const barCenterTime = (barStartTime + barEndTime) * 0.5;
 
     let isKept = false;
     for (const range of keepRanges) {
@@ -329,8 +350,11 @@ function drawOverview(audioBuffer) {
 
     ctxOverview.fillStyle = isKept ? "#ffffff" : "#7a7a76";
 
-    const radius = Math.min(barWidth / 2, 2);
-    drawRoundedRect(ctxOverview, { x, y, width: barWidth, height: barHeight, radius });
+    reusableOverviewRect.x = x;
+    reusableOverviewRect.y = y;
+    reusableOverviewRect.height = barHeight;
+
+    drawRoundedRect(ctxOverview, reusableOverviewRect);
   }
 }
 
