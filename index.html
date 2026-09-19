@@ -48,7 +48,7 @@
           Could not decode this audio file. Try MP3 or WAV.
         </div>
         <div class="controls-row" style="margin-top: 16px;">
-          <button id="showEditBtn" class="btn btn-secondary hidden">EDIT AUDIO</button>
+          <button id="showEditBtn" class="btn btn-secondary hidden" aria-controls="editSection" aria-expanded="false">EDIT AUDIO</button>
         </div>
       </section>
 
@@ -83,7 +83,7 @@
         </div>
 
         <div class="controls-row">
-          <button id="playPreviewBtn" class="btn btn-secondary" disabled>PLAY PREVIEW</button>
+          <button id="playPreviewBtn" class="btn btn-secondary" disabled aria-pressed="false" aria-label="Play audio preview">PLAY PREVIEW</button>
           <button id="cutSelectedBtn" class="btn btn-secondary" disabled>CUT SELECTED</button>
           <button id="undoBtn" class="btn btn-secondary" disabled>UNDO</button>
           <button id="resetBtn" class="btn btn-secondary" disabled>RESET</button>
