@@ -468,21 +468,22 @@ async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
       lastYield = performance.now();
     }
 
+    // Performance optimization: Hoist frame window boundaries and inverse count multiplier outside inner loop
+    // to eliminate branch checks (if tf >= 0 && tf < totalFrames), counter increments, and divisions per frame.
+    const minF = Math.max(0, f - smoothWindow);
+    const maxF = Math.min(totalFrames - 1, f + smoothWindow);
+    const invCount = 1.0 / (maxF - minF + 1);
+
     let ampSum = 0;
     let freqSum = 0;
-    let count = 0;
 
-    for (let off = -smoothWindow; off <= smoothWindow; off++) {
-      const tf = f + off;
-      if (tf >= 0 && tf < totalFrames) {
-        ampSum += rawAmplitude[tf];
-        freqSum += rawFrequency[tf];
-        count++;
-      }
+    for (let tf = minF; tf <= maxF; tf++) {
+      ampSum += rawAmplitude[tf];
+      freqSum += rawFrequency[tf];
     }
 
-    const normAmp = Math.min(1.0, (ampSum / count) * invMaxRms);
-    const normFreq = Math.min(1.0, (freqSum / count) * invMaxFreq);
+    const normAmp = Math.min(1.0, (ampSum * invCount) * invMaxRms);
+    const normFreq = Math.min(1.0, (freqSum * invCount) * invMaxFreq);
 
     metrics[f] = { amplitude: normAmp, frequency: normFreq };
   }
