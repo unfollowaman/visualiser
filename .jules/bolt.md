@@ -27,3 +27,9 @@
 **Learning:** Creating temporary `{ x, y, width, height, radius }` option objects on every bar inside 60 FPS canvas drawing loops (`drawBars` rendering 48 bars/frame and `drawOverview` rendering 200 bars) allocated over 500,000 temporary heap objects during a single 3-minute video export (10,800 frames). In single-threaded synchronous canvas drawing calls, mutating a single module-level persistent rect object (`reusableBarRect` and `reusableOverviewRect`) and hoisting loop-invariant layout calculations (`radius`, `stepX`, vertical center offsets) completely eliminates heap allocations and GC pressure without affecting rendering accuracy or API compatibility.
 
 **Action:** Re-use mutable persistent objects for option parameter signatures in high-frequency frame drawing loops.
+
+## 2026-09-20 - Pre-multiply Inverse Scaling Factors in 60 FPS Frequency Bin Animation Loops
+
+**Learning:** In `runPreviewLoop()` (`script.js`), calculating `count` using loop increments (`count++`) and executing floating-point divisions (`sum / count / 255`) for each visualizer bar on every `requestAnimationFrame` frame performed thousands of division operations per second. Pre-calculating a composite inverse scaling factor (`1 / (binCount * 255)`) into a `Float32Array` during frequency bin initialization replaces per-bar divisions, branch checks, and counter increments with a single multiplication (`sum * invCount`) in the 60 FPS animation loop.
+
+**Action:** Pre-calculate combined inverse multipliers for static bin structures to eliminate divisions and branch checks in high-frequency animation loops.

@@ -19,6 +19,7 @@ let previewStartTime = 0;
 let previewFreqDataArray = null;
 let previewBinStarts = null;
 let previewBinEnds = null;
+let previewBinInvCounts = null;
 let previewVisualAmplitudes = new Float32Array(48);
 
 // Edit State
@@ -1173,29 +1174,32 @@ function runPreviewLoop() {
     previewFreqDataArray = new Uint8Array(bufferLength);
     previewBinStarts = new Int32Array(48);
     previewBinEnds = new Int32Array(48);
+    previewBinInvCounts = new Float32Array(48);
     const binsPerBar = bufferLength / 48;
     for (let i = 0; i < 48; i++) {
-      previewBinStarts[i] = Math.floor(i * binsPerBar);
-      previewBinEnds[i] = Math.floor((i + 1) * binsPerBar);
+      const start = Math.floor(i * binsPerBar);
+      const end = Math.floor((i + 1) * binsPerBar);
+      previewBinStarts[i] = start;
+      previewBinEnds[i] = end;
+      const binCount = end - start;
+      previewBinInvCounts[i] = binCount > 0 ? 1 / (binCount * 255) : 0;
     }
   }
   activePreviewAnalyser.getByteFrequencyData(previewFreqDataArray);
 
-  // Group frequency bins (0 to 128) into 48 visualizer bars
+  // Performance optimization: Pre-multiply inverse count scaling factor (1 / (binCount * 255))
+  // during bin precomputation to eliminate loop counter increments, branch checks, and floating-point divisions
+  // in the 60 FPS animation loop.
   for (let i = 0; i < 48; i++) {
     const binStart = previewBinStarts[i];
     const binEnd = previewBinEnds[i];
 
     let sum = 0;
-    let count = 0;
-    for (let b = binStart; b < binEnd && b < bufferLength; b++) {
+    for (let b = binStart; b < binEnd; b++) {
       sum += previewFreqDataArray[b];
-      count++;
     }
 
-    const averageVal = count > 0 ? sum / count : 0;
-    // Scale 0-255 byte value to 0-1 amplitude representation
-    previewVisualAmplitudes[i] = averageVal / 255;
+    previewVisualAmplitudes[i] = sum * previewBinInvCounts[i];
   }
 
   drawBars(ctxPreview, previewVisualAmplitudes, previewCanvas.width, previewCanvas.height);
