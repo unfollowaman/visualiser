@@ -143,6 +143,19 @@ function mixDownToMono(audioBuffer) {
   return monoSamples;
 }
 
+// Helper to update button disabled state, aria-disabled attribute, and tooltip
+function setButtonDisabled(btn, isDisabled, disabledTitle = "", enabledTitle = "") {
+  if (!btn) return;
+  btn.disabled = isDisabled;
+  btn.setAttribute("aria-disabled", isDisabled ? "true" : "false");
+  const title = isDisabled ? disabledTitle : enabledTitle;
+  if (title) {
+    btn.setAttribute("title", title);
+  } else {
+    btn.removeAttribute("title");
+  }
+}
+
 // Helper to format duration in mm:ss
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -412,7 +425,7 @@ function selectAspectRatio(width, height, cardToSelect, cardToDeselect) {
 
   // Enable Render Button if we have audio decoded
   if (decodedAudioBuffer) {
-    renderBtn.disabled = false;
+    setButtonDisabled(renderBtn, false, "", "Render and download video");
   }
 }
 
@@ -578,16 +591,16 @@ function renderEditState() {
   updateTrimHandles();
   drawOverview(decodedAudioBuffer);
 
-  undoBtn.disabled = editHistory.length === 0;
+  setButtonDisabled(undoBtn, editHistory.length === 0, "No edit history to undo", "Undo last audio edit");
 
   const isFull = keepRanges.length === 1 &&
                  keepRanges[0].start === 0 &&
                  keepRanges[0].end === decodedAudioBuffer.duration;
-  resetBtn.disabled = isFull;
+  setButtonDisabled(resetBtn, isFull, "Audio is already at original full length", "Reset audio edits");
 
   if (decodedAudioBuffer) {
-    continueBtn.disabled = false;
-    playPreviewBtn.disabled = false;
+    setButtonDisabled(continueBtn, false, "", "Continue with current audio edits");
+    setButtonDisabled(playPreviewBtn, false, "", "Play audio preview");
   }
 }
 
@@ -673,7 +686,7 @@ editorContainer.addEventListener("touchstart", (e) => {
 function updateSelectionHighlight() {
   if (selectionStartX === null || selectionEndX === null) {
     selectionHighlight.classList.add("hidden");
-    cutSelectedBtn.disabled = true;
+    setButtonDisabled(cutSelectedBtn, true, "Drag across waveform timeline to select a region to cut");
     return;
   }
 
@@ -685,10 +698,10 @@ function updateSelectionHighlight() {
     selectionHighlight.style.left = `${minX}px`;
     selectionHighlight.style.width = `${width}px`;
     selectionHighlight.classList.remove("hidden");
-    cutSelectedBtn.disabled = false;
+    setButtonDisabled(cutSelectedBtn, false, "", "Cut selected audio range");
   } else {
     selectionHighlight.classList.add("hidden");
-    cutSelectedBtn.disabled = true;
+    setButtonDisabled(cutSelectedBtn, true, "Drag across waveform timeline to select a region to cut");
   }
 }
 
@@ -841,7 +854,7 @@ showEditBtn.addEventListener("click", () => {
   showEditBtn.classList.add("hidden");
   showEditBtn.setAttribute("aria-expanded", "true");
   aspectRatioSection.classList.add("hidden"); // Optional, hide aspect ratio while editing
-  renderBtn.disabled = true; // Disable render until "Continue" is clicked
+  setButtonDisabled(renderBtn, true, "Finish editing audio and click Continue to render");
   updateEditorDimensions();
 });
 
@@ -901,8 +914,8 @@ function handleSelectedFile(file) {
   durationWarning.classList.add("hidden");
   decodeError.textContent = "Could not decode this audio file. Try MP3 or WAV.";
   decodeError.classList.add("hidden");
-  playPreviewBtn.disabled = true;
-  renderBtn.disabled = true;
+  setButtonDisabled(playPreviewBtn, true, "Load an audio file to play preview");
+  setButtonDisabled(renderBtn, true, "Select 16:9 or 9:16 aspect ratio format to render");
   progressContainer.classList.add("hidden");
   downloadContainer.classList.add("hidden");
   statusLine.classList.add("hidden");
@@ -1465,9 +1478,9 @@ continueBtn.addEventListener("click", () => {
   // The downstream renderBtn is disabled until aspect ratio is selected
   // unless an aspect ratio is already chosen.
   if (chosenWidth && chosenHeight) {
-    renderBtn.disabled = false;
+    setButtonDisabled(renderBtn, false, "", "Render and download video");
   } else {
-    renderBtn.disabled = true;
+    setButtonDisabled(renderBtn, true, "Select 16:9 or 9:16 aspect ratio format to render");
   }
 });
 
@@ -1480,8 +1493,8 @@ renderBtn.addEventListener("click", async () => {
   stopPreview();
 
   // Reset progress, disable buttons and aspect cards during render
-  renderBtn.disabled = true;
-  playPreviewBtn.disabled = true;
+  setButtonDisabled(renderBtn, true, "Video rendering in progress...");
+  setButtonDisabled(playPreviewBtn, true, "Video rendering in progress...");
   card16x9.classList.add("disabled");
   card9x16.classList.add("disabled");
   progressContainer.classList.remove("hidden");
@@ -1547,8 +1560,8 @@ renderBtn.addEventListener("click", async () => {
     progressContainer.classList.add("hidden");
   } finally {
     // Graceful recovery
-    renderBtn.disabled = false;
-    playPreviewBtn.disabled = false;
+    setButtonDisabled(renderBtn, false, "", "Render and download video");
+    setButtonDisabled(playPreviewBtn, false, "", "Play audio preview");
     card16x9.classList.remove("disabled");
     card9x16.classList.remove("disabled");
   }

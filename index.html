@@ -83,13 +83,13 @@
         </div>
 
         <div class="controls-row">
-          <button id="playPreviewBtn" class="btn btn-secondary" disabled aria-pressed="false" aria-label="Play audio preview">PLAY PREVIEW</button>
-          <button id="cutSelectedBtn" class="btn btn-secondary" disabled>CUT SELECTED</button>
-          <button id="undoBtn" class="btn btn-secondary" disabled>UNDO</button>
-          <button id="resetBtn" class="btn btn-secondary" disabled>RESET</button>
+          <button id="playPreviewBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-pressed="false" aria-label="Play audio preview" title="Load an audio file to play preview">PLAY PREVIEW</button>
+          <button id="cutSelectedBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Cut selected audio range" title="Drag across waveform timeline to select a region to cut">CUT SELECTED</button>
+          <button id="undoBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Undo last audio edit" title="No edit history to undo">UNDO</button>
+          <button id="resetBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Reset audio edits" title="Audio is already at original full length">RESET</button>
         </div>
         <div class="controls-row">
-          <button id="continueBtn" class="btn btn-primary" disabled>CONTINUE</button>
+          <button id="continueBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Continue with current audio edits" title="Load an audio file to continue">CONTINUE</button>
         </div>
       </section>
 
@@ -118,7 +118,7 @@
       <!-- Export Section -->
       <section class="panel export-section">
         <div class="controls-row">
-          <button id="renderBtn" class="btn btn-primary" disabled>RENDER AND DOWNLOAD</button>
+          <button id="renderBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
         </div>
 
         <!-- Progress Area -->
@@ -153,7 +153,7 @@
         </div>
 
         <div class="controls-row" style="margin-top: 16px;">
-          <button id="renderFlowerBtn" class="btn btn-primary" disabled>RENDER AND DOWNLOAD</button>
+          <button id="renderFlowerBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
         </div>
 
         <!-- Flower Progress Area -->

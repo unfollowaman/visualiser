@@ -491,6 +491,19 @@ async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   return metrics;
 }
 
+// Helper to update button disabled state, aria-disabled attribute, and tooltip
+function setButtonDisabled(btn, isDisabled, disabledTitle = "", enabledTitle = "") {
+  if (!btn) return;
+  btn.disabled = isDisabled;
+  btn.setAttribute("aria-disabled", isDisabled ? "true" : "false");
+  const title = isDisabled ? disabledTitle : enabledTitle;
+  if (title) {
+    btn.setAttribute("title", title);
+  } else {
+    btn.removeAttribute("title");
+  }
+}
+
 // Ensure renderFlowerBtn is enabled when file is loaded and aspect ratio chosen
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
@@ -498,7 +511,7 @@ const observer = new MutationObserver((mutations) => {
        const aspectRatioSection = document.getElementById("aspectRatioSection");
        if (!aspectRatioSection.classList.contains("hidden")) {
           if (window.workingAudioBuffer) {
-              renderFlowerBtn.disabled = false;
+              setButtonDisabled(renderFlowerBtn, false, "", "Render flower video and download");
           }
        }
     }
@@ -512,7 +525,7 @@ async function renderAndExportFlowerVideo() {
 
   stopAllPreviews();
 
-  renderFlowerBtn.disabled = true;
+  setButtonDisabled(renderFlowerBtn, true, "Flower video rendering in progress...");
   flowerProgressContainer.classList.remove("hidden");
   flowerDownloadContainer.classList.add("hidden");
   flowerStatusLine.classList.add("hidden");
@@ -623,7 +636,7 @@ async function renderAndExportFlowerVideo() {
     flowerStatusLine.classList.remove("hidden");
     flowerProgressContainer.classList.add("hidden");
   } finally {
-    renderFlowerBtn.disabled = false;
+    setButtonDisabled(renderFlowerBtn, false, "", "Render flower video and download");
     startAllPreviews();
   }
 }
