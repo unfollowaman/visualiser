@@ -285,7 +285,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
 }
 
@@ -294,15 +294,28 @@ body {
   color: #7a7a76;
   font-weight: 400;
   font-size: 18px;
+  transition: color 0.15s ease;
 }
 
 .aspect-card .card-subtitle {
   color: #7a7a76;
   font-size: 11px;
+  transition: color 0.15s ease;
 }
 
-/* Selected state: border and text become white */
+.aspect-card:hover:not(.disabled) {
+  background-color: #1a1a1a;
+  border-color: #7a7a76;
+}
+
+.aspect-card:hover:not(.disabled) .card-title,
+.aspect-card:hover:not(.disabled) .card-subtitle {
+  color: #f2f2f0;
+}
+
+/* Selected state: border, background, and text become white/highlighted */
 .aspect-card.selected {
+  background-color: #1a1a1a;
   border-color: #f2f2f0;
 }
 

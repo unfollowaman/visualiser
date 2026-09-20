@@ -9,3 +9,7 @@
 ## 2026-09-18 - ARIA Toggle States (`aria-pressed`) & Collapsible Expansion Controls (`aria-expanded`)
 **Learning:** Toggle buttons with state transitions (such as play/stop preview toggles) require dynamic `aria-pressed` ("true"/"false") and explicit `aria-label` updates, while expandable control buttons opening hidden panels require `aria-controls` pointing to the section ID and dynamic `aria-expanded` updates so screen readers accurately announce control state changes.
 **Action:** Always pair toggle buttons with dynamic `aria-pressed` / `aria-label` updates and section toggles with `aria-controls` / `aria-expanded`.
+
+## 2026-09-19 - Interactive Card Hover Feedback & Transition Consistency
+**Learning:** Custom interactive card controls (such as aspect ratio cards) require subtle background highlights (`background-color: #1a1a1a`) and text color transitions on `:hover:not(.disabled)` and `.selected` states to match existing drag-and-drop zones and offer tactile feedback during pointer interactions.
+**Action:** Ensure interactive selection cards consistently implement hover background transitions alongside keyboard `Enter`/`Space` listeners and ARIA state updates.
