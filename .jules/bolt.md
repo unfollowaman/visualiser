@@ -33,3 +33,9 @@
 **Learning:** In `runPreviewLoop()` (`script.js`), calculating `count` using loop increments (`count++`) and executing floating-point divisions (`sum / count / 255`) for each visualizer bar on every `requestAnimationFrame` frame performed thousands of division operations per second. Pre-calculating a composite inverse scaling factor (`1 / (binCount * 255)`) into a `Float32Array` during frequency bin initialization replaces per-bar divisions, branch checks, and counter increments with a single multiplication (`sum * invCount`) in the 60 FPS animation loop.
 
 **Action:** Pre-calculate combined inverse multipliers for static bin structures to eliminate divisions and branch checks in high-frequency animation loops.
+
+## 2026-09-21 - Hoist Boundary Clamping Outside Inner PCM Sample Iteration Loops
+
+**Learning:** In `analyzeAudio()` (`script.js`), the inner sample loop over Float32Array PCM samples (`for (let s = segStart; s < segEnd && s < totalSamples; s++)`) evaluated `s < totalSamples` on every single iteration across all 48 bars per frame (~8,000,000 PCM samples for a 3-minute audio file). Pre-calculating `const sampleLimit = segEnd < totalSamples ? segEnd : totalSamples;` prior to entering the inner loop eliminates millions of redundant boundary check comparisons in the tightest audio signal analysis loop in `script.js`.
+
+**Action:** Hoist array upper bound clamping and range checks outside tight mathematical data processing loops.

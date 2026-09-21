@@ -1025,7 +1025,10 @@ function analyzeAudio(audioBuffer) {
 
       let sumSquares = 0;
       let count = 0;
-      for (let s = segStart; s < segEnd && s < totalSamples; s++) {
+      // Performance optimization: Hoist totalSamples boundary clamping outside the inner sample loop.
+      // Eliminates millions of redundant s < totalSamples comparisons across PCM audio frames.
+      const sampleLimit = segEnd < totalSamples ? segEnd : totalSamples;
+      for (let s = segStart; s < sampleLimit; s++) {
         const val = monoSamples[s];
         sumSquares += val * val;
         count++;
