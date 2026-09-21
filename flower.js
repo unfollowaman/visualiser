@@ -629,6 +629,9 @@ async function renderAndExportFlowerVideo() {
     flowerDownloadContainer.classList.remove("hidden");
     flowerStatusLine.textContent = "Rendering completed successfully!";
     flowerStatusLine.classList.remove("hidden");
+    if (flowerDownloadVideo) {
+      flowerDownloadVideo.focus();
+    }
 
   } catch (err) {
     logError("Export Error:", err);

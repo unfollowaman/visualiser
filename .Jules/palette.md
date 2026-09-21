@@ -13,3 +13,7 @@
 ## 2026-09-19 - Interactive Card Hover Feedback & Transition Consistency
 **Learning:** Custom interactive card controls (such as aspect ratio cards) require subtle background highlights (`background-color: #1a1a1a`) and text color transitions on `:hover:not(.disabled)` and `.selected` states to match existing drag-and-drop zones and offer tactile feedback during pointer interactions.
 **Action:** Ensure interactive selection cards consistently implement hover background transitions alongside keyboard `Enter`/`Space` listeners and ARIA state updates.
+
+## 2026-09-21 - Focus Management Across Collapsible Panel Toggles and Export Completion
+**Learning:** When expanding or collapsing UI panels (`display: none`) or revealing download links after async task completion, explicit DOM element focus (`.focus()`) must be set on newly revealed interactive controls (e.g. preview controls, aspect cards, or download links). Otherwise, hiding the currently focused trigger element causes browser focus to drop to `document.body`, forcing keyboard and screen reader users to lose their place in the document flow.
+**Action:** Always shift focus programmatically to the primary interactive element in newly revealed sections or completed export containers.
