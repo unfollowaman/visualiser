@@ -238,7 +238,7 @@ body {
 
 .handle-readout {
   position: absolute;
-  top: -24px;
+  top: 6px;
   background-color: #121212;
   color: #f2f2f0;
   border: 1px solid #232323;
@@ -249,10 +249,13 @@ body {
   opacity: 0;
   transition: opacity 0.15s ease;
   white-space: nowrap;
+  z-index: 15;
 }
 
 .trim-handle:hover .handle-readout,
 .trim-handle:active .handle-readout,
+.trim-handle:focus .handle-readout,
+.trim-handle:focus-visible .handle-readout,
 .trim-handle.dragging .handle-readout {
   opacity: 1;
 }

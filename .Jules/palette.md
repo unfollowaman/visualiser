@@ -17,3 +17,7 @@
 ## 2026-09-21 - Focus Management Across Collapsible Panel Toggles and Export Completion
 **Learning:** When expanding or collapsing UI panels (`display: none`) or revealing download links after async task completion, explicit DOM element focus (`.focus()`) must be set on newly revealed interactive controls (e.g. preview controls, aspect cards, or download links). Otherwise, hiding the currently focused trigger element causes browser focus to drop to `document.body`, forcing keyboard and screen reader users to lose their place in the document flow.
 **Action:** Always shift focus programmatically to the primary interactive element in newly revealed sections or completed export containers.
+
+## 2026-09-22 - Visual Tooltip & Readout Visibility on Keyboard Focus
+**Learning:** Hover-triggered visual tooltips or data readouts attached to interactive controls (like audio trim handle timestamp readouts) must trigger on `:focus` and `:focus-visible` in CSS, and be positioned inside parent boundaries or with high `z-index` so keyboard users tabbing or adjusting values via keyboard can inspect readouts in real-time without clipping.
+**Action:** Always include `:focus` and `:focus-visible` states alongside `:hover` for interactive control readouts and tooltips.

@@ -138,4 +138,22 @@ test.describe('trimHandleKeyboard unit and integration tests', () => {
     expect(result.ariaValuenow).toBe('10.0');
     expect(result.ariaValuetext).toBe('00:10.0 end time');
   });
+
+  test('trim handle readouts are visible when handle receives focus', async ({ page }) => {
+    await page.evaluate(() => {
+      document.getElementById('editSection').classList.remove('hidden');
+      const left = document.getElementById('leftTrimHandle');
+      left.style.transition = 'none';
+      const readout = left.querySelector('.handle-readout');
+      if (readout) readout.style.transition = 'none';
+      left.focus();
+    });
+
+    const opacity = await page.evaluate(() => {
+      const readout = document.querySelector('#leftTrimHandle .handle-readout');
+      return window.getComputedStyle(readout).opacity;
+    });
+
+    expect(opacity).toBe('1');
+  });
 });
