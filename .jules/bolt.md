@@ -39,3 +39,9 @@
 **Learning:** In `analyzeAudio()` (`script.js`), the inner sample loop over Float32Array PCM samples (`for (let s = segStart; s < segEnd && s < totalSamples; s++)`) evaluated `s < totalSamples` on every single iteration across all 48 bars per frame (~8,000,000 PCM samples for a 3-minute audio file). Pre-calculating `const sampleLimit = segEnd < totalSamples ? segEnd : totalSamples;` prior to entering the inner loop eliminates millions of redundant boundary check comparisons in the tightest audio signal analysis loop in `script.js`.
 
 **Action:** Hoist array upper bound clamping and range checks outside tight mathematical data processing loops.
+
+## 2026-09-22 - Bypass AudioBuffer Allocation and Sample Fading for Untrimmed Original Audio
+
+**Learning:** `buildWorkingAudioBuffer()` is invoked whenever previewing audio, continuing to render, or initiating video exports. When the user has not edited the audio (or resets it to full length), `keepRanges` spans the entire duration (`keepRanges[0].start === 0 && keepRanges[0].end === decodedAudioBuffer.duration`). Previously, `buildWorkingAudioBuffer()` still allocated a new `AudioBuffer` and copied all channels sample-by-sample. Bypassing buffer construction and returning `decodedAudioBuffer` directly when `keepRanges` is untrimmed eliminates unnecessary memory allocations and Float32Array bulk copies.
+
+**Action:** Check if range parameters cover the full source duration before reconstructing audio or binary data buffers.

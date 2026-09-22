@@ -186,7 +186,14 @@ function applyFade(sample, index, rangeSamples, fadeSamples) {
 // Build the working audio buffer from decodedAudioBuffer based on keepRanges
 function buildWorkingAudioBuffer() {
   if (!decodedAudioBuffer) return null;
-  if (keepRanges.length === 0) return decodedAudioBuffer;
+  if (
+    keepRanges.length === 0 ||
+    (keepRanges.length === 1 &&
+      keepRanges[0].start === 0 &&
+      keepRanges[0].end === decodedAudioBuffer.duration)
+  ) {
+    return decodedAudioBuffer;
+  }
 
   const sampleRate = decodedAudioBuffer.sampleRate;
   const numChannels = decodedAudioBuffer.numberOfChannels;
