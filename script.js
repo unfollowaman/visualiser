@@ -856,6 +856,9 @@ showEditBtn.addEventListener("click", () => {
   aspectRatioSection.classList.add("hidden"); // Optional, hide aspect ratio while editing
   setButtonDisabled(renderBtn, true, "Finish editing audio and click Continue to render");
   updateEditorDimensions();
+  if (playPreviewBtn) {
+    playPreviewBtn.focus();
+  }
 });
 
 // Handle reliable file click and keyboard gestures
@@ -1485,6 +1488,10 @@ continueBtn.addEventListener("click", () => {
   } else {
     setButtonDisabled(renderBtn, true, "Select 16:9 or 9:16 aspect ratio format to render");
   }
+
+  if (card16x9) {
+    card16x9.focus();
+  }
 });
 
 
@@ -1555,6 +1562,9 @@ renderBtn.addEventListener("click", async () => {
     downloadContainer.classList.remove("hidden");
     statusLine.textContent = "Rendering completed successfully!";
     statusLine.classList.remove("hidden");
+    if (downloadVideo) {
+      downloadVideo.focus();
+    }
 
   } catch (err) {
     logError("Export Error: ", err);
