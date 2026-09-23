@@ -320,13 +320,15 @@ function drawOverview(audioBuffer) {
     for (let i = 0; i < numBars; i++) {
       const startSample = Math.floor(i * samplesPerBar);
       const endSample = Math.floor((i + 1) * samplesPerBar);
+      // Performance optimization: Hoist sample limit and count calculation outside inner loop
+      // to eliminate boundary checks and count increments over PCM audio samples.
+      const sampleLimit = endSample < totalSamples ? endSample : totalSamples;
+      const count = Math.max(0, sampleLimit - startSample);
 
       let sumSquares = 0;
-      let count = 0;
-      for (let s = startSample; s < endSample && s < totalSamples; s++) {
+      for (let s = startSample; s < sampleLimit; s++) {
         const val = monoSamples[s];
         sumSquares += val * val;
-        count++;
       }
       const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
       cachedOverviewAmplitudes[i] = rms;
@@ -1034,14 +1036,13 @@ function analyzeAudio(audioBuffer) {
       const segEnd = Math.floor(frameStartSample + (barIdx + 1) * segmentLength);
 
       let sumSquares = 0;
-      let count = 0;
-      // Performance optimization: Hoist totalSamples boundary clamping outside the inner sample loop.
-      // Eliminates millions of redundant s < totalSamples comparisons across PCM audio frames.
+      // Performance optimization: Hoist sample count calculation outside inner sample loop.
+      // Eliminates millions of redundant count++ operations across PCM audio samples.
       const sampleLimit = segEnd < totalSamples ? segEnd : totalSamples;
+      const count = Math.max(0, sampleLimit - segStart);
       for (let s = segStart; s < sampleLimit; s++) {
         const val = monoSamples[s];
         sumSquares += val * val;
-        count++;
       }
 
       // Root Mean Square
