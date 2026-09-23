@@ -203,4 +203,40 @@ test.describe('trimHandleHistory unit and integration tests', () => {
     expect(result.historyLengthAfterUndo).toBe(0);
     expect(result.undoBtnDisabledAfterUndo).toBe(true);
   });
+
+  test('Ctrl+Z or Cmd+Z keyboard shortcut triggers undo when history is present', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      document.getElementById('editSection').classList.remove('hidden');
+      decodedAudioBuffer = audioCtx.createBuffer(1, 44100 * 10, 44100);
+      keepRanges = [{ start: 2, end: 8 }];
+      editHistory = [[{ start: 0, end: 10 }]];
+      renderEditState();
+
+      const initialTitle = document.getElementById('undoBtn').getAttribute('title');
+
+      // Dispatch Ctrl+Z event
+      window.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'z',
+        code: 'KeyZ',
+        ctrlKey: true,
+        bubbles: true
+      }));
+
+      const rangesAfterCtrlZ = JSON.parse(JSON.stringify(keepRanges));
+      const historyLengthAfterCtrlZ = editHistory.length;
+
+      return {
+        initialTitle,
+        rangesAfterCtrlZ,
+        historyLengthAfterCtrlZ
+      };
+    });
+
+    expect(result.initialTitle).toContain('Ctrl+Z / ⌘Z');
+    expect(result.rangesAfterCtrlZ).toEqual([{ start: 0, end: 10 }]);
+    expect(result.historyLengthAfterCtrlZ).toBe(0);
+  });
 });
