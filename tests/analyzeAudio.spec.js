@@ -34,4 +34,34 @@ test.describe('analyzeAudio unit and edge case tests', () => {
     expect(typeof analysis.frame0Bar0).toBe('number');
     expect(typeof analysis.frame119Bar47).toBe('number');
   });
+
+  test('drawOverview correctly computes cached overview amplitudes using hoisted sample limits', async ({ page }) => {
+    const res = await page.evaluate(() => {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const sampleRate = 44100;
+      const duration = 1;
+      const mockBuffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
+      const channel = mockBuffer.getChannelData(0);
+      for (let i = 0; i < channel.length; i++) {
+        channel[i] = 0.5;
+      }
+
+      keepRanges = [{ start: 0, end: 1 }];
+      drawOverview(mockBuffer);
+
+      return {
+        hasCachedAmplitudes: Array.isArray(cachedOverviewAmplitudes) || cachedOverviewAmplitudes instanceof Float32Array,
+        barCount: cachedOverviewAmplitudes ? cachedOverviewAmplitudes.length : 0,
+        firstBarRms: cachedOverviewAmplitudes ? cachedOverviewAmplitudes[0] : 0,
+        globalMax: cachedOverviewGlobalMax
+      };
+    });
+
+    expect(res.hasCachedAmplitudes).toBe(true);
+    expect(res.barCount).toBe(200);
+    expect(res.firstBarRms).toBeCloseTo(0.5, 2);
+    expect(res.globalMax).toBeCloseTo(0.5, 2);
+  });
 });

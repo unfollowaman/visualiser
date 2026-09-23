@@ -45,3 +45,9 @@
 **Learning:** `buildWorkingAudioBuffer()` is invoked whenever previewing audio, continuing to render, or initiating video exports. When the user has not edited the audio (or resets it to full length), `keepRanges` spans the entire duration (`keepRanges[0].start === 0 && keepRanges[0].end === decodedAudioBuffer.duration`). Previously, `buildWorkingAudioBuffer()` still allocated a new `AudioBuffer` and copied all channels sample-by-sample. Bypassing buffer construction and returning `decodedAudioBuffer` directly when `keepRanges` is untrimmed eliminates unnecessary memory allocations and Float32Array bulk copies.
 
 **Action:** Check if range parameters cover the full source duration before reconstructing audio or binary data buffers.
+
+## 2026-09-23 - Pre-calculate Sample Limits and Counts Outside Inner Signal Processing Loops
+
+**Learning:** In `analyzeAudio()` and `drawOverview()` (`script.js`), inner loops over Float32Array PCM audio samples incremented a `count` variable (`count++`) on every sample iteration across all audio frames (millions of operations for full-length audio tracks). Because segment boundaries and total sample limits are deterministic before entering the inner sample loop, pre-calculating `const sampleLimit = endSample < totalSamples ? endSample : totalSamples;` and `const count = Math.max(0, sampleLimit - startSample);` outside the inner loop eliminates millions of redundant increment operations and boundary checks in audio signal processing.
+
+**Action:** Pre-calculate range lengths and sample counts in $O(1)$ time prior to entering tight data array processing loops.
