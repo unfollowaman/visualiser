@@ -646,4 +646,11 @@ async function renderAndExportFlowerVideo() {
 
 renderFlowerBtn.addEventListener("click", renderAndExportFlowerVideo);
 
+if (flowerDownloadVideo) {
+  flowerDownloadVideo.addEventListener("click", () => {
+    flowerStatusLine.textContent = "Download started!";
+    flowerStatusLine.classList.remove("hidden");
+  });
+}
+
 initFlowerGrid();
