@@ -1583,7 +1583,6 @@ renderBtn.addEventListener("click", async () => {
     if (downloadVideo) {
       downloadVideo.focus();
     }
-
   } catch (err) {
     logError("Export Error: ", err);
     statusLine.textContent = `Error: ${err.message || err}`;
@@ -1597,3 +1596,10 @@ renderBtn.addEventListener("click", async () => {
     card9x16.classList.remove("disabled");
   }
 });
+
+if (downloadVideo) {
+  downloadVideo.addEventListener("click", () => {
+    statusLine.textContent = "Download started!";
+    statusLine.classList.remove("hidden");
+  });
+}
