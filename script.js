@@ -347,10 +347,11 @@ function drawOverview(audioBuffer) {
   const radius = Math.min(barWidth * 0.5, 2);
   const halfH = h * 0.5;
 
-  // Performance optimization: Reuse module-scoped overview rect object and hoist radius calculation
-  // to avoid 200 heap object allocations per drawOverview call during handle dragging.
+  // Performance optimization: Pre-calculate duration step factor outside loop and reuse module-scoped overview rect object
+  // to eliminate 200 division operations per drawOverview frame during interactive trim handle dragging.
   reusableOverviewRect.width = barWidth;
   reusableOverviewRect.radius = radius;
+  const durationPerBar = duration / numBars;
 
   for (let i = 0; i < numBars; i++) {
     const amp = cachedOverviewAmplitudes[i] / cachedOverviewGlobalMax;
@@ -358,10 +359,8 @@ function drawOverview(audioBuffer) {
     const x = i * stepX;
     const y = halfH - barHeight * 0.5;
 
-    // Check if bar is in kept ranges
-    const barStartTime = (i / numBars) * duration;
-    const barEndTime = ((i + 1) / numBars) * duration;
-    const barCenterTime = (barStartTime + barEndTime) * 0.5;
+    // Check if bar is in kept ranges using direct center time calculation
+    const barCenterTime = (i + 0.5) * durationPerBar;
 
     let isKept = false;
     for (const range of keepRanges) {

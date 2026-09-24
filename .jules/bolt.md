@@ -51,3 +51,9 @@
 **Learning:** In `analyzeAudio()` and `drawOverview()` (`script.js`), inner loops over Float32Array PCM audio samples incremented a `count` variable (`count++`) on every sample iteration across all audio frames (millions of operations for full-length audio tracks). Because segment boundaries and total sample limits are deterministic before entering the inner sample loop, pre-calculating `const sampleLimit = endSample < totalSamples ? endSample : totalSamples;` and `const count = Math.max(0, sampleLimit - startSample);` outside the inner loop eliminates millions of redundant increment operations and boundary checks in audio signal processing.
 
 **Action:** Pre-calculate range lengths and sample counts in $O(1)$ time prior to entering tight data array processing loops.
+
+## 2026-09-24 - Pre-calculate Duration Step Factor Outside Interactive 200-Bar Waveform Redraw Loops
+
+**Learning:** In `drawOverview()` (`script.js`), redrawn on every `mousemove`/`touchmove` drag event when adjusting audio trim handles, calculating `(i / numBars) * duration`, `((i + 1) / numBars) * duration`, and averaging them inside the 200-bar loop executed 200 division operations per drag frame. Pre-calculating `durationPerBar = duration / numBars` outside the loop simplifies bar center time computation to `(i + 0.5) * durationPerBar`, eliminating 200 floating-point divisions per drag event frame during interactive handle dragging.
+
+**Action:** Pre-calculate step factors for index-based timeline positioning outside high-frequency canvas redraw loops.
