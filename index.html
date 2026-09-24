@@ -31,7 +31,7 @@
           <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
         </div>
 
-        <div id="fileInfoContainer" class="file-info-container hidden">
+        <div id="fileInfoContainer" class="file-info-container hidden" role="status" aria-live="polite">
           <div class="file-meta">
             <span class="file-label">FILE:</span>
             <span id="fileName" class="file-value">filename.mp3</span>
@@ -85,7 +85,7 @@
         <div class="controls-row">
           <button id="playPreviewBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-pressed="false" aria-label="Play audio preview" title="Load an audio file to play preview">PLAY PREVIEW</button>
           <button id="cutSelectedBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Cut selected audio range" title="Drag across waveform timeline to select a region to cut">CUT SELECTED</button>
-          <button id="undoBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Undo last audio edit" title="No edit history to undo">UNDO</button>
+          <button id="undoBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Undo last audio edit (Ctrl+Z or Cmd+Z)" title="No edit history to undo">UNDO</button>
           <button id="resetBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Reset audio edits" title="Audio is already at original full length">RESET</button>
         </div>
         <div class="controls-row">

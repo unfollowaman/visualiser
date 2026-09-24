@@ -85,7 +85,7 @@ test.describe('Action buttons aria-disabled and tooltip synchronization', () => 
 
     expect(result.updatedUndoState.disabled).toBe(false);
     expect(result.updatedUndoState.ariaDisabled).toBe('false');
-    expect(result.updatedUndoState.title).toBe('Undo last audio edit');
+    expect(result.updatedUndoState.title).toBe('Undo last audio edit (Ctrl+Z / ⌘Z)');
 
     expect(result.updatedResetState.disabled).toBe(false);
     expect(result.updatedResetState.ariaDisabled).toBe('false');

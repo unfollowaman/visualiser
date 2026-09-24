@@ -21,3 +21,7 @@
 ## 2026-09-22 - Visual Tooltip & Readout Visibility on Keyboard Focus
 **Learning:** Hover-triggered visual tooltips or data readouts attached to interactive controls (like audio trim handle timestamp readouts) must trigger on `:focus` and `:focus-visible` in CSS, and be positioned inside parent boundaries or with high `z-index` so keyboard users tabbing or adjusting values via keyboard can inspect readouts in real-time without clipping.
 **Action:** Always include `:focus` and `:focus-visible` states alongside `:hover` for interactive control readouts and tooltips.
+
+## 2026-09-23 - Keyboard Shortcut Ergonomics (`Ctrl+Z` / `⌘Z`) & ARIA Shortcut Hints
+**Learning:** Destructive or reversible interactive UI actions (such as audio editing undos) need global keyboard shortcut support (`Ctrl+Z` / `Cmd+Z`) paired with explicit input-element guards (`isInput` checks) and clear shortcut hints in `title` tooltips and `aria-label` attributes (`Undo last audio edit (Ctrl+Z / ⌘Z)`). This makes web editing interactions feel like native desktop software while preserving screen reader and keyboard clarity.
+**Action:** Always pair reversible action buttons with standard desktop keyboard shortcuts (`Ctrl+Z`), checking for input element focus, and include shortcut hints in `title` tooltips and `aria-label` descriptions.

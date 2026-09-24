@@ -600,7 +600,7 @@ function renderEditState() {
   updateTrimHandles();
   drawOverview(decodedAudioBuffer);
 
-  setButtonDisabled(undoBtn, editHistory.length === 0, "No edit history to undo", "Undo last audio edit");
+  setButtonDisabled(undoBtn, editHistory.length === 0, "No edit history to undo", "Undo last audio edit (Ctrl+Z / ⌘Z)");
 
   const isFull = keepRanges.length === 1 &&
                  keepRanges[0].start === 0 &&
@@ -844,6 +844,17 @@ undoBtn.addEventListener("click", () => {
     selectionEndX = null;
     updateSelectionHighlight();
     renderEditState();
+  }
+});
+
+window.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+    const activeEl = document.activeElement;
+    const isInput = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.isContentEditable);
+    if (!isInput && editSection && !editSection.classList.contains("hidden") && undoBtn && !undoBtn.disabled) {
+      e.preventDefault();
+      undoBtn.click();
+    }
   }
 });
 
