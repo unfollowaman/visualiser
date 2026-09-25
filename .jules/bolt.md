@@ -57,3 +57,9 @@
 **Learning:** In `drawOverview()` (`script.js`), redrawn on every `mousemove`/`touchmove` drag event when adjusting audio trim handles, calculating `(i / numBars) * duration`, `((i + 1) / numBars) * duration`, and averaging them inside the 200-bar loop executed 200 division operations per drag frame. Pre-calculating `durationPerBar = duration / numBars` outside the loop simplifies bar center time computation to `(i + 0.5) * durationPerBar`, eliminating 200 floating-point divisions per drag event frame during interactive handle dragging.
 
 **Action:** Pre-calculate step factors for index-based timeline positioning outside high-frequency canvas redraw loops.
+
+## 2026-09-25 - Fast Path Bypass and Frozen Zero Object Reuse for Silent Audio Frames in Signal Analysis
+
+**Learning:** In frame-by-frame audio signal analysis (`extractAudioMetrics`), computing `Math.sqrt` and zero-crossing divisions on silent audio frames (e.g. padding/intro/outro silence) performs thousands of unnecessary math calculations and allocates thousands of temporary `{ amplitude, frequency }` objects. Checking `if (sumSq === 0)` to fast-path zero metric assignment and reusing a module-level frozen `ZERO_METRIC` object eliminates redundant square roots, divisions, and GC heap allocations.
+
+**Action:** Fast-path silent/zero signal frames in mathematical analysis loops and reuse frozen immutable metric singletons for zero values.

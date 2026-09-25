@@ -17,6 +17,9 @@ let cardVisibility = [];
 let flowerCardObserver = null;
 let flowerMp4MuxerPromise = null;
 
+// Immutable frozen zero metric object reused for silent frames to avoid heap allocation churn
+const ZERO_METRIC = Object.freeze({ amplitude: 0, frequency: 0 });
+
 // DOM Elements
 const flowerSection = document.getElementById("flowerSection");
 const flowerGrid = document.getElementById("flowerGrid");
@@ -398,7 +401,7 @@ function yieldToMain() {
 
 async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
   if (!audioBuffer) {
-    return new Array(totalFrames).fill({ amplitude: 0, frequency: 0 });
+    return new Array(totalFrames).fill(ZERO_METRIC);
   }
 
   const sampleRate = audioBuffer.sampleRate;
@@ -445,6 +448,15 @@ async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
       prevVal = val;
     }
 
+    // Performance optimization: Fast path bypass for silent audio frames (sumSq === 0)
+    // Avoids Math.sqrt, division, and max metrics checks when PCM samples are silent
+    if (sumSq === 0) {
+      rawAmplitude[f] = 0;
+      rawFrequency[f] = 0;
+      startSample = endSample;
+      continue;
+    }
+
     const rms = Math.sqrt(sumSq / count);
     const freqMetric = count > 1 ? diffSum / (count - 1) : 0;
 
@@ -485,7 +497,10 @@ async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
     const normAmp = Math.min(1.0, (ampSum * invCount) * invMaxRms);
     const normFreq = Math.min(1.0, (freqSum * invCount) * invMaxFreq);
 
-    metrics[f] = { amplitude: normAmp, frequency: normFreq };
+    // Reuse frozen ZERO_METRIC object for silent frames to eliminate per-frame object allocation overhead
+    metrics[f] = (normAmp === 0 && normFreq === 0)
+      ? ZERO_METRIC
+      : { amplitude: normAmp, frequency: normFreq };
   }
 
   return metrics;
