@@ -25,3 +25,7 @@
 ## 2026-09-23 - Keyboard Shortcut Ergonomics (`Ctrl+Z` / `⌘Z`) & ARIA Shortcut Hints
 **Learning:** Destructive or reversible interactive UI actions (such as audio editing undos) need global keyboard shortcut support (`Ctrl+Z` / `Cmd+Z`) paired with explicit input-element guards (`isInput` checks) and clear shortcut hints in `title` tooltips and `aria-label` attributes (`Undo last audio edit (Ctrl+Z / ⌘Z)`). This makes web editing interactions feel like native desktop software while preserving screen reader and keyboard clarity.
 **Action:** Always pair reversible action buttons with standard desktop keyboard shortcuts (`Ctrl+Z`), checking for input element focus, and include shortcut hints in `title` tooltips and `aria-label` descriptions.
+
+## 2026-09-25 - Real-Time Animation Playhead Readouts & Screen Reader ARIA Decorators
+**Learning:** Dynamic visual time badges on 60 FPS animation playheads (like audio waveform cursor lines) must use `pointer-events: none`, high `z-index`, and `aria-hidden="true"` so rapid frame-by-frame visual timestamp updates do not spam screen reader live regions or obstruct pointer interactions while providing precise real-time visual playback feedback.
+**Action:** Always mark rapid animation-driven cursor time overlays with `aria-hidden="true"` and `pointer-events: none` while relying on stateful button controls for screen reader play announcements.
