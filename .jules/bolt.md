@@ -63,3 +63,9 @@
 **Learning:** In frame-by-frame audio signal analysis (`extractAudioMetrics`), computing `Math.sqrt` and zero-crossing divisions on silent audio frames (e.g. padding/intro/outro silence) performs thousands of unnecessary math calculations and allocates thousands of temporary `{ amplitude, frequency }` objects. Checking `if (sumSq === 0)` to fast-path zero metric assignment and reusing a module-level frozen `ZERO_METRIC` object eliminates redundant square roots, divisions, and GC heap allocations.
 
 **Action:** Fast-path silent/zero signal frames in mathematical analysis loops and reuse frozen immutable metric singletons for zero values.
+
+## 2026-09-26 - Pre-calculate Composite Scale Factors and Pre-retrieve Audio Channel Data Outside Loops
+
+**Learning:** In frame signal processing loops (`analyzeAudio` in `script.js` and `extractAudioMetrics` in `flower.js`), computing `sum * invCount` and then multiplying by `invGlobalMax` or `invMaxRms` performed two floating-point multiplications per bar/metric across all frames (over 1,000,000 operations for a 3-minute video export). Pre-calculating a single composite scale factor (`scaleFactor = invCount * invGlobalMax`) outside inner bar loops reduces arithmetic operations by 50%. Additionally, pre-retrieving `audioBuffer.getChannelData(c)` arrays once into a local array (`channelDataList`) prior to entering WebCodecs audio chunk encoding loops eliminates hundreds of redundant Web Audio API getter calls.
+
+**Action:** Pre-calculate combined scale factors and pre-fetch immutable Web Audio API channel arrays outside hot chunk/frame iteration loops.
