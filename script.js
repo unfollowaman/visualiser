@@ -260,9 +260,8 @@ function buildWorkingAudioBuffer() {
 
 // Draw symmetric rounded bars matching the equalizer spec
 function drawBars(ctx, amplitudes, w, h) {
-  // Fill entire canvas with solid black
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, w, h);
+  // Clear canvas to transparent background
+  ctx.clearRect(0, 0, w, h);
 
   ctx.fillStyle = "#ffffff";
   const gap = w * 0.006;
