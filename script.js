@@ -57,6 +57,7 @@ const rightTrimHandle = document.getElementById("rightTrimHandle");
 const leftTrimReadout = document.getElementById("leftTrimReadout");
 const rightTrimReadout = document.getElementById("rightTrimReadout");
 const playheadLine = document.getElementById("playheadLine");
+const playheadReadout = document.getElementById("playheadReadout");
 const cutSelectedBtn = document.getElementById("cutSelectedBtn");
 const undoBtn = document.getElementById("undoBtn");
 const resetBtn = document.getElementById("resetBtn");
@@ -1202,6 +1203,9 @@ function runPreviewLoop() {
     const w = getEditorWidth();
     const leftPx = (mappedTime / duration) * w;
     playheadLine.style.left = `${leftPx}px`;
+    if (playheadReadout) {
+      playheadReadout.textContent = formatDurationDetailed(mappedTime);
+    }
     playheadLine.classList.remove("hidden");
   }
 
