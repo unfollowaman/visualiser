@@ -480,11 +480,13 @@ async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
       lastYield = performance.now();
     }
 
-    // Performance optimization: Hoist frame window boundaries and inverse count multiplier outside inner loop
-    // to eliminate branch checks (if tf >= 0 && tf < totalFrames), counter increments, and divisions per frame.
+    // Performance optimization: Hoist frame window boundaries and pre-calculate composite amplitude/frequency
+    // scale factors outside loop to eliminate per-frame floating point operations.
     const minF = Math.max(0, f - smoothWindow);
     const maxF = Math.min(totalFrames - 1, f + smoothWindow);
     const invCount = 1.0 / (maxF - minF + 1);
+    const ampScale = invCount * invMaxRms;
+    const freqScale = invCount * invMaxFreq;
 
     let ampSum = 0;
     let freqSum = 0;
@@ -494,8 +496,8 @@ async function extractAudioMetrics(audioBuffer, totalFrames, fps = 60) {
       freqSum += rawFrequency[tf];
     }
 
-    const normAmp = Math.min(1.0, (ampSum * invCount) * invMaxRms);
-    const normFreq = Math.min(1.0, (freqSum * invCount) * invMaxFreq);
+    const normAmp = Math.min(1.0, ampSum * ampScale);
+    const normFreq = Math.min(1.0, freqSum * freqScale);
 
     // Reuse frozen ZERO_METRIC object for silent frames to eliminate per-frame object allocation overhead
     metrics[f] = (normAmp === 0 && normFreq === 0)
