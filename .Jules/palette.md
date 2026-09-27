@@ -33,3 +33,7 @@
 ## 2026-09-26 - Dynamic Drag-and-Drop Feedback & Post-Decode Focus Management
 **Learning:** File upload drop zones require dynamic label updates during `dragover` ("DROP AUDIO FILE HERE") and after successful decoding ("DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE") to signal drop target activation and replacement availability. Shifting keyboard focus to newly revealed actionable buttons (`#showEditBtn.focus()`) upon decode completion seamlessly guides keyboard and screen reader users to the next step.
 **Action:** Always pair drag-and-drop zones with dynamic dragover/replace text updates and programmatically shift focus to primary actionable controls when async file decoding unhides subsequent sections.
+
+## 2026-09-27 - Escape Key Cancellation for Transient Drag Selections
+**Learning:** Transient modal interactions such as visual range selections on interactive timeline waveforms should support standard `Escape` key cancellation, paired with explicit shortcut hints in button tooltips (`Cut selected audio range (Esc to cancel)`), giving keyboard and power users a quick way to dismiss unintentional selections without needing to click elsewhere.
+**Action:** Pair transient drag-select regions with an `Escape` keydown listener and clear shortcut hints in action button titles.

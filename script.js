@@ -714,7 +714,7 @@ function updateSelectionHighlight() {
     selectionHighlight.style.left = `${minX}px`;
     selectionHighlight.style.width = `${width}px`;
     selectionHighlight.classList.remove("hidden");
-    setButtonDisabled(cutSelectedBtn, false, "", "Cut selected audio range");
+    setButtonDisabled(cutSelectedBtn, false, "", "Cut selected audio range (Esc to cancel)");
   } else {
     selectionHighlight.classList.add("hidden");
     setButtonDisabled(cutSelectedBtn, true, "Drag across waveform timeline to select a region to cut");
@@ -855,6 +855,13 @@ undoBtn.addEventListener("click", () => {
 });
 
 window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if (editSection && !editSection.classList.contains("hidden") && selectionStartX !== null) {
+      selectionStartX = null;
+      selectionEndX = null;
+      updateSelectionHighlight();
+    }
+  }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
     const activeEl = document.activeElement;
     const isInput = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.isContentEditable);

@@ -125,6 +125,6 @@ test.describe('Action buttons aria-disabled and tooltip synchronization', () => 
 
     expect(result.activeState.disabled).toBe(false);
     expect(result.activeState.ariaDisabled).toBe('false');
-    expect(result.activeState.title).toBe('Cut selected audio range');
+    expect(result.activeState.title).toBe('Cut selected audio range (Esc to cancel)');
   });
 });
