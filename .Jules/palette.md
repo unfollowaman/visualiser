@@ -29,3 +29,7 @@
 ## 2026-09-25 - Real-Time Animation Playhead Readouts & Screen Reader ARIA Decorators
 **Learning:** Dynamic visual time badges on 60 FPS animation playheads (like audio waveform cursor lines) must use `pointer-events: none`, high `z-index`, and `aria-hidden="true"` so rapid frame-by-frame visual timestamp updates do not spam screen reader live regions or obstruct pointer interactions while providing precise real-time visual playback feedback.
 **Action:** Always mark rapid animation-driven cursor time overlays with `aria-hidden="true"` and `pointer-events: none` while relying on stateful button controls for screen reader play announcements.
+
+## 2026-09-26 - Dynamic Drag-and-Drop Feedback & Post-Decode Focus Management
+**Learning:** File upload drop zones require dynamic label updates during `dragover` ("DROP AUDIO FILE HERE") and after successful decoding ("DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE") to signal drop target activation and replacement availability. Shifting keyboard focus to newly revealed actionable buttons (`#showEditBtn.focus()`) upon decode completion seamlessly guides keyboard and screen reader users to the next step.
+**Action:** Always pair drag-and-drop zones with dynamic dragover/replace text updates and programmatically shift focus to primary actionable controls when async file decoding unhides subsequent sections.

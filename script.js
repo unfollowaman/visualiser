@@ -35,6 +35,7 @@ let mp4MuxerPromise = null;
 
 // UI Elements
 const dropZone = document.getElementById("dropZone");
+const dropZoneText = document.getElementById("dropZoneText");
 const fileInput = document.getElementById("fileInput");
 const fileInfoContainer = document.getElementById("fileInfoContainer");
 const fileName = document.getElementById("fileName");
@@ -898,15 +899,28 @@ dropZone.addEventListener("keydown", (e) => {
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("drag-over");
+  if (dropZoneText) {
+    dropZoneText.textContent = "DROP AUDIO FILE HERE";
+  }
 });
 
 dropZone.addEventListener("dragleave", () => {
   dropZone.classList.remove("drag-over");
+  if (dropZoneText) {
+    dropZoneText.textContent = decodedAudioBuffer
+      ? "DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE"
+      : "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+  }
 });
 
 dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropZone.classList.remove("drag-over");
+  if (dropZoneText) {
+    dropZoneText.textContent = decodedAudioBuffer
+      ? "DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE"
+      : "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+  }
 
   if (e.dataTransfer.files.length > 0) {
     handleSelectedFile(e.dataTransfer.files[0]);
@@ -951,12 +965,14 @@ function handleSelectedFile(file) {
   const isAudioType = (file && file.type && file.type.startsWith("audio/")) || hasAudioExtension;
 
   if (!isAudioType) {
+    if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
     decodeError.textContent = "Please select a valid audio file (MP3, WAV, etc.).";
     decodeError.classList.remove("hidden");
     return;
   }
 
   if (file.size > MAX_FILE_SIZE) {
+    if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
     decodeError.textContent = "File size exceeds the 50MB limit.";
     decodeError.classList.remove("hidden");
     return;
@@ -997,11 +1013,20 @@ function handleSelectedFile(file) {
       renderEditState();
       showEditBtn.classList.remove("hidden");
 
+      if (dropZoneText) {
+        dropZoneText.textContent = "DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE";
+      }
+
       // We automatically jump to aspect ratio section since edit is optional
       window.workingAudioBuffer = buildWorkingAudioBuffer();
       aspectRatioSection.classList.remove("hidden");
+
+      if (showEditBtn) {
+        showEditBtn.focus();
+      }
     }, (err) => {
       logError("Decode Audio Data Error: ", err);
+      if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
       fileInfoContainer.classList.add("hidden");
       decodeError.classList.remove("hidden");
     });
@@ -1009,6 +1034,7 @@ function handleSelectedFile(file) {
 
   reader.onerror = function (err) {
     logError("FileReader Error: ", err);
+    if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
     fileInfoContainer.classList.add("hidden");
     decodeError.classList.remove("hidden");
   };
