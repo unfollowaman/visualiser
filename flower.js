@@ -15,7 +15,7 @@ let flowerRenderers = [];
 let flowerCards = [];
 let cardVisibility = [];
 let flowerCardObserver = null;
-let flowerMp4MuxerPromise = null;
+let flowerMuxerPromise = null;
 
 // Immutable frozen zero metric object reused for silent frames to avoid heap allocation churn
 const ZERO_METRIC = Object.freeze({ amplitude: 0, frequency: 0 });
@@ -74,7 +74,7 @@ void main() {
   float cy = (gy + 0.5) * spacing;
 
   if (cx >= width || cy >= height) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     return;
   }
 
@@ -117,14 +117,14 @@ void main() {
   float texV = (sy - imgOffsetY) / drawH;
 
   if (texU < 0.0 || texU > 1.0 || texV < 0.0 || texV > 1.0) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     return;
   }
 
   vec4 texColor = texture2D(uTexture, vec2(texU, texV));
 
   if (texColor.a < 0.04) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     return;
   }
 
@@ -132,7 +132,7 @@ void main() {
   float baseRadius = halfSpacing * pow(brightness, 0.8) * 1.25;
 
   if (baseRadius < 0.1) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     return;
   }
 
@@ -142,21 +142,21 @@ void main() {
   float dist = length(vec2(canvasX, canvasY) - vec2(cx, cy));
 
   if (dist > radius + 0.5) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     return;
   }
 
   float delta = max(0.5, halfSpacing * 0.12);
-  float alpha = smoothstep(radius + 0.5, radius - delta, dist);
+  float alpha = smoothstep(radius + 0.5, radius - delta, dist) * texColor.a;
 
   vec3 col = texColor.rgb * alpha;
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(col, alpha);
 }
 `;
 
 function createWebGLRenderer(canvas) {
-  const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true, alpha: false }) ||
-             canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, alpha: false });
+  const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true, alpha: true }) ||
+             canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, alpha: true });
   if (!gl) {
     logError("WebGL not supported");
     return null;
@@ -572,30 +572,120 @@ async function renderAndExportFlowerVideo() {
     // Extract audio metrics per frame
     const audioMetrics = await extractAudioMetrics(window.workingAudioBuffer, totalFrames, fps);
 
-    if (!flowerMp4MuxerPromise) {
-      flowerMp4MuxerPromise = import('./mp4-muxer.js');
+    if (!flowerMuxerPromise) {
+      flowerMuxerPromise = import('./webm-muxer.js');
     }
-    const mp4MuxerModule = await flowerMp4MuxerPromise;
-    const Mp4Muxer = mp4MuxerModule.Mp4Muxer || mp4MuxerModule.default || window.Mp4Muxer;
+    const webmMuxerModule = await flowerMuxerPromise;
+    const WebMMuxer = webmMuxerModule.WebMMuxer || webmMuxerModule.default || window.WebMMuxer;
 
-    let muxer = new Mp4Muxer.Muxer({
-      target: new Mp4Muxer.ArrayBufferTarget(),
-      video: { codec: 'avc', width: width, height: height },
-      fastStart: 'in-memory'
-    });
+    let selectedAudioCodec = null;
+    let encoderAudioCodecString = null;
+    const audioBuffer = window.workingAudioBuffer;
+
+    if (audioBuffer && typeof isOpusSupported === "function") {
+      const opusConfig = {
+        codec: 'opus',
+        sampleRate: audioBuffer.sampleRate,
+        numberOfChannels: audioBuffer.numberOfChannels,
+        bitrate: 128_000
+      };
+      if (await isOpusSupported(opusConfig)) {
+        selectedAudioCodec = 'opus';
+        encoderAudioCodecString = 'opus';
+      }
+    }
+
+    const muxerOptions = {
+      target: new WebMMuxer.ArrayBufferTarget(),
+      video: {
+        codec: 'V_VP9',
+        width: width,
+        height: height
+      }
+    };
+
+    if (selectedAudioCodec) {
+      muxerOptions.audio = {
+        codec: 'A_OPUS',
+        numberOfChannels: audioBuffer.numberOfChannels,
+        sampleRate: audioBuffer.sampleRate
+      };
+    }
+
+    let muxer = new WebMMuxer.Muxer(muxerOptions);
 
     let videoEncoder = new VideoEncoder({
       output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-      error: e => logError("Encoder Error:", e)
+      error: e => logError("VideoEncoder Error:", e)
     });
 
     videoEncoder.configure({
-      codec: 'avc1.420034',
+      codec: 'vp09.00.10.08',
       width: width,
       height: height,
       bitrate: 8_000_000,
       framerate: fps,
+      alpha: 'keep'
     });
+
+    let audioEncoder = null;
+    if (selectedAudioCodec) {
+      audioEncoder = new AudioEncoder({
+        output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
+        error: e => logError("AudioEncoder Error:", e)
+      });
+
+      audioEncoder.configure({
+        codec: encoderAudioCodecString,
+        sampleRate: audioBuffer.sampleRate,
+        numberOfChannels: audioBuffer.numberOfChannels,
+        bitrate: 128_000
+      });
+
+      const sampleRate = audioBuffer.sampleRate;
+      const numChannels = audioBuffer.numberOfChannels;
+      const totalAudioFrames = audioBuffer.length;
+      const chunkSize = 16384;
+      const maxPcmSamples = numChannels * chunkSize;
+      const pcmDataBuffer = new Float32Array(maxPcmSamples);
+
+      const channelDataList = [];
+      for (let c = 0; c < numChannels; c++) {
+        channelDataList.push(audioBuffer.getChannelData(c));
+      }
+
+      for (let offset = 0; offset < totalAudioFrames; offset += chunkSize) {
+        while (audioEncoder.encodeQueueSize > 2) {
+          await new Promise(resolve => {
+            audioEncoder.addEventListener("dequeue", resolve, { once: true });
+          });
+        }
+
+        const numFrames = Math.min(chunkSize, totalAudioFrames - offset);
+        const pcmData = (numFrames === chunkSize)
+          ? pcmDataBuffer
+          : pcmDataBuffer.subarray(0, numChannels * numFrames);
+
+        for (let c = 0; c < numChannels; c++) {
+          const channelData = channelDataList[c];
+          pcmData.set(channelData.subarray(offset, offset + numFrames), c * numFrames);
+        }
+
+        const timestampMicros = Math.round((offset / sampleRate) * 1_000_000);
+
+        const audioData = new AudioData({
+          format: 'f32-planar',
+          sampleRate: sampleRate,
+          numberOfFrames: numFrames,
+          numberOfChannels: numChannels,
+          timestamp: timestampMicros,
+          data: pcmData
+        });
+
+        audioEncoder.encode(audioData);
+        audioData.close();
+      }
+    }
 
     for (let i = 0; i < totalFrames; i++) {
       while (videoEncoder.encodeQueueSize > 2) {
@@ -631,16 +721,21 @@ async function renderAndExportFlowerVideo() {
     flowerProgressPercentage.textContent = "100%";
     flowerProgressContainer.setAttribute("aria-valuenow", "100");
 
+    if (audioEncoder) {
+      await audioEncoder.flush();
+      audioEncoder.close();
+    }
+
     await videoEncoder.flush();
     videoEncoder.close();
     muxer.finalize();
 
     const buffer = muxer.target.buffer;
-    const blob = new Blob([buffer], { type: 'video/mp4' });
+    const blob = new Blob([buffer], { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
 
     flowerDownloadVideo.href = url;
-    flowerDownloadVideo.download = `flower-background-1x1.mp4`;
+    flowerDownloadVideo.download = `flower-transparent-1x1.webm`;
 
     flowerProgressContainer.classList.add("hidden");
     flowerDownloadContainer.classList.remove("hidden");
