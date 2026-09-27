@@ -69,3 +69,9 @@
 **Learning:** In frame signal processing loops (`analyzeAudio` in `script.js` and `extractAudioMetrics` in `flower.js`), computing `sum * invCount` and then multiplying by `invGlobalMax` or `invMaxRms` performed two floating-point multiplications per bar/metric across all frames (over 1,000,000 operations for a 3-minute video export). Pre-calculating a single composite scale factor (`scaleFactor = invCount * invGlobalMax`) outside inner bar loops reduces arithmetic operations by 50%. Additionally, pre-retrieving `audioBuffer.getChannelData(c)` arrays once into a local array (`channelDataList`) prior to entering WebCodecs audio chunk encoding loops eliminates hundreds of redundant Web Audio API getter calls.
 
 **Action:** Pre-calculate combined scale factors and pre-fetch immutable Web Audio API channel arrays outside hot chunk/frame iteration loops.
+
+## 2026-09-27 - Track FillStyle State and Pre-calculate Inverse Global Max in 200-Bar Waveform Redraw Loops
+
+**Learning:** In `drawOverview()` (`script.js`), executed on every `mousemove`/`touchmove` gesture frame during trim handle dragging, setting `ctxOverview.fillStyle` unconditionally on every bar mutated the 2D canvas context property 200 times per frame. Since the waveform consists of contiguous blocks of kept (`#ffffff`) and trimmed (`#7a7a76`) bars, tracking `currentFillColor` state updates `fillStyle` only when transitioning between kept and trimmed regions (typically only 1-3 context mutations per frame instead of 200). Additionally, pre-calculating `invOverviewGlobalMax = 1 / cachedOverviewGlobalMax` replaces 200 per-bar floating-point divisions with multiplications.
+
+**Action:** Track state transitions before mutating 2D canvas context fill and stroke properties in high-frequency rendering loops.

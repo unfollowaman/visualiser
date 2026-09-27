@@ -348,14 +348,17 @@ function drawOverview(audioBuffer) {
   const radius = Math.min(barWidth * 0.5, 2);
   const halfH = h * 0.5;
 
-  // Performance optimization: Pre-calculate duration step factor outside loop and reuse module-scoped overview rect object
-  // to eliminate 200 division operations per drawOverview frame during interactive trim handle dragging.
+  // Performance optimization: Pre-calculate inverse global max and duration step factor outside loop,
+  // reuse module-scoped overview rect object, and track fillStyle state to avoid up to 199 redundant
+  // canvas context property mutations per frame during high-frequency interactive trim handle dragging.
   reusableOverviewRect.width = barWidth;
   reusableOverviewRect.radius = radius;
   const durationPerBar = duration / numBars;
+  const invOverviewGlobalMax = 1 / cachedOverviewGlobalMax;
+  let currentFillColor = null;
 
   for (let i = 0; i < numBars; i++) {
-    const amp = cachedOverviewAmplitudes[i] / cachedOverviewGlobalMax;
+    const amp = cachedOverviewAmplitudes[i] * invOverviewGlobalMax;
     const barHeight = Math.max(minBarHeight, amp * maxBarHeight);
     const x = i * stepX;
     const y = halfH - barHeight * 0.5;
@@ -371,7 +374,11 @@ function drawOverview(audioBuffer) {
       }
     }
 
-    ctxOverview.fillStyle = isKept ? "#ffffff" : "#7a7a76";
+    const targetColor = isKept ? "#ffffff" : "#7a7a76";
+    if (currentFillColor !== targetColor) {
+      ctxOverview.fillStyle = targetColor;
+      currentFillColor = targetColor;
+    }
 
     reusableOverviewRect.x = x;
     reusableOverviewRect.y = y;
