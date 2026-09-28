@@ -75,3 +75,9 @@
 **Learning:** In `drawOverview()` (`script.js`), executed on every `mousemove`/`touchmove` gesture frame during trim handle dragging, setting `ctxOverview.fillStyle` unconditionally on every bar mutated the 2D canvas context property 200 times per frame. Since the waveform consists of contiguous blocks of kept (`#ffffff`) and trimmed (`#7a7a76`) bars, tracking `currentFillColor` state updates `fillStyle` only when transitioning between kept and trimmed regions (typically only 1-3 context mutations per frame instead of 200). Additionally, pre-calculating `invOverviewGlobalMax = 1 / cachedOverviewGlobalMax` replaces 200 per-bar floating-point divisions with multiplications.
 
 **Action:** Track state transitions before mutating 2D canvas context fill and stroke properties in high-frequency rendering loops.
+
+## 2026-09-28 - Cache Canvas Layout Geometry and Bar X-Positions for 60 FPS Visualizer Rendering
+
+**Learning:** In `drawBars()` (`script.js`), invoked 60 times/sec during live preview and over 10,000 times during video export frame loops, recalculating canvas layout constants (`barWidth`, `stepX`, `startX`, `maxBarHeight`, `minBarHeight`, `halfH`) and evaluating `startX + i * stepX` for every bar executed over 600,000 redundant arithmetic operations per video render pass. Caching these layout parameters and precomputing a `Float32Array(48)` of bar X-positions invalidated only when canvas dimensions (`w`, `h`) change completely removes layout math from hot rendering loops.
+
+**Action:** Memoize layout geometry and bar coordinate arrays per canvas dimensions to eliminate arithmetic operations in high-frequency canvas drawing functions.
