@@ -37,3 +37,7 @@
 ## 2026-09-27 - Escape Key Cancellation for Transient Drag Selections
 **Learning:** Transient modal interactions such as visual range selections on interactive timeline waveforms should support standard `Escape` key cancellation, paired with explicit shortcut hints in button tooltips (`Cut selected audio range (Esc to cancel)`), giving keyboard and power users a quick way to dismiss unintentional selections without needing to click elsewhere.
 **Action:** Pair transient drag-select regions with an `Escape` keydown listener and clear shortcut hints in action button titles.
+
+## 2026-09-28 - Grid Arrow Key Navigation & Dynamic Selection ARIA Labels
+**Learning:** Custom interactive button grid cards (like flower pattern previews) require full arrow key navigation (`ArrowRight`, `ArrowLeft`, `ArrowDown`, `ArrowUp`, `Home`, `End`) to move focus across grid rows and columns seamlessly, paired with dynamic `aria-label` updates (`"${name} flower pattern, selected"` vs `"Select ${name} flower pattern"`) so screen readers announce both item name and explicit selection state on focus or interaction.
+**Action:** Always complement grid selection cards with 2D arrow key focus movement and dynamic selection state descriptions in ARIA labels.

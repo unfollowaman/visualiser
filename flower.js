@@ -282,7 +282,7 @@ function initFlowerGrid() {
     card.dataset.index = idx;
     card.setAttribute("role", "button");
     card.setAttribute("tabindex", "0");
-    card.setAttribute("aria-label", `Select ${flower.name} flower pattern`);
+    card.setAttribute("aria-label", idx === 0 ? `${flower.name} flower pattern, selected` : `Select ${flower.name} flower pattern`);
     card.setAttribute("aria-pressed", idx === 0 ? "true" : "false");
     card.setAttribute("title", flower.name);
     if (idx === 0) card.classList.add("selected");
@@ -312,21 +312,53 @@ function initFlowerGrid() {
       cardVisibility[idx] = true;
     }
 
-    const selectCard = () => {
-      if (selectedFlowerIndex !== idx && flowerCards[selectedFlowerIndex]) {
-        flowerCards[selectedFlowerIndex].classList.remove("selected");
-        flowerCards[selectedFlowerIndex].setAttribute("aria-pressed", "false");
+    const selectCard = (cardIdx = idx) => {
+      const prevIdx = selectedFlowerIndex;
+      if (prevIdx !== cardIdx && flowerCards[prevIdx]) {
+        flowerCards[prevIdx].classList.remove("selected");
+        flowerCards[prevIdx].setAttribute("aria-pressed", "false");
+        flowerCards[prevIdx].setAttribute("aria-label", `Select ${FLOWERS[prevIdx].name} flower pattern`);
       }
-      card.classList.add("selected");
-      card.setAttribute("aria-pressed", "true");
-      selectedFlowerIndex = idx;
+      const targetCard = flowerCards[cardIdx];
+      if (targetCard) {
+        targetCard.classList.add("selected");
+        targetCard.setAttribute("aria-pressed", "true");
+        targetCard.setAttribute("aria-label", `${FLOWERS[cardIdx].name} flower pattern, selected`);
+        selectedFlowerIndex = cardIdx;
+      }
     };
 
-    card.addEventListener("click", selectCard);
+    card.addEventListener("click", () => selectCard(idx));
     card.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        selectCard();
+        selectCard(idx);
+        return;
+      }
+
+      if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) {
+        e.preventDefault();
+        let targetIdx = idx;
+        const total = FLOWERS.length;
+
+        if (e.key === "ArrowRight") {
+          targetIdx = (idx + 1) % total;
+        } else if (e.key === "ArrowLeft") {
+          targetIdx = (idx - 1 + total) % total;
+        } else if (e.key === "ArrowDown") {
+          targetIdx = Math.min(total - 1, idx + 3);
+        } else if (e.key === "ArrowUp") {
+          targetIdx = Math.max(0, idx - 3);
+        } else if (e.key === "Home") {
+          targetIdx = 0;
+        } else if (e.key === "End") {
+          targetIdx = total - 1;
+        }
+
+        if (targetIdx !== idx && flowerCards[targetIdx]) {
+          selectCard(targetIdx);
+          flowerCards[targetIdx].focus();
+        }
       }
     });
 
