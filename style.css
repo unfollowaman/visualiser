@@ -517,6 +517,10 @@ body {
   position: relative;
 }
 
+.flower-preview-card:hover:not(.selected) {
+  border-color: #7a7a76;
+}
+
 /* Make the last two items center in the bottom row */
 .flower-preview-card:nth-child(4) {
   grid-column: 1 / span 1;
