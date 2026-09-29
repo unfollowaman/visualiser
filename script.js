@@ -95,6 +95,14 @@ let cachedOverviewGlobalMax = 1;
 const reusableBarRect = { x: 0, y: 0, width: 0, height: 0, radius: 0 };
 const reusableOverviewRect = { x: 0, y: 0, width: 0, height: 0, radius: 0 };
 
+// Cached layout parameters and pre-calculated bar X-positions per canvas dimension for drawBars
+let cachedBarCanvasW = 0;
+let cachedBarCanvasH = 0;
+let cachedBarMaxHeight = 0;
+let cachedBarMinHeight = 0;
+let cachedBarHalfH = 0;
+const cachedBarXPositions = new Float32Array(48);
+
 // Helper to mix down audio channels to a single mono Float32Array
 function mixDownToMono(audioBuffer) {
   if (!audioBuffer) return new Float32Array(0);
@@ -264,30 +272,40 @@ function drawBars(ctx, amplitudes, w, h) {
   // Clear canvas to transparent background
   ctx.clearRect(0, 0, w, h);
 
+  // Performance optimization: Cache canvas layout geometry metrics and pre-calculate individual
+  // bar X-positions into a Float32Array per canvas dimension (w, h). This skips redundant floating-point
+  // additions, multiplications, and layout recalculations across all 48 bars on every frame during
+  // 60 FPS live preview playback and video export rendering (over 500,000 arithmetic operations saved for 3-minute videos).
+  if (cachedBarCanvasW !== w || cachedBarCanvasH !== h) {
+    cachedBarCanvasW = w;
+    cachedBarCanvasH = h;
+    const gap = w * 0.006;
+    const totalGap = gap * 47;
+    const barWidth = (w * 0.82 - totalGap) / 48;
+    const stepX = barWidth + gap;
+    const startX = (w - (barWidth * 48 + totalGap)) * 0.5;
+
+    cachedBarMaxHeight = h * 0.78;
+    cachedBarMinHeight = h * 0.012;
+    cachedBarHalfH = h * 0.5;
+
+    reusableBarRect.width = barWidth;
+    reusableBarRect.radius = Math.min(barWidth * 0.5, 6);
+
+    for (let i = 0; i < 48; i++) {
+      cachedBarXPositions[i] = startX + i * stepX;
+    }
+  }
+
   ctx.fillStyle = "#ffffff";
-  const gap = w * 0.006;
-  const totalGap = gap * 47;
-  const barWidth = (w * 0.82 - totalGap) / 48;
-  const stepX = barWidth + gap;
-  const startX = (w - (barWidth * 48 + totalGap)) * 0.5;
-
-  const maxBarHeight = h * 0.78;
-  const minBarHeight = h * 0.012;
-  const radius = Math.min(barWidth * 0.5, 6);
-  const halfH = h * 0.5;
-
-  // Performance optimization: Reuse module-scoped bar rect object and hoist constant layout math
-  // to eliminate 48 temporary object allocations per frame during 60 FPS previews and video exports.
-  reusableBarRect.width = barWidth;
-  reusableBarRect.radius = radius;
 
   for (let i = 0; i < 48; i++) {
     const amp = amplitudes[i] || 0;
     const clampedAmp = amp < 0 ? 0 : (amp > 1 ? 1 : amp);
-    const barHeight = Math.max(minBarHeight, clampedAmp * maxBarHeight);
+    const barHeight = Math.max(cachedBarMinHeight, clampedAmp * cachedBarMaxHeight);
 
-    reusableBarRect.x = startX + i * stepX;
-    reusableBarRect.y = halfH - barHeight * 0.5;
+    reusableBarRect.x = cachedBarXPositions[i];
+    reusableBarRect.y = cachedBarHalfH - barHeight * 0.5;
     reusableBarRect.height = barHeight;
 
     drawRoundedRect(ctx, reusableBarRect);
