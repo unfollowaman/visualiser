@@ -90,6 +90,15 @@ const monoCache = new WeakMap();
 let cachedOverviewBuffer = null;
 let cachedOverviewAmplitudes = null;
 let cachedOverviewGlobalMax = 1;
+const cachedOverviewBarCenterTimes = new Float32Array(200);
+
+// Cached layout parameters and pre-calculated bar X-positions per canvas dimension for drawOverview
+let cachedOverviewCanvasW = 0;
+let cachedOverviewCanvasH = 0;
+let cachedOverviewMaxBarHeight = 0;
+let cachedOverviewMinBarHeight = 0;
+let cachedOverviewHalfH = 0;
+const cachedOverviewXPositions = new Float32Array(200);
 
 // Reusable rect objects for drawBars and drawOverview to eliminate per-bar heap allocations
 const reusableBarRect = { x: 0, y: 0, width: 0, height: 0, radius: 0 };
@@ -336,7 +345,11 @@ function drawOverview(audioBuffer) {
     cachedOverviewAmplitudes = new Float32Array(numBars);
     let globalMax = 0;
 
+    const durationPerBar = duration / numBars;
+
     for (let i = 0; i < numBars; i++) {
+      cachedOverviewBarCenterTimes[i] = (i + 0.5) * durationPerBar;
+
       const startSample = Math.floor(i * samplesPerBar);
       const endSample = Math.floor((i + 1) * samplesPerBar);
       // Performance optimization: Hoist sample limit and count calculation outside inner loop
@@ -357,32 +370,38 @@ function drawOverview(audioBuffer) {
     cachedOverviewGlobalMax = globalMax === 0 ? 1 : globalMax;
   }
 
-  const gap = w * 0.003;
-  const totalGap = gap * (numBars - 1);
-  const barWidth = (w - totalGap) / numBars;
-  const stepX = barWidth + gap;
-  const maxBarHeight = h * 0.8;
-  const minBarHeight = h * 0.05;
-  const radius = Math.min(barWidth * 0.5, 2);
-  const halfH = h * 0.5;
+  // Performance optimization: Cache overview canvas layout geometry metrics and pre-calculate individual
+  // bar X-positions into a Float32Array per canvas dimension (w, h), and reuse pre-calculated bar center
+  // times. This eliminates 200 multiplications, additions, and layout recalculations per frame during
+  // high-frequency interactive audio trim handle dragging (mousemove/touchmove events).
+  if (cachedOverviewCanvasW !== w || cachedOverviewCanvasH !== h) {
+    cachedOverviewCanvasW = w;
+    cachedOverviewCanvasH = h;
+    const gap = w * 0.003;
+    const totalGap = gap * (numBars - 1);
+    const barWidth = (w - totalGap) / numBars;
+    const stepX = barWidth + gap;
+    cachedOverviewMaxBarHeight = h * 0.8;
+    cachedOverviewMinBarHeight = h * 0.05;
+    cachedOverviewHalfH = h * 0.5;
 
-  // Performance optimization: Pre-calculate inverse global max and duration step factor outside loop,
-  // reuse module-scoped overview rect object, and track fillStyle state to avoid up to 199 redundant
-  // canvas context property mutations per frame during high-frequency interactive trim handle dragging.
-  reusableOverviewRect.width = barWidth;
-  reusableOverviewRect.radius = radius;
-  const durationPerBar = duration / numBars;
+    reusableOverviewRect.width = barWidth;
+    reusableOverviewRect.radius = Math.min(barWidth * 0.5, 2);
+
+    for (let i = 0; i < numBars; i++) {
+      cachedOverviewXPositions[i] = i * stepX;
+    }
+  }
+
   const invOverviewGlobalMax = 1 / cachedOverviewGlobalMax;
   let currentFillColor = null;
 
   for (let i = 0; i < numBars; i++) {
     const amp = cachedOverviewAmplitudes[i] * invOverviewGlobalMax;
-    const barHeight = Math.max(minBarHeight, amp * maxBarHeight);
-    const x = i * stepX;
-    const y = halfH - barHeight * 0.5;
+    const barHeight = Math.max(cachedOverviewMinBarHeight, amp * cachedOverviewMaxBarHeight);
 
-    // Check if bar is in kept ranges using direct center time calculation
-    const barCenterTime = (i + 0.5) * durationPerBar;
+    // Check if bar is in kept ranges using pre-calculated bar center time
+    const barCenterTime = cachedOverviewBarCenterTimes[i];
 
     let isKept = false;
     for (const range of keepRanges) {
@@ -398,8 +417,8 @@ function drawOverview(audioBuffer) {
       currentFillColor = targetColor;
     }
 
-    reusableOverviewRect.x = x;
-    reusableOverviewRect.y = y;
+    reusableOverviewRect.x = cachedOverviewXPositions[i];
+    reusableOverviewRect.y = cachedOverviewHalfH - barHeight * 0.5;
     reusableOverviewRect.height = barHeight;
 
     drawRoundedRect(ctxOverview, reusableOverviewRect);
