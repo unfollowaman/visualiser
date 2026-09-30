@@ -447,10 +447,16 @@ function selectAspectRatio(width, height, cardToSelect, cardToDeselect) {
   chosenWidth = width;
   chosenHeight = height;
 
+  const selectLabel = cardToSelect === card16x9 ? "16:9 aspect ratio (Landscape)" : "9:16 aspect ratio (Vertical)";
+  const deselectLabel = cardToDeselect === card16x9 ? "16:9 aspect ratio (Landscape)" : "9:16 aspect ratio (Vertical)";
+
   cardToDeselect.classList.remove("selected");
   cardToDeselect.setAttribute("aria-pressed", "false");
+  cardToDeselect.setAttribute("aria-label", `Select ${deselectLabel}`);
+
   cardToSelect.classList.add("selected");
   cardToSelect.setAttribute("aria-pressed", "true");
+  cardToSelect.setAttribute("aria-label", `${selectLabel}, selected`);
 
   // Re-size preview canvas and draw immediately
   previewCanvas.width = chosenWidth;
@@ -463,10 +469,16 @@ function selectAspectRatio(width, height, cardToSelect, cardToDeselect) {
   }
 }
 
-const handleAspectKeydown = (e, action) => {
+const handleAspectKeydown = (e, targetCard, action) => {
   if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
     action();
+  } else if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(e.key)) {
+    e.preventDefault();
+    if (targetCard && !targetCard.classList.contains("disabled")) {
+      targetCard.focus();
+      targetCard.click();
+    }
   }
 };
 
@@ -476,7 +488,7 @@ card16x9.addEventListener("click", () => {
 });
 card16x9.addEventListener("keydown", (e) => {
   if (card16x9.classList.contains("disabled")) return;
-  handleAspectKeydown(e, () => selectAspectRatio(1280, 720, card16x9, card9x16));
+  handleAspectKeydown(e, card9x16, () => selectAspectRatio(1280, 720, card16x9, card9x16));
 });
 
 card9x16.addEventListener("click", () => {
@@ -485,7 +497,7 @@ card9x16.addEventListener("click", () => {
 });
 card9x16.addEventListener("keydown", (e) => {
   if (card9x16.classList.contains("disabled")) return;
-  handleAspectKeydown(e, () => selectAspectRatio(720, 1280, card9x16, card16x9));
+  handleAspectKeydown(e, card16x9, () => selectAspectRatio(720, 1280, card9x16, card16x9));
 });
 
 // Edit Interaction Logic
@@ -989,6 +1001,8 @@ function handleSelectedFile(file) {
   statusLine.classList.add("hidden");
   aspectRatioSection.classList.add("hidden");
 
+  if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
+
   // File Validation: Type and Size checks
   const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
   const ALLOWED_EXTENSIONS = [".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".weba", ".opus", ".mp4"];
@@ -998,6 +1012,7 @@ function handleSelectedFile(file) {
 
   if (!isAudioType) {
     if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+    if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
     decodeError.textContent = "Please select a valid audio file (MP3, WAV, etc.).";
     decodeError.classList.remove("hidden");
     return;
@@ -1005,6 +1020,7 @@ function handleSelectedFile(file) {
 
   if (file.size > MAX_FILE_SIZE) {
     if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+    if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
     decodeError.textContent = "File size exceeds the 50MB limit.";
     decodeError.classList.remove("hidden");
     return;
@@ -1048,6 +1064,9 @@ function handleSelectedFile(file) {
       if (dropZoneText) {
         dropZoneText.textContent = "DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE";
       }
+      if (dropZone) {
+        dropZone.setAttribute("aria-label", "Replace audio file");
+      }
 
       // We automatically jump to aspect ratio section since edit is optional
       window.workingAudioBuffer = buildWorkingAudioBuffer();
@@ -1059,6 +1078,7 @@ function handleSelectedFile(file) {
     }, (err) => {
       logError("Decode Audio Data Error: ", err);
       if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+      if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
       fileInfoContainer.classList.add("hidden");
       decodeError.classList.remove("hidden");
     });
@@ -1067,6 +1087,7 @@ function handleSelectedFile(file) {
   reader.onerror = function (err) {
     logError("FileReader Error: ", err);
     if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+    if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
     fileInfoContainer.classList.add("hidden");
     decodeError.classList.remove("hidden");
   };

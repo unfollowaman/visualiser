@@ -41,3 +41,7 @@
 ## 2026-09-28 - Grid Arrow Key Navigation & Dynamic Selection ARIA Labels
 **Learning:** Custom interactive button grid cards (like flower pattern previews) require full arrow key navigation (`ArrowRight`, `ArrowLeft`, `ArrowDown`, `ArrowUp`, `Home`, `End`) to move focus across grid rows and columns seamlessly, paired with dynamic `aria-label` updates (`"${name} flower pattern, selected"` vs `"Select ${name} flower pattern"`) so screen readers announce both item name and explicit selection state on focus or interaction.
 **Action:** Always complement grid selection cards with 2D arrow key focus movement and dynamic selection state descriptions in ARIA labels.
+
+## 2026-09-29 - Dynamic ARIA Label Synchronization & Card Selector Arrow Key Navigation
+**Learning:** Custom interactive button card selectors (such as aspect ratio option cards and file drop zones) must dynamically synchronize their `aria-label` descriptions with current state transitions (`"16:9 aspect ratio (Landscape), selected"` vs `"Select 16:9 aspect ratio (Landscape)"`, `"Replace audio file"` vs `"Upload audio file"`), and support horizontal/vertical Arrow key navigation (`ArrowRight`, `ArrowLeft`, `ArrowUp`, `ArrowDown`) so keyboard and screen reader users can move focus across options and receive precise selection announcements without relying on `aria-pressed` alone.
+**Action:** Pair interactive card option selectors with dynamic `aria-label` updates on selection state changes and horizontal/vertical Arrow key listeners for seamless keyboard focus movement.
