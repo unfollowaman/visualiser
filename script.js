@@ -426,18 +426,27 @@ function drawOverview(audioBuffer) {
 }
 
 // Helper to draw a rounded rectangle
+// Performance optimization: Pre-calculate boundary coordinates once per call
+// to eliminate repetitive arithmetic operations in high-frequency frame drawing loops (248 bars rendered per frame across preview, overview, and video export loops).
 function drawRoundedRect(ctx, rect) {
   const { x, y, width, height, radius } = rect;
+  const xR = x + radius;
+  const xw = x + width;
+  const xwR = xw - radius;
+  const yR = y + radius;
+  const yh = y + height;
+  const yhR = yh - radius;
+
   ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.moveTo(xR, y);
+  ctx.lineTo(xwR, y);
+  ctx.quadraticCurveTo(xw, y, xw, yR);
+  ctx.lineTo(xw, yhR);
+  ctx.quadraticCurveTo(xw, yh, xwR, yh);
+  ctx.lineTo(xR, yh);
+  ctx.quadraticCurveTo(x, yh, x, yhR);
+  ctx.lineTo(x, yR);
+  ctx.quadraticCurveTo(x, y, xR, y);
   ctx.closePath();
   ctx.fill();
 }
