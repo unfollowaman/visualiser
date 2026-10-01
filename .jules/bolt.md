@@ -81,3 +81,9 @@
 **Learning:** In `drawBars()` (`script.js`), executed 60 times per second during live preview playback and thousands of times during video exports (10,800 frames for a 3-minute video), recalculating canvas layout metrics (`gap`, `barWidth`, `stepX`, `startX`, `maxBarHeight`, `minBarHeight`, `halfH`, `radius`) and evaluating bar X-positions (`startX + i * stepX`) on every single frame per bar performed over 500,000 redundant floating-point additions and multiplications. Caching geometry parameters and pre-calculating bar X-positions into a `Float32Array` per canvas dimension eliminates repetitive layout arithmetic during high-frequency animation and video frame rendering loops.
 
 **Action:** Pre-calculate layout geometry and X/Y coordinate offsets per canvas dimension when rendering repeated geometric elements in 60 FPS canvas animation loops.
+
+## 2026-09-30 - Cache Overview Waveform Layout Geometry and Bar Center Times During Dragging
+
+**Learning:** In `drawOverview()` (`script.js`), executed on every `mousemove`/`touchmove` frame while dragging trim handles, evaluating bar X-positions (`i * stepX`) and bar center times (`(i + 0.5) * durationPerBar`) across 200 bars recalculated arithmetic coordinates 200 times per gesture frame. Pre-calculating `cachedOverviewBarCenterTimes` Float32Array on audio decode and caching layout metrics (`cachedOverviewXPositions` Float32Array, `cachedOverviewMaxBarHeight`, `cachedOverviewMinBarHeight`, `cachedOverviewHalfH`) per canvas dimension eliminates 200 multiplications and layout recalculations per frame during interactive handle dragging.
+
+**Action:** Pre-compute timeline bar center timestamps and canvas X-coordinates into Float32Arrays during initial signal setup and canvas resize events.
