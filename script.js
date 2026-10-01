@@ -752,6 +752,7 @@ function updateSelectionHighlight() {
   if (selectionStartX === null || selectionEndX === null) {
     selectionHighlight.classList.add("hidden");
     setButtonDisabled(cutSelectedBtn, true, "Drag across waveform timeline to select a region to cut");
+    cutSelectedBtn.setAttribute("aria-label", "Cut selected audio range");
     return;
   }
 
@@ -764,9 +765,11 @@ function updateSelectionHighlight() {
     selectionHighlight.style.width = `${width}px`;
     selectionHighlight.classList.remove("hidden");
     setButtonDisabled(cutSelectedBtn, false, "", "Cut selected audio range (Esc to cancel)");
+    cutSelectedBtn.setAttribute("aria-label", "Cut selected audio range (Esc to cancel)");
   } else {
     selectionHighlight.classList.add("hidden");
     setButtonDisabled(cutSelectedBtn, true, "Drag across waveform timeline to select a region to cut");
+    cutSelectedBtn.setAttribute("aria-label", "Cut selected audio range");
   }
 }
 
