@@ -362,9 +362,14 @@ function drawOverview(audioBuffer) {
         const val = monoSamples[s];
         sumSquares += val * val;
       }
-      const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
+      // Performance optimization: Fast path bypass for silent audio frames (sumSquares === 0)
+      // Avoids Math.sqrt, division, and max tracking when PCM samples are silent
+      let rms = 0;
+      if (sumSquares > 0 && count > 0) {
+        rms = Math.sqrt(sumSquares / count);
+        if (rms > globalMax) globalMax = rms;
+      }
       cachedOverviewAmplitudes[i] = rms;
-      if (rms > globalMax) globalMax = rms;
     }
 
     cachedOverviewGlobalMax = globalMax === 0 ? 1 : globalMax;
@@ -1165,13 +1170,16 @@ function analyzeAudio(audioBuffer) {
         sumSquares += val * val;
       }
 
-      // Root Mean Square
-      const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
-      rawBuffer[baseIdx + barIdx] = rms;
-
-      if (rms > globalMax) {
-        globalMax = rms;
+      // Performance optimization: Fast path bypass for silent audio segments (sumSquares === 0)
+      // Avoids Math.sqrt, division, and max tracking when PCM samples are silent
+      let rms = 0;
+      if (sumSquares > 0 && count > 0) {
+        rms = Math.sqrt(sumSquares / count);
+        if (rms > globalMax) {
+          globalMax = rms;
+        }
       }
+      rawBuffer[baseIdx + barIdx] = rms;
 
       segStart = segEnd;
     }
