@@ -87,3 +87,9 @@
 **Learning:** In `drawOverview()` (`script.js`), executed on every `mousemove`/`touchmove` frame while dragging trim handles, evaluating bar X-positions (`i * stepX`) and bar center times (`(i + 0.5) * durationPerBar`) across 200 bars recalculated arithmetic coordinates 200 times per gesture frame. Pre-calculating `cachedOverviewBarCenterTimes` Float32Array on audio decode and caching layout metrics (`cachedOverviewXPositions` Float32Array, `cachedOverviewMaxBarHeight`, `cachedOverviewMinBarHeight`, `cachedOverviewHalfH`) per canvas dimension eliminates 200 multiplications and layout recalculations per frame during interactive handle dragging.
 
 **Action:** Pre-compute timeline bar center timestamps and canvas X-coordinates into Float32Arrays during initial signal setup and canvas resize events.
+
+## 2026-10-03 - Cache WebGL Canvas Resolution and Image Uniform State
+
+**Learning:** In WebGL animation and frame rendering loops (`createWebGLRenderer` in `flower.js`), invoking `gl.uniform2f(uResolution, width, height)` and `gl.uniform2f(uImgSize, imgWidth, imgHeight)` unconditionally on every frame issued thousands of redundant WebGL C++ driver state mutations per minute. Because canvas and image dimensions remain unchanged across frames in 60 FPS animation loops and video exports, tracking dimension states with closure variables (`lastResW`, `lastResH`, `lastImgW`, `lastImgH`) and updating uniforms only on dimension changes eliminates unnecessary WebGL driver overhead.
+
+**Action:** Cache dimension state in WebGL rendering contexts to skip redundant uniform calls in 60 FPS rendering loops.
