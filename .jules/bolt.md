@@ -87,3 +87,9 @@
 **Learning:** In `drawOverview()` (`script.js`), executed on every `mousemove`/`touchmove` frame while dragging trim handles, evaluating bar X-positions (`i * stepX`) and bar center times (`(i + 0.5) * durationPerBar`) across 200 bars recalculated arithmetic coordinates 200 times per gesture frame. Pre-calculating `cachedOverviewBarCenterTimes` Float32Array on audio decode and caching layout metrics (`cachedOverviewXPositions` Float32Array, `cachedOverviewMaxBarHeight`, `cachedOverviewMinBarHeight`, `cachedOverviewHalfH`) per canvas dimension eliminates 200 multiplications and layout recalculations per frame during interactive handle dragging.
 
 **Action:** Pre-compute timeline bar center timestamps and canvas X-coordinates into Float32Arrays during initial signal setup and canvas resize events.
+
+## 2026-10-05 - Cache Resolution and Image Dimensions in WebGL Renderer Frame Loops
+
+**Learning:** In `createWebGLRenderer` (`flower.js`), `gl.viewport(0, 0, canvas.width, canvas.height)` and `gl.uniform2f` calls for `uResolution` and `uImgSize` were executed on every frame inside 60 FPS animation loops and video export frame loops. Tracking canvas dimensions (`lastResW`, `lastResH`) and image texture dimensions (`lastImgW`, `lastImgH`) via closure state updates `gl.viewport` and uniform bindings only when dimensions actually change, eliminating thousands of redundant WebGL driver context state mutations during frame rendering.
+
+**Action:** Cache canvas resolution and texture size variables in WebGL render closures to execute `gl.viewport` and `gl.uniform2f` context updates conditionally.
