@@ -213,6 +213,12 @@ function createWebGLRenderer(canvas) {
   let currentTexture = null;
   let currentImgSize = { x: 1, y: 1 };
 
+  // Cache resolution and image dimensions to avoid redundant WebGL driver uniform calls per frame
+  let lastResW = 0;
+  let lastResH = 0;
+  let lastImgW = 0;
+  let lastImgH = 0;
+
   function setTexture(img) {
     if (!img) return;
     if (currentTexture) {
@@ -241,8 +247,21 @@ function createWebGLRenderer(canvas) {
       gl.bindTexture(gl.TEXTURE_2D, currentTexture);
     }
 
-    gl.uniform2f(uResolution, canvas.width, canvas.height);
-    gl.uniform2f(uImgSize, currentImgSize.x, currentImgSize.y);
+    // Performance optimization: Update resolution and image dimension WebGL uniforms
+    // only when canvas dimensions or image sizes change. Avoids hundreds of redundant
+    // WebGL driver uniform binding calls per second in 60 FPS loops and video exports.
+    if (lastResW !== canvas.width || lastResH !== canvas.height) {
+      lastResW = canvas.width;
+      lastResH = canvas.height;
+      gl.uniform2f(uResolution, lastResW, lastResH);
+    }
+
+    if (lastImgW !== currentImgSize.x || lastImgH !== currentImgSize.y) {
+      lastImgW = currentImgSize.x;
+      lastImgH = currentImgSize.y;
+      gl.uniform2f(uImgSize, lastImgW, lastImgH);
+    }
+
     gl.uniform1f(uTime, timeSec);
     gl.uniform1f(uAmplitude, amplitude);
     gl.uniform1f(uFrequency, frequency);
