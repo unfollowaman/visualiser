@@ -74,7 +74,7 @@ void main() {
   float cy = (gy + 0.5) * spacing;
 
   if (cx >= width || cy >= height) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
 
@@ -117,14 +117,14 @@ void main() {
   float texV = (sy - imgOffsetY) / drawH;
 
   if (texU < 0.0 || texU > 1.0 || texV < 0.0 || texV > 1.0) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
 
   vec4 texColor = texture2D(uTexture, vec2(texU, texV));
 
   if (texColor.a < 0.04) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
 
@@ -132,7 +132,7 @@ void main() {
   float baseRadius = halfSpacing * pow(brightness, 0.8) * 1.25;
 
   if (baseRadius < 0.1) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
 
@@ -142,7 +142,7 @@ void main() {
   float dist = length(vec2(canvasX, canvasY) - vec2(cx, cy));
 
   if (dist > radius + 0.5) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
 
@@ -150,13 +150,13 @@ void main() {
   float alpha = smoothstep(radius + 0.5, radius - delta, dist) * texColor.a;
 
   vec3 col = texColor.rgb * alpha;
-  gl_FragColor = vec4(col, alpha);
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
 
 function createWebGLRenderer(canvas) {
-  const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true, alpha: true }) ||
-             canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, alpha: true });
+  const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true }) ||
+             canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true });
   if (!gl) {
     logError("WebGL not supported");
     return null;
@@ -656,8 +656,7 @@ async function renderAndExportFlowerVideo() {
       width: width,
       height: height,
       bitrate: 8_000_000,
-      framerate: fps,
-      alpha: 'keep'
+      framerate: fps
     });
 
     let audioEncoder = null;
@@ -767,7 +766,7 @@ async function renderAndExportFlowerVideo() {
     const url = URL.createObjectURL(blob);
 
     flowerDownloadVideo.href = url;
-    flowerDownloadVideo.download = `flower-transparent-1x1.webm`;
+    flowerDownloadVideo.download = `flower-1x1.webm`;
 
     flowerProgressContainer.classList.add("hidden");
     flowerDownloadContainer.classList.remove("hidden");
