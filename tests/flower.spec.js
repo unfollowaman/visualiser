@@ -112,7 +112,7 @@ test.describe('flower.js unit and integration tests', () => {
     expect(keyInfo.card3AriaPressedSpace).toBe('true');
   });
 
-  test('createWebGLRenderer creates WebGL context with alpha enabled and renders transparent backgrounds', async ({ page }) => {
+  test('createWebGLRenderer creates WebGL context and renders solid black backgrounds', async ({ page }) => {
     const rendererResult = await page.evaluate(() => {
       const testCanvas = document.createElement('canvas');
       testCanvas.width = 256;
@@ -123,12 +123,10 @@ test.describe('flower.js unit and integration tests', () => {
         return { success: false, reason: 'Renderer created null' };
       }
 
-      const attrs = renderer.gl.getContextAttributes();
-
       // Render a frame with sample time and audio metrics (no texture loaded yet -> background pixels)
       renderer.render(1.5, 0.5, 0.8);
 
-      // Read a pixel from canvas center to verify transparent background alpha value (0)
+      // Read a pixel from canvas center to verify solid black background alpha value (255)
       const pixels = new Uint8Array(4);
       renderer.gl.readPixels(128, 128, 1, 1, renderer.gl.RGBA, renderer.gl.UNSIGNED_BYTE, pixels);
 
@@ -146,7 +144,6 @@ test.describe('flower.js unit and integration tests', () => {
       return {
         success: true,
         hasGl: !!renderer.gl,
-        alphaEnabled: attrs ? attrs.alpha : false,
         bgAlphaPixel: pixels[3],
         glWidth: renderer.gl.drawingBufferWidth,
         glHeight: renderer.gl.drawingBufferHeight
@@ -155,8 +152,7 @@ test.describe('flower.js unit and integration tests', () => {
 
     expect(rendererResult.success).toBe(true);
     expect(rendererResult.hasGl).toBe(true);
-    expect(rendererResult.alphaEnabled).toBe(true);
-    expect(rendererResult.bgAlphaPixel).toBe(0);
+    expect(rendererResult.bgAlphaPixel).toBe(255);
     expect(rendererResult.glWidth).toBe(256);
     expect(rendererResult.glHeight).toBe(256);
   });

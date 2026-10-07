@@ -278,8 +278,8 @@ function buildWorkingAudioBuffer() {
 
 // Draw symmetric rounded bars matching the equalizer spec
 function drawBars(ctx, amplitudes, w, h) {
-  // Clear canvas to transparent background
-  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, w, h);
 
   // Performance optimization: Cache canvas layout geometry metrics and pre-calculate individual
   // bar X-positions into a Float32Array per canvas dimension (w, h). This skips redundant floating-point
