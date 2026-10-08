@@ -15,6 +15,7 @@ function applyGrid() {
   r.setProperty('--cols', g.cols);
   r.setProperty('--rows', g.rows);
   r.setProperty('--gutter', Math.max(3, Math.round(g.S * 0.07)) + 'px');
+  window.waveformGrid = g;
   window.dispatchEvent(new CustomEvent('gridchange', { detail: g }));
 }
 function onResize() {

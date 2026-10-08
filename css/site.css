@@ -95,3 +95,16 @@ html, body {
   margin: 0 auto;
   padding: 0 14px;
 }
+
+html { scroll-behavior: smooth; }
+.hero-title { margin: 0; z-index: 2; font-family: var(--font-ui); font-weight: 800; letter-spacing: -0.045em; font-size: calc(var(--s) * var(--hero-font-scale, 0.84)); color: var(--ink); }
+.hero-title .line { height: var(--s); line-height: var(--s); white-space: nowrap; }
+.type-caret { display: inline-block; width: 0.09em; min-width: 4px; height: calc(var(--s) * var(--hero-font-scale, 0.84) * 0.78); margin-left: 0.08em; background: var(--ink); vertical-align: baseline; animation: caret-blink 1s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
+.hero-desc { margin: 0; z-index: 2; font-family: var(--font-display); font-weight: 400; font-size: max(19px, calc(var(--s) * 0.3)); line-height: 1.25; color: var(--ink); }
+.hero-cta { z-index: 2; }
+.btn-solid { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.5rem; background: var(--ink); color: var(--paper); font: 700 0.95rem var(--font-ui); text-decoration: none; }
+#hero-flowers { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 600ms ease; }
+#hero-flowers.is-ready { opacity: 1; }
+#hero-brain-slot { z-index: 1; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .type-caret { animation: none; opacity: 0; } #hero-flowers { transition: none; } }
