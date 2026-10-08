@@ -20,13 +20,21 @@
 <body>
   <header class="site-header"><a class="wordmark" href="#top" aria-label="Waveform home">Waveform</a></header>
   <main id="top">
-    <section class="hero" aria-label="Introduction"><div class="grid grid--light" id="hero-grid"></div></section>
+    <section class="hero" aria-label="Introduction">
+      <div class="grid grid--light" id="hero-grid">
+        <canvas id="hero-flowers" aria-hidden="true"></canvas>
+        <div id="hero-brain-slot" class="cell" aria-hidden="true"></div>
+        <h1 id="hero-title" class="hero-title cell" aria-label="Voices in my head. Needs to be articulated."><span id="hero-typed" aria-hidden="true"><div class="line">Voices</div><div class="line">in</div><div class="line">My</div><div class="line">Head</div></span></h1>
+        <p id="hero-desc" class="hero-desc cell">Turn a voice note into a video that moves with every word. Upload it, pick a style, download.</p>
+        <div id="hero-cta" class="hero-cta cell"><a class="btn-solid" href="#features">Upload voice</a></div>
+      </div>
+    </section>
     <section class="features" id="features" aria-label="Create your video">
       <div class="grid grid--dark" id="features-grid"></div>
       <div id="legacy-tool">
         <div class="container">
           <header class="app-header">
-            <h1 class="title">Waveform</h1>
+            <div class="title" role="heading" aria-level="2">Waveform</div>
           </header>
 
           <main class="app-content">
@@ -197,6 +205,8 @@
   </main>
 
   <script src="js/grid.js" defer></script>
+  <script src="js/hero-type.js" defer></script>
+  <script src="js/hero-flowers.js" defer></script>
   <script src="script.js" defer></script>
   <script src="flower.js" defer></script>
 </body>
