@@ -3,6 +3,10 @@ const { test, expect } = require('@playwright/test');
 test.describe('flower.js unit and integration tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000/index.html');
+    const flowerStyleBtn = page.locator('.style-card[data-style="flower"]');
+    if (await flowerStyleBtn.count() > 0) {
+      await flowerStyleBtn.click();
+    }
   });
 
   test('FLOWERS array and initFlowerGrid setup flower preview cards with labels and titles', async ({ page }) => {

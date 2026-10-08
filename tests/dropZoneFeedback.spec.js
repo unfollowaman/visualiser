@@ -27,10 +27,10 @@ test.describe('Drop zone drag-and-drop feedback and post-decode focus management
       };
     });
 
-    expect(dragFeedback.initialText).toBe('DRAG & DROP AUDIO FILE OR CLICK TO BROWSE');
+    expect(dragFeedback.initialText).toBe('Drag & drop your files here');
     expect(dragFeedback.dragOverText).toBe('DROP AUDIO FILE HERE');
     expect(dragFeedback.isDragOverClass).toBe(true);
-    expect(dragFeedback.dragLeaveText).toBe('DRAG & DROP AUDIO FILE OR CLICK TO BROWSE');
+    expect(dragFeedback.dragLeaveText).toBe('Drag & drop your files here');
   });
 
   test('updates drop zone text to replace message and focuses #showEditBtn after successful audio decode', async ({ page }) => {

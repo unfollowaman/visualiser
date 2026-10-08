@@ -30,7 +30,35 @@
       </div>
     </section>
     <section class="features" id="features" aria-label="Create your video">
-      <div class="grid grid--dark" id="features-grid"></div>
+      <div class="grid grid--dark" id="features-grid">
+        <h2 id="feat-title-upload" class="feat-title cell">upload voice</h2>
+        <div id="dropZone" class="drop-zone dropzone cell" role="button" tabindex="0" aria-label="Upload audio file">
+          <p id="dropZoneText" class="drop-zone-text">Drag & drop your files here</p>
+          <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
+        </div>
+        <h2 id="feat-title-style" class="feat-title cell">choose style</h2>
+        <div id="style-cards" role="group" aria-label="Visualizer style" style="display:contents">
+          <button type="button" class="style-card cell" data-style="lines" aria-pressed="true"><canvas aria-hidden="true"></canvas><span class="label">Lines</span></button>
+          <button type="button" class="style-card cell" data-style="flower" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="label">Flower</span></button>
+          <button type="button" class="style-card cell" data-style="orb" aria-disabled="true" aria-describedby="orb-desc"><canvas aria-hidden="true"></canvas><span class="label">Orb (soon)</span><span id="orb-desc" class="sr-only">Orb style is coming soon</span></button>
+        </div>
+        <div id="flower-options" class="cell" hidden>
+          <div class="flower-grid" id="flowerGrid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div id="preview-cell" class="cell preview-stack">
+          <div class="canvas-container">
+            <canvas id="previewCanvas" width="1280" height="720" role="img" aria-label="Audio visualizer preview canvas"></canvas>
+          </div>
+          <div id="flower-preview-container" class="flower-preview-container is-inactive"></div>
+        </div>
+        <div id="render-cell" class="cell">
+          <button id="renderBtn" class="btn btn-primary btn-solid btn-solid--light" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
+          <button id="renderFlowerBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
+        </div>
+      </div>
+      <p class="features-note">Works with mp3, m4a and wav. Your audio never leaves your browser.</p>
       <div id="legacy-tool">
         <div class="container">
           <header class="app-header">
@@ -40,11 +68,6 @@
           <main class="app-content">
             <!-- File Selection Area -->
             <section class="panel upload-section">
-              <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Upload audio file">
-                <p id="dropZoneText" class="drop-zone-text">DRAG & DROP AUDIO FILE OR CLICK TO BROWSE</p>
-                <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
-              </div>
-
               <div id="fileInfoContainer" class="file-info-container hidden" role="status" aria-live="polite">
                 <div class="file-meta">
                   <span class="file-label">FILE:</span>
@@ -124,20 +147,8 @@
               </div>
             </section>
 
-            <!-- Preview Section -->
-            <section class="panel preview-section">
-              <div class="canvas-container">
-                <canvas id="previewCanvas" width="1280" height="720" role="img" aria-label="Audio visualizer preview canvas"></canvas>
-              </div>
-
-            </section>
-
             <!-- Export Section -->
             <section class="panel export-section">
-              <div class="controls-row">
-                <button id="renderBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
-              </div>
-
               <!-- Progress Area -->
               <div id="progressContainer" class="progress-container hidden" role="progressbar" aria-label="Video rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                 <div class="progress-header">
@@ -163,15 +174,7 @@
 
             <!-- Flower Section -->
             <section id="flowerSection" class="panel preview-section">
-              <h2 class="title" style="font-size: 24px;">FLOWER</h2>
-
-              <div class="flower-grid" id="flowerGrid">
-                <!-- Populated by JS -->
-              </div>
-
-              <div class="controls-row" style="margin-top: 16px;">
-                <button id="renderFlowerBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
-              </div>
+              <h2 class="title sr-only">FLOWER</h2>
 
               <!-- Flower Progress Area -->
               <div id="flowerProgressContainer" class="progress-container hidden" role="progressbar" aria-label="Flower rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -206,7 +209,9 @@
 
   <script src="js/grid.js" defer></script>
   <script src="js/hero-type.js" defer></script>
+  <script src="js/halftone.js" defer></script>
   <script src="js/hero-flowers.js" defer></script>
+  <script src="js/features.js" defer></script>
   <script src="script.js" defer></script>
   <script src="flower.js" defer></script>
 </body>

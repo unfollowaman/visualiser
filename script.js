@@ -984,7 +984,7 @@ dropZone.addEventListener("dragleave", () => {
   if (dropZoneText) {
     dropZoneText.textContent = decodedAudioBuffer
       ? "DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE"
-      : "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+      : "Drag & drop your files here";
   }
 });
 
@@ -994,7 +994,7 @@ dropZone.addEventListener("drop", (e) => {
   if (dropZoneText) {
     dropZoneText.textContent = decodedAudioBuffer
       ? "DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE"
-      : "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+      : "Drag & drop your files here";
   }
 
   if (e.dataTransfer.files.length > 0) {
@@ -1042,7 +1042,7 @@ function handleSelectedFile(file) {
   const isAudioType = (file && file.type && file.type.startsWith("audio/")) || hasAudioExtension;
 
   if (!isAudioType) {
-    if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+    if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
     if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
     decodeError.textContent = "Please select a valid audio file (MP3, WAV, etc.).";
     decodeError.classList.remove("hidden");
@@ -1050,7 +1050,7 @@ function handleSelectedFile(file) {
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+    if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
     if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
     decodeError.textContent = "File size exceeds the 50MB limit.";
     decodeError.classList.remove("hidden");
@@ -1108,7 +1108,7 @@ function handleSelectedFile(file) {
       }
     }, (err) => {
       logError("Decode Audio Data Error: ", err);
-      if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+      if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
       if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
       fileInfoContainer.classList.add("hidden");
       decodeError.classList.remove("hidden");
@@ -1117,7 +1117,7 @@ function handleSelectedFile(file) {
 
   reader.onerror = function (err) {
     logError("FileReader Error: ", err);
-    if (dropZoneText) dropZoneText.textContent = "DRAG & DROP AUDIO FILE OR CLICK TO BROWSE";
+    if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
     if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
     fileInfoContainer.classList.add("hidden");
     decodeError.classList.remove("hidden");
