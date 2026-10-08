@@ -213,6 +213,15 @@ function createWebGLRenderer(canvas) {
   let currentTexture = null;
   let currentImgSize = { x: 1, y: 1 };
 
+  // Performance optimization: Track resolution and image dimensions using closure variables
+  // to update uResolution and uImgSize WebGL uniforms (gl.uniform2f) and viewport state
+  // only when canvas dimensions or image size change, eliminating thousands of redundant
+  // C++ WebGL driver uniform binding calls per second during 60 FPS animation loops and video rendering.
+  let lastResW = -1;
+  let lastResH = -1;
+  let lastImgW = -1;
+  let lastImgH = -1;
+
   function setTexture(img) {
     if (!img) return;
     if (currentTexture) {
@@ -233,16 +242,26 @@ function createWebGLRenderer(canvas) {
   }
 
   function render(timeSec, amplitude = 0, frequency = 0) {
-    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(program);
+
+    if (canvas.width !== lastResW || canvas.height !== lastResH) {
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
+      lastResW = canvas.width;
+      lastResH = canvas.height;
+    }
+
+    if (currentImgSize.x !== lastImgW || currentImgSize.y !== lastImgH) {
+      gl.uniform2f(uImgSize, currentImgSize.x, currentImgSize.y);
+      lastImgW = currentImgSize.x;
+      lastImgH = currentImgSize.y;
+    }
 
     if (currentTexture) {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, currentTexture);
     }
 
-    gl.uniform2f(uResolution, canvas.width, canvas.height);
-    gl.uniform2f(uImgSize, currentImgSize.x, currentImgSize.y);
     gl.uniform1f(uTime, timeSec);
     gl.uniform1f(uAmplitude, amplitude);
     gl.uniform1f(uFrequency, frequency);
