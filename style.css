@@ -5,7 +5,7 @@
   padding: 0;
 }
 
-body {
+#legacy-tool {
   background-color: #0a0a0a;
   color: #f2f2f0;
   font-family: 'Playfair Display', serif;
@@ -545,10 +545,6 @@ body {
 
 /* Mobile Responsive Adjustments */
 @media (max-width: 480px) {
-  body {
-    padding: 20px 12px;
-  }
-
   .container {
     gap: 20px;
   }

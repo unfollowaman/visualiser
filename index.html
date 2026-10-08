@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Waveform</title>
 
   <link rel="icon" type="image/png" href="favicons/favicon-96x96.png" sizes="96x96" />
@@ -11,182 +11,192 @@
   <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png" />
   <link rel="manifest" href="favicons/site.webmanifest" />
 
-  <!-- Preconnect to Google Fonts domains to eliminate cross-origin connection latency -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@700;800&family=Instrument+Serif:ital@0;1&display=swap">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
-  <div class="container">
-    <header class="app-header">
-      <h1 class="title">Waveform</h1>
-    </header>
+  <header class="site-header"><a class="wordmark" href="#top" aria-label="Waveform home">Waveform</a></header>
+  <main id="top">
+    <section class="hero" aria-label="Introduction"><div class="grid grid--light" id="hero-grid"></div></section>
+    <section class="features" id="features" aria-label="Create your video">
+      <div class="grid grid--dark" id="features-grid"></div>
+      <div id="legacy-tool">
+        <div class="container">
+          <header class="app-header">
+            <h1 class="title">Waveform</h1>
+          </header>
 
-    <main class="app-content">
-      <!-- File Selection Area -->
-      <section class="panel upload-section">
-        <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Upload audio file">
-          <p id="dropZoneText" class="drop-zone-text">DRAG & DROP AUDIO FILE OR CLICK TO BROWSE</p>
-          <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
+          <main class="app-content">
+            <!-- File Selection Area -->
+            <section class="panel upload-section">
+              <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Upload audio file">
+                <p id="dropZoneText" class="drop-zone-text">DRAG & DROP AUDIO FILE OR CLICK TO BROWSE</p>
+                <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
+              </div>
+
+              <div id="fileInfoContainer" class="file-info-container hidden" role="status" aria-live="polite">
+                <div class="file-meta">
+                  <span class="file-label">FILE:</span>
+                  <span id="fileName" class="file-value">filename.mp3</span>
+                </div>
+                <div class="file-meta">
+                  <span class="file-label">DURATION:</span>
+                  <span id="fileDuration" class="file-value">00:00</span>
+                </div>
+                <div id="durationWarning" class="warning-text hidden">
+                  over about 2.5 minutes, export may take a while.
+                </div>
+              </div>
+              <div id="decodeError" class="error-text hidden" role="alert" aria-live="assertive">
+                Could not decode this audio file. Try MP3 or WAV.
+              </div>
+              <div class="controls-row" style="margin-top: 16px;">
+                <button id="showEditBtn" class="btn btn-secondary hidden" aria-controls="editSection" aria-expanded="false">EDIT AUDIO</button>
+              </div>
+            </section>
+
+            <!-- Edit Section -->
+            <section id="editSection" class="panel edit-section hidden">
+              <div class="edit-stats">
+                <div class="file-meta">
+                  <span class="file-label">ORIGINAL:</span>
+                  <span id="originalLength" class="file-value">00:00</span>
+                </div>
+                <div class="file-meta">
+                  <span class="file-label">EDITED:</span>
+                  <span id="editedLength" class="file-value">00:00</span>
+                </div>
+                <div id="editDurationWarning" class="warning-text hidden">
+                  over about 2.5 minutes, export may take a while.
+                </div>
+              </div>
+
+              <div class="editor-container" id="editorContainer">
+                <canvas id="overviewCanvas" width="800" height="120" role="img" aria-label="Audio waveform timeline overview"></canvas>
+                <div id="selectionHighlight" class="selection-highlight hidden"></div>
+                <div id="leftTrimHandle" class="trim-handle left-handle" role="slider" aria-label="Left trim handle" tabindex="0">
+                  <div class="handle-line"></div>
+                  <div class="handle-readout" id="leftTrimReadout">00:00.0</div>
+                </div>
+                <div id="rightTrimHandle" class="trim-handle right-handle" role="slider" aria-label="Right trim handle" tabindex="0">
+                  <div class="handle-line"></div>
+                  <div class="handle-readout" id="rightTrimReadout">00:00.0</div>
+                </div>
+                <div id="playheadLine" class="playhead-line hidden">
+                  <div class="playhead-readout" id="playheadReadout" aria-hidden="true">00:00.0</div>
+                </div>
+              </div>
+
+              <div class="controls-row">
+                <button id="playPreviewBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-pressed="false" aria-label="Play audio preview" title="Load an audio file to play preview">PLAY PREVIEW</button>
+                <button id="cutSelectedBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Cut selected audio range" title="Drag across waveform timeline to select a region to cut">CUT SELECTED</button>
+                <button id="undoBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Undo last audio edit (Ctrl+Z or Cmd+Z)" title="No edit history to undo">UNDO</button>
+                <button id="resetBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Reset audio edits" title="Audio is already at original full length">RESET</button>
+              </div>
+              <div class="controls-row">
+                <button id="continueBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Continue with current audio edits" title="Load an audio file to continue">CONTINUE</button>
+              </div>
+            </section>
+
+            <!-- Aspect Ratio Selection Section -->
+            <section id="aspectRatioSection" class="panel aspect-ratio-section hidden">
+              <span class="eyebrow">ASPECT RATIO</span>
+              <div class="aspect-ratio-cards">
+                <div class="aspect-card" id="card16x9" data-ratio="16:9" role="button" tabindex="0" aria-label="Select 16:9 aspect ratio (Landscape)" aria-pressed="false" title="16:9 Landscape format (1280x720)">
+                  <span class="card-title">16:9</span>
+                  <span class="card-subtitle">(Landscape)</span>
+                </div>
+                <div class="aspect-card" id="card9x16" data-ratio="9:16" role="button" tabindex="0" aria-label="Select 9:16 aspect ratio (Vertical)" aria-pressed="false" title="9:16 Vertical format (720x1280)">
+                  <span class="card-title">9:16</span>
+                  <span class="card-subtitle">(Vertical)</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Preview Section -->
+            <section class="panel preview-section">
+              <div class="canvas-container">
+                <canvas id="previewCanvas" width="1280" height="720" role="img" aria-label="Audio visualizer preview canvas"></canvas>
+              </div>
+
+            </section>
+
+            <!-- Export Section -->
+            <section class="panel export-section">
+              <div class="controls-row">
+                <button id="renderBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
+              </div>
+
+              <!-- Progress Area -->
+              <div id="progressContainer" class="progress-container hidden" role="progressbar" aria-label="Video rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="progress-header">
+                  <span id="progressLabel" class="progress-label">RENDERING...</span>
+                  <span id="progressPercentage" class="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Status/Error line -->
+              <div id="statusLine" class="status-line hidden" role="status" aria-live="polite"></div>
+
+              <!-- Download Links -->
+              <div id="downloadContainer" class="download-container hidden">
+                <div class="download-links">
+                  <a id="downloadVideo" class="btn btn-primary" href="#" download>DOWNLOAD VIDEO</a>
+                </div>
+              </div>
+
+            </section>
+
+            <!-- Flower Section -->
+            <section id="flowerSection" class="panel preview-section">
+              <h2 class="title" style="font-size: 24px;">FLOWER</h2>
+
+              <div class="flower-grid" id="flowerGrid">
+                <!-- Populated by JS -->
+              </div>
+
+              <div class="controls-row" style="margin-top: 16px;">
+                <button id="renderFlowerBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
+              </div>
+
+              <!-- Flower Progress Area -->
+              <div id="flowerProgressContainer" class="progress-container hidden" role="progressbar" aria-label="Flower rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="progress-header">
+                  <span id="flowerProgressLabel" class="progress-label">RENDERING...</span>
+                  <span id="flowerProgressPercentage" class="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="flowerProgressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Flower Status/Error line -->
+              <div id="flowerStatusLine" class="status-line hidden" role="status" aria-live="polite"></div>
+
+              <!-- Flower Download Links -->
+              <div id="flowerDownloadContainer" class="download-container hidden">
+                <div class="download-links">
+                  <a id="flowerDownloadVideo" class="btn btn-primary" href="#" download>DOWNLOAD VIDEO</a>
+                </div>
+              </div>
+            </section>
+
+            <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+              <span class="eyebrow" style="letter-spacing: 0.1em; font-size: 10px;">@unfollowaman</span>
+            </div>
+          </main>
         </div>
-
-        <div id="fileInfoContainer" class="file-info-container hidden" role="status" aria-live="polite">
-          <div class="file-meta">
-            <span class="file-label">FILE:</span>
-            <span id="fileName" class="file-value">filename.mp3</span>
-          </div>
-          <div class="file-meta">
-            <span class="file-label">DURATION:</span>
-            <span id="fileDuration" class="file-value">00:00</span>
-          </div>
-          <div id="durationWarning" class="warning-text hidden">
-            over about 2.5 minutes, export may take a while.
-          </div>
-        </div>
-        <div id="decodeError" class="error-text hidden" role="alert" aria-live="assertive">
-          Could not decode this audio file. Try MP3 or WAV.
-        </div>
-        <div class="controls-row" style="margin-top: 16px;">
-          <button id="showEditBtn" class="btn btn-secondary hidden" aria-controls="editSection" aria-expanded="false">EDIT AUDIO</button>
-        </div>
-      </section>
-
-      <!-- Edit Section -->
-      <section id="editSection" class="panel edit-section hidden">
-        <div class="edit-stats">
-          <div class="file-meta">
-            <span class="file-label">ORIGINAL:</span>
-            <span id="originalLength" class="file-value">00:00</span>
-          </div>
-          <div class="file-meta">
-            <span class="file-label">EDITED:</span>
-            <span id="editedLength" class="file-value">00:00</span>
-          </div>
-          <div id="editDurationWarning" class="warning-text hidden">
-            over about 2.5 minutes, export may take a while.
-          </div>
-        </div>
-
-        <div class="editor-container" id="editorContainer">
-          <canvas id="overviewCanvas" width="800" height="120" role="img" aria-label="Audio waveform timeline overview"></canvas>
-          <div id="selectionHighlight" class="selection-highlight hidden"></div>
-          <div id="leftTrimHandle" class="trim-handle left-handle" role="slider" aria-label="Left trim handle" tabindex="0">
-            <div class="handle-line"></div>
-            <div class="handle-readout" id="leftTrimReadout">00:00.0</div>
-          </div>
-          <div id="rightTrimHandle" class="trim-handle right-handle" role="slider" aria-label="Right trim handle" tabindex="0">
-            <div class="handle-line"></div>
-            <div class="handle-readout" id="rightTrimReadout">00:00.0</div>
-          </div>
-          <div id="playheadLine" class="playhead-line hidden">
-            <div class="playhead-readout" id="playheadReadout" aria-hidden="true">00:00.0</div>
-          </div>
-        </div>
-
-        <div class="controls-row">
-          <button id="playPreviewBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-pressed="false" aria-label="Play audio preview" title="Load an audio file to play preview">PLAY PREVIEW</button>
-          <button id="cutSelectedBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Cut selected audio range" title="Drag across waveform timeline to select a region to cut">CUT SELECTED</button>
-          <button id="undoBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Undo last audio edit (Ctrl+Z or Cmd+Z)" title="No edit history to undo">UNDO</button>
-          <button id="resetBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Reset audio edits" title="Audio is already at original full length">RESET</button>
-        </div>
-        <div class="controls-row">
-          <button id="continueBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Continue with current audio edits" title="Load an audio file to continue">CONTINUE</button>
-        </div>
-      </section>
-
-      <!-- Aspect Ratio Selection Section -->
-      <section id="aspectRatioSection" class="panel aspect-ratio-section hidden">
-        <span class="eyebrow">ASPECT RATIO</span>
-        <div class="aspect-ratio-cards">
-          <div class="aspect-card" id="card16x9" data-ratio="16:9" role="button" tabindex="0" aria-label="Select 16:9 aspect ratio (Landscape)" aria-pressed="false" title="16:9 Landscape format (1280x720)">
-            <span class="card-title">16:9</span>
-            <span class="card-subtitle">(Landscape)</span>
-          </div>
-          <div class="aspect-card" id="card9x16" data-ratio="9:16" role="button" tabindex="0" aria-label="Select 9:16 aspect ratio (Vertical)" aria-pressed="false" title="9:16 Vertical format (720x1280)">
-            <span class="card-title">9:16</span>
-            <span class="card-subtitle">(Vertical)</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Preview Section -->
-      <section class="panel preview-section">
-        <div class="canvas-container">
-          <canvas id="previewCanvas" width="1280" height="720" role="img" aria-label="Audio visualizer preview canvas"></canvas>
-        </div>
-
-      </section>
-
-      <!-- Export Section -->
-      <section class="panel export-section">
-        <div class="controls-row">
-          <button id="renderBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
-        </div>
-
-        <!-- Progress Area -->
-        <div id="progressContainer" class="progress-container hidden" role="progressbar" aria-label="Video rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div class="progress-header">
-            <span id="progressLabel" class="progress-label">RENDERING...</span>
-            <span id="progressPercentage" class="progress-percentage">0%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
-          </div>
-        </div>
-
-        <!-- Status/Error line -->
-        <div id="statusLine" class="status-line hidden" role="status" aria-live="polite"></div>
-
-        <!-- Download Links -->
-        <div id="downloadContainer" class="download-container hidden">
-          <div class="download-links">
-            <a id="downloadVideo" class="btn btn-primary" href="#" download>DOWNLOAD VIDEO</a>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- Flower Section -->
-      <section id="flowerSection" class="panel preview-section">
-        <h2 class="title" style="font-size: 24px;">FLOWER</h2>
-
-        <div class="flower-grid" id="flowerGrid">
-          <!-- Populated by JS -->
-        </div>
-
-        <div class="controls-row" style="margin-top: 16px;">
-          <button id="renderFlowerBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
-        </div>
-
-        <!-- Flower Progress Area -->
-        <div id="flowerProgressContainer" class="progress-container hidden" role="progressbar" aria-label="Flower rendering progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div class="progress-header">
-            <span id="flowerProgressLabel" class="progress-label">RENDERING...</span>
-            <span id="flowerProgressPercentage" class="progress-percentage">0%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="flowerProgressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
-          </div>
-        </div>
-
-        <!-- Flower Status/Error line -->
-        <div id="flowerStatusLine" class="status-line hidden" role="status" aria-live="polite"></div>
-
-        <!-- Flower Download Links -->
-        <div id="flowerDownloadContainer" class="download-container hidden">
-          <div class="download-links">
-            <a id="flowerDownloadVideo" class="btn btn-primary" href="#" download>DOWNLOAD VIDEO</a>
-          </div>
-        </div>
-      </section>
-
-      <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
-        <span class="eyebrow" style="letter-spacing: 0.1em; font-size: 10px;">@unfollowaman</span>
       </div>
-    </main>
-  </div>
+    </section>
+  </main>
 
+  <script src="js/grid.js" defer></script>
   <script src="script.js" defer></script>
   <script src="flower.js" defer></script>
 </body>
