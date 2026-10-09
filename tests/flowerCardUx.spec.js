@@ -3,6 +3,10 @@ const { test, expect } = require('@playwright/test');
 test.describe('Flower Card Arrow Key Navigation & Dynamic ARIA Labels tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    const flowerStyleBtn = page.locator('.style-card[data-style="flower"]');
+    if (await flowerStyleBtn.count() > 0) {
+      await flowerStyleBtn.click();
+    }
   });
 
   test('initial flower cards have aria-label and aria-pressed attributes correctly set', async ({ page }) => {
