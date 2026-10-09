@@ -87,3 +87,9 @@
 **Learning:** In `drawOverview()` (`script.js`), executed on every `mousemove`/`touchmove` frame while dragging trim handles, evaluating bar X-positions (`i * stepX`) and bar center times (`(i + 0.5) * durationPerBar`) across 200 bars recalculated arithmetic coordinates 200 times per gesture frame. Pre-calculating `cachedOverviewBarCenterTimes` Float32Array on audio decode and caching layout metrics (`cachedOverviewXPositions` Float32Array, `cachedOverviewMaxBarHeight`, `cachedOverviewMinBarHeight`, `cachedOverviewHalfH`) per canvas dimension eliminates 200 multiplications and layout recalculations per frame during interactive handle dragging.
 
 **Action:** Pre-compute timeline bar center timestamps and canvas X-coordinates into Float32Arrays during initial signal setup and canvas resize events.
+
+## 2026-10-09 - Hoist Invariant Calculations in High-Frequency Halftone Canvas Drawing Loops
+
+**Learning:** In `WaveformHalftone.draw()` (`js/halftone.js`), called on every 60 FPS animation frame across hundreds or thousands of halftone dots in hero and feature section canvas visualizers, computing `d * 0.62`, `0.16 * (1 + 1.2 * nVal + 1.5 * pVal)`, and `t * 1.6 - pOffset` inside per-dot loops executed tens of thousands of redundant floating-point additions and multiplications per second. Hoisting these calculations outside the bucket and dot loops eliminates redundant arithmetic in the hot rendering loop while maintaining exact mathematical accuracy.
+
+**Action:** Hoist scale factors, time phase offsets, and radius bounds outside per-element loops in high-frequency canvas animation drawing functions.
