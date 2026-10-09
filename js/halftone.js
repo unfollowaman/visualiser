@@ -133,6 +133,8 @@
     };
   }
 
+  var TAU = 6.283185307179586;
+
   function draw(cx, built, cxCenter, cyCenter, t, pulse, near, phaseOffset) {
     if (!built || !built.buckets) return;
 
@@ -140,6 +142,13 @@
     var pOffset = phaseOffset || 0;
     var pVal = pulse || 0;
     var nVal = near || 0;
+
+    // Performance optimization: Hoist loop invariants outside the per-bucket and per-dot iteration loops.
+    // Pre-calculating maxRadius, scaleFactor, tPhase, and TAU eliminates redundant floating-point
+    // additions, multiplications, and parameter evaluations across thousands of halftone dots per frame at 60 FPS.
+    var maxRadius = d * 0.62;
+    var scaleFactor = 0.16 * (1 + 1.2 * nVal + 1.5 * pVal);
+    var tPhase = t * 1.6 - pOffset;
 
     built.buckets.forEach(function (bucket) {
       var path = new Path2D();
@@ -151,13 +160,13 @@
         var bBase = bucket.base[i];
         var bw0 = bucket.w0[i];
 
-        var wave = Math.sin(bw0 - t * 1.6 + pOffset);
-        var scale = 1 + 0.16 * wave * (1 + 1.2 * nVal + 1.5 * pVal);
-        var r = Math.min(d * 0.62, bBase * scale);
+        var wave = Math.sin(bw0 - tPhase);
+        var scale = 1 + wave * scaleFactor;
+        var r = Math.min(maxRadius, bBase * scale);
 
         if (r > 0.1) {
           path.moveTo(bx + r, by);
-          path.arc(bx, by, r, 0, 6.283185307179586);
+          path.arc(bx, by, r, 0, TAU);
         }
       }
 
