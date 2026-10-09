@@ -39,9 +39,11 @@
 
   var renderBtn = document.getElementById('renderBtn');
   var renderFlowerBtn = document.getElementById('renderFlowerBtn');
+  var renderOrbBtn = document.getElementById('renderOrbBtn');
 
   var linesPreview = document.querySelector('.canvas-container');
   var flowerPreview = document.getElementById('flower-preview-container');
+  var orbPreview = document.getElementById('orb-preview');
 
   function setCellPos(el, x, y, w, h) {
     if (!el) return;
@@ -307,35 +309,40 @@
   }
 
   function selectStyle(style) {
-    if (style === 'orb') return; // disabled
-
     var isFlower = (style === 'flower');
     st.flower = isFlower;
 
-    if (linesBtn) linesBtn.setAttribute('aria-pressed', !isFlower ? 'true' : 'false');
-    if (flowerBtn) flowerBtn.setAttribute('aria-pressed', isFlower ? 'true' : 'false');
+    if (linesBtn) linesBtn.setAttribute('aria-pressed', style === 'lines' ? 'true' : 'false');
+    if (flowerBtn) flowerBtn.setAttribute('aria-pressed', style === 'flower' ? 'true' : 'false');
+    if (orbBtn) orbBtn.setAttribute('aria-pressed', style === 'orb' ? 'true' : 'false');
 
-    if (renderBtn) renderBtn.hidden = isFlower;
-    if (renderFlowerBtn) renderFlowerBtn.hidden = !isFlower;
+    if (renderBtn) renderBtn.hidden = (style !== 'lines');
+    if (renderFlowerBtn) renderFlowerBtn.hidden = (style !== 'flower');
+    if (renderOrbBtn) renderOrbBtn.hidden = (style !== 'orb');
 
     if (flowerOptions) {
       flowerOptions.hidden = !isFlower;
     }
 
     if (linesPreview) {
-      linesPreview.classList.toggle('is-inactive', isFlower);
+      linesPreview.classList.toggle('is-inactive', style !== 'lines');
     }
     if (flowerPreview) {
-      flowerPreview.classList.toggle('is-inactive', !isFlower);
+      flowerPreview.classList.toggle('is-inactive', style !== 'flower');
+    }
+    if (orbPreview) {
+      orbPreview.classList.toggle('is-inactive', style !== 'orb');
     }
 
     if (window.waveformGrid) {
       layoutFeatures(window.waveformGrid, st);
     }
+
+    window.dispatchEvent(new CustomEvent('stylechange', { detail: { style: style } }));
   }
 
   // Setup style card listeners
-  [linesBtn, flowerBtn].forEach(function (card) {
+  [linesBtn, flowerBtn, orbBtn].forEach(function (card) {
     if (!card) return;
     var style = card.dataset.style;
     card.addEventListener('click', function () {
@@ -348,19 +355,6 @@
       }
     });
   });
-
-  if (orbBtn) {
-    orbBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    });
-    orbBtn.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    });
-  }
 
   // File input & dropzone listeners to update state
   if (fileInput) {
@@ -408,4 +402,5 @@
   }
 
   window.layoutFeatures = layoutFeatures;
+  window.cardLevel = cardLevel;
 })();

@@ -212,23 +212,16 @@ test.describe('Phase 3 Feature Section Redesign Acceptance Checks', () => {
     expect(afterContent).toContain('Tap to change');
   });
 
-  test('Acceptance Check 7: Keyboard navigation and Orb card disabled announcement', async ({ page }) => {
+  test('Acceptance Check 7: Keyboard navigation and Orb card enabled in Phase 4', async ({ page }) => {
     await page.goto('http://localhost:3000/index.html');
 
     const orbCard = page.locator('.style-card[data-style="orb"]');
-    await expect(orbCard).toHaveAttribute('aria-disabled', 'true');
+    await expect(orbCard).not.toHaveAttribute('aria-disabled', 'true');
 
-    const orbDescId = await orbCard.getAttribute('aria-describedby');
-    expect(orbDescId).toBeTruthy();
-
-    const orbDesc = page.locator(`#${orbDescId}`);
-    await expect(orbDesc).toHaveText('Orb style is coming soon');
-
-    // Clicking orb card does nothing
-    const initialLinesPressed = await page.locator('.style-card[data-style="lines"]').getAttribute('aria-pressed');
-    await orbCard.click({ force: true });
-    const afterLinesPressed = await page.locator('.style-card[data-style="lines"]').getAttribute('aria-pressed');
-    expect(afterLinesPressed).toBe(initialLinesPressed);
+    // Clicking orb card selects orb style
+    await orbCard.click();
+    await expect(orbCard).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.style-card[data-style="lines"]')).toHaveAttribute('aria-pressed', 'false');
   });
 
   test('Acceptance Check 8: prefers-reduced-motion renders static card previews', async ({ page }) => {

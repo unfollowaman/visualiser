@@ -40,7 +40,7 @@
         <div id="style-cards" role="group" aria-label="Visualizer style" style="display:contents">
           <button type="button" class="style-card cell" data-style="lines" aria-pressed="true"><canvas aria-hidden="true"></canvas><span class="label">Lines</span></button>
           <button type="button" class="style-card cell" data-style="flower" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="label">Flower</span></button>
-          <button type="button" class="style-card cell" data-style="orb" aria-disabled="true" aria-describedby="orb-desc"><canvas aria-hidden="true"></canvas><span class="label">Orb (soon)</span><span id="orb-desc" class="sr-only">Orb style is coming soon</span></button>
+          <button type="button" class="style-card cell" data-style="orb" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="label">Orb</span></button>
         </div>
         <div id="flower-options" class="cell" hidden>
           <div class="flower-grid" id="flowerGrid">
@@ -52,10 +52,12 @@
             <canvas id="previewCanvas" width="1280" height="720" role="img" aria-label="Audio visualizer preview canvas"></canvas>
           </div>
           <div id="flower-preview-container" class="flower-preview-container is-inactive"></div>
+          <canvas id="orb-preview" class="orb-preview is-inactive" role="img" aria-label="Orb visualizer preview canvas"></canvas>
         </div>
         <div id="render-cell" class="cell">
           <button id="renderBtn" class="btn btn-primary btn-solid btn-solid--light" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
           <button id="renderFlowerBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
+          <button id="renderOrbBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render orb video and download" title="Load an audio file and choose aspect ratio to render orb video">RENDER AND DOWNLOAD</button>
         </div>
       </div>
       <p class="features-note">Works with mp3, m4a and wav. Your audio never leaves your browser.</p>
@@ -212,6 +214,8 @@
   <script src="js/halftone.js" defer></script>
   <script src="js/hero-flowers.js" defer></script>
   <script src="js/features.js" defer></script>
+  <script src="js/orb-export.js" defer></script>
+  <script src="js/orb.js" defer></script>
   <script src="script.js" defer></script>
   <script src="flower.js" defer></script>
 </body>
