@@ -485,6 +485,11 @@
   }
 
   function startPreviewLoop() {
+    if (document.documentElement.dataset.motion === 'paused') {
+      stopPreviewLoop();
+      renderPreviewFrame(3000);
+      return;
+    }
     if (animFrameId) cancelAnimationFrame(animFrameId);
     animFrameId = null;
     lastFrameTime = performance.now();
@@ -492,6 +497,17 @@
       animFrameId = requestAnimationFrame(loop);
     }
   }
+
+  window.addEventListener('motionchange', function () {
+    if (document.documentElement.dataset.motion === 'paused') {
+      stopPreviewLoop();
+      renderPreviewFrame(3000);
+    } else {
+      if (isOrbSelected) {
+        startPreviewLoop();
+      }
+    }
+  });
 
   function stopPreviewLoop() {
     if (animFrameId) {

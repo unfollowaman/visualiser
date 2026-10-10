@@ -1725,3 +1725,91 @@ if (downloadVideo) {
     statusLine.classList.remove("hidden");
   });
 }
+
+// Accessibility Live Announcements Observer
+(function setupLiveAnnouncements() {
+  function init() {
+    const liveStatus = document.getElementById("live-status");
+    if (!liveStatus) return;
+
+    let lastAnnouncedPercent = -1;
+    let isRenderingActive = false;
+
+    function announce(msg) {
+      liveStatus.textContent = "";
+      setTimeout(() => {
+        liveStatus.textContent = msg;
+      }, 50);
+    }
+
+    const fileNameEl = document.getElementById("fileName");
+    if (fileNameEl) {
+      const fileObserver = new MutationObserver(() => {
+        const name = fileNameEl.textContent.trim();
+        if (name && name !== "filename.mp3") {
+          announce(`Loaded audio file: ${name}`);
+        }
+      });
+      fileObserver.observe(fileNameEl, { childList: true, characterData: true, subtree: true });
+    }
+
+    const progressPercents = [
+      document.getElementById("progressPercentage"),
+      document.getElementById("flowerProgressPercentage")
+    ].filter(Boolean);
+
+    progressPercents.forEach((el) => {
+      const progObserver = new MutationObserver(() => {
+        const text = el.textContent.trim();
+        const match = text.match(/(\d+)%/);
+        if (match) {
+          const val = parseInt(match[1], 10);
+          if (val === 0 && !isRenderingActive) {
+            isRenderingActive = true;
+            lastAnnouncedPercent = 0;
+            announce("Rendering started");
+          } else if (isRenderingActive && val > lastAnnouncedPercent) {
+            const quarter = Math.floor(val / 25) * 25;
+            if (quarter > lastAnnouncedPercent && quarter < 100) {
+              lastAnnouncedPercent = quarter;
+              announce(`Rendering ${quarter} percent`);
+            } else if (val === 100 && lastAnnouncedPercent < 100) {
+              lastAnnouncedPercent = 100;
+              announce("Rendering 100 percent");
+            }
+          }
+        }
+      });
+      progObserver.observe(el, { childList: true, characterData: true, subtree: true });
+    });
+
+    const statusLines = [
+      document.getElementById("statusLine"),
+      document.getElementById("flowerStatusLine")
+    ].filter(Boolean);
+
+    statusLines.forEach((s) => {
+      const statusObserver = new MutationObserver(() => {
+        const txt = s.textContent.trim();
+        if (txt && !s.classList.contains("hidden")) {
+          if (txt.toLowerCase().includes("completed") || txt.toLowerCase().includes("completed successfully")) {
+            announce("Render finished");
+            isRenderingActive = false;
+            lastAnnouncedPercent = -1;
+          } else if (txt.toLowerCase().includes("error") || txt.toLowerCase().includes("failed")) {
+            announce(`Rendering error: ${txt}`);
+            isRenderingActive = false;
+            lastAnnouncedPercent = -1;
+          }
+        }
+      });
+      statusObserver.observe(s, { childList: true, characterData: true, subtree: true, attributes: true });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

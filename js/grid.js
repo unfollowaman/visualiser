@@ -1,10 +1,50 @@
+// Motion Control Initializer
+(function initMotionState() {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!document.documentElement.dataset.motion) {
+    document.documentElement.dataset.motion = prefersReduced ? 'paused' : 'on';
+  }
+
+  let prevMotion = document.documentElement.dataset.motion;
+  const observer = new MutationObserver(() => {
+    const current = document.documentElement.dataset.motion;
+    if (current !== prevMotion) {
+      prevMotion = current;
+      window.dispatchEvent(new CustomEvent('motionchange', { detail: { motion: current } }));
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
+
+  function setupToggle() {
+    const motionBtn = document.getElementById('motion-toggle');
+    if (!motionBtn) return;
+    function updateBtn() {
+      const isPaused = document.documentElement.dataset.motion === 'paused';
+      motionBtn.setAttribute('aria-pressed', isPaused ? 'true' : 'false');
+    }
+    updateBtn();
+    motionBtn.addEventListener('click', function () {
+      const isPaused = document.documentElement.dataset.motion === 'paused';
+      document.documentElement.dataset.motion = isPaused ? 'on' : 'paused';
+      updateBtn();
+    });
+    window.addEventListener('motionchange', updateBtn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupToggle);
+  } else {
+    setupToggle();
+  }
+})();
+
 let lastW = 0, lastH = 0, ticking = false;
 function computeGrid() {
   const w = document.documentElement.clientWidth, h = window.innerHeight;
   const narrow = w < 760;
   const pad = w < 640 ? 14 : 28;
   const cols = narrow ? 6 : (w < 1100 ? 10 : 14);
-  const S = Math.floor((w - 2 * pad) / cols);
+  const S = Math.min(Math.floor((w - 2 * pad) / cols), 112);
   const rows = Math.max(narrow ? 12 : 8, Math.floor((h - 68) / S));
   return { S, cols, rows, narrow, w, h };
 }
