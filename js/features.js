@@ -11,7 +11,6 @@
 
   var loadedFlowerImages = {};
   var builtHalftones = {}; // key: flowerKey_size
-  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var st = {
     hasFile: false,
@@ -229,7 +228,8 @@
       } else if (item.style === 'orb') {
         drawOrbCard(cx, size, t, lvl);
       } else if (item.style === 'flower') {
-        var idx = prefersReducedMotion ? 0 : Math.floor(t / 2.5) % 4;
+        var isPaused = document.documentElement.dataset.motion === 'paused';
+        var idx = isPaused ? 0 : Math.floor(t / 2.5) % 4;
         var key = FLOWER_KEYS[idx];
         var img = loadedFlowerImages[key];
 
@@ -266,14 +266,27 @@
   }
 
   function startLoop() {
-    if (!animFrameId && !isHidden && isGridIntersecting) {
-      if (prefersReducedMotion) {
-        renderCardFrames(2);
-      } else {
-        animFrameId = requestAnimationFrame(loop);
-      }
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    if (document.documentElement.dataset.motion === 'paused') {
+      renderCardFrames(2);
+      return;
+    }
+    if (!isHidden && isGridIntersecting) {
+      animFrameId = requestAnimationFrame(loop);
     }
   }
+
+  window.addEventListener('motionchange', function () {
+    if (document.documentElement.dataset.motion === 'paused') {
+      stopLoop();
+      renderCardFrames(2);
+    } else {
+      startLoop();
+    }
+  });
 
   function stopLoop() {
     if (animFrameId) {
@@ -380,15 +393,39 @@
         isGridIntersecting = entry.isIntersecting;
         updateVisibility();
       });
-    }, { threshold: 0.05 });
+    }, { rootMargin: '200px', threshold: 0.05 });
     observer.observe(featuresGrid);
   }
 
   // Init
   loadFlowerImages();
 
+  function checkExportSupport() {
+    var isSupported = (typeof VideoEncoder !== 'undefined') && (typeof AudioEncoder !== 'undefined');
+    if (!isSupported) {
+      var note = document.querySelector('.features-note');
+      if (note && !note.querySelector('.export-unsupported-msg')) {
+        var msg = document.createElement('span');
+        msg.className = 'export-unsupported-msg';
+        msg.style.display = 'block';
+        msg.style.color = '#ff8888';
+        msg.style.marginTop = '6px';
+        msg.textContent = 'Video export is not supported in this browser. Try Chrome or Edge.';
+        note.appendChild(msg);
+      }
+      [renderBtn, renderFlowerBtn, renderOrbBtn].forEach(function (btn) {
+        if (btn) {
+          btn.disabled = true;
+          btn.setAttribute('aria-disabled', 'true');
+          btn.setAttribute('title', 'Video export is not supported in this browser. Try Chrome or Edge.');
+        }
+      });
+    }
+  }
+
   function initFeatures() {
     checkFileState();
+    checkExportSupport();
     if (window.waveformGrid) {
       layoutFeatures(window.waveformGrid, st);
     }

@@ -140,10 +140,15 @@
     var pOffset = phaseOffset || 0;
     var pVal = pulse || 0;
     var nVal = near || 0;
+    var hasPath2D = typeof Path2D !== 'undefined';
 
     built.buckets.forEach(function (bucket) {
-      var path = new Path2D();
       var count = bucket.count;
+      var path = hasPath2D ? new Path2D() : null;
+
+      if (!hasPath2D) {
+        cx.beginPath();
+      }
 
       for (var i = 0; i < count; i++) {
         var bx = cxCenter + bucket.rx[i];
@@ -156,13 +161,22 @@
         var r = Math.min(d * 0.62, bBase * scale);
 
         if (r > 0.1) {
-          path.moveTo(bx + r, by);
-          path.arc(bx, by, r, 0, 6.283185307179586);
+          if (hasPath2D) {
+            path.moveTo(bx + r, by);
+            path.arc(bx, by, r, 0, 6.283185307179586);
+          } else {
+            cx.moveTo(bx + r, by);
+            cx.arc(bx, by, r, 0, 6.283185307179586);
+          }
         }
       }
 
       cx.fillStyle = bucket.color;
-      cx.fill(path);
+      if (hasPath2D) {
+        cx.fill(path);
+      } else {
+        cx.fill();
+      }
     });
   }
 

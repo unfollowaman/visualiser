@@ -16,7 +16,6 @@
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
 
-  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var pulse = 0;
   var pointerX = -9999;
@@ -110,7 +109,8 @@
       if (data) flowerDataList.push(data);
     });
 
-    drawFrame(prefersReducedMotion ? 3 : (performance.now() / 1000));
+    var isPaused = document.documentElement.dataset.motion === 'paused';
+    drawFrame(isPaused ? 3 : (performance.now() / 1000));
 
     if (!isReadyFired) {
       isReadyFired = true;
@@ -172,12 +172,28 @@
   }
 
   function startLoop() {
-    if (prefersReducedMotion) return;
-    if (!animFrameId && !isHidden && isIntersecting && isImagesLoaded) {
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    if (document.documentElement.dataset.motion === 'paused') {
+      drawFrame(3);
+      return;
+    }
+    if (!isHidden && isIntersecting && isImagesLoaded) {
       lastTime = 0;
       animFrameId = requestAnimationFrame(tick);
     }
   }
+
+  window.addEventListener('motionchange', function () {
+    if (document.documentElement.dataset.motion === 'paused') {
+      stopLoop();
+      drawFrame(3);
+    } else {
+      startLoop();
+    }
+  });
 
   function stopLoop() {
     if (animFrameId) {
@@ -229,7 +245,9 @@
   function startInit() {
     loadImages(function () {
       rebuildFlowers();
-      if (!prefersReducedMotion) {
+      if (document.documentElement.dataset.motion === 'paused') {
+        drawFrame(3);
+      } else {
         startLoop();
       }
     });

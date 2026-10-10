@@ -34,7 +34,7 @@
 }
 
 .eyebrow {
-  color: #7a7a76;
+  color: #8e8e8a;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -86,7 +86,7 @@
 .drop-zone-text {
   font-size: 12px;
   letter-spacing: 0.08em;
-  color: #7a7a76;
+  color: #8e8e8a;
   pointer-events: none;
 }
 
@@ -108,7 +108,7 @@
 }
 
 .file-label {
-  color: #7a7a76;
+  color: #8e8e8a;
   font-size: 11px;
   letter-spacing: 0.05em;
   width: 90px;
@@ -121,7 +121,7 @@
 
 /* Warnings and Errors */
 .warning-text {
-  color: #7a7a76;
+  color: #8e8e8a;
   font-size: 11px;
   margin-top: 4px;
 }
@@ -190,7 +190,7 @@
   left: 0;
   right: 0;
   background: rgba(10, 10, 10, 0.75);
-  color: #7a7a76;
+  color: #8e8e8a;
   font-family: monospace;
   font-size: 10px;
   letter-spacing: 0.05em;
@@ -220,14 +220,15 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 24px;
-  margin-left: -12px;
+  width: 44px;
+  margin-left: -22px;
   cursor: ew-resize;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   z-index: 10;
+  min-height: 44px;
 }
 
 .handle-line {
@@ -306,18 +307,20 @@
   gap: 8px;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .aspect-card .card-title {
   font-family: 'Instrument Serif', serif;
-  color: #7a7a76;
+  color: #8e8e8a;
   font-weight: 400;
   font-size: 18px;
   transition: color 0.15s ease;
 }
 
 .aspect-card .card-subtitle {
-  color: #7a7a76;
+  color: #8e8e8a;
   font-size: 11px;
   transition: color 0.15s ease;
 }
@@ -354,9 +357,10 @@
 .flower-preview-card:focus-visible,
 .aspect-card:focus-visible,
 .trim-handle:focus-visible,
-.btn:focus-visible {
-  outline: 2px solid #f2f2f0;
-  outline-offset: 2px;
+.btn:focus-visible,
+.style-card:focus-visible {
+  outline: 3px solid #3F78E8;
+  outline-offset: 3px;
 }
 
 /* Buttons */
@@ -382,6 +386,8 @@
   border: none;
   border-radius: 0;
   white-space: nowrap;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .btn:hover:not(:disabled) {
@@ -422,7 +428,7 @@
 
 .progress-label {
   font-family: 'Instrument Serif', serif;
-  color: #7a7a76;
+  color: #8e8e8a;
   font-size: 14px;
 }
 
@@ -477,7 +483,7 @@
 }
 
 .nav-link {
-  color: #7a7a76;
+  color: #8e8e8a;
   text-decoration: none;
   font-family: monospace;
   font-size: 13px;
@@ -486,6 +492,10 @@
   padding-bottom: 4px;
   transition: color 0.15s ease, border-bottom-color 0.15s ease;
   border-bottom: 1px solid transparent;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .nav-link:hover {
@@ -516,6 +526,8 @@
   cursor: pointer;
   transition: border-color 0.15s ease;
   position: relative;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .flower-preview-card:hover:not(.selected) {

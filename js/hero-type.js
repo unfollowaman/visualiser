@@ -76,11 +76,6 @@
   }
 
   // --- Typed Headline ---
-  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (prefersReducedMotion) {
-    return;
-  }
-
   var heroTyped = document.getElementById('hero-typed');
   if (!heroTyped) return;
 
@@ -170,7 +165,27 @@
     }
   }
 
+  function renderPausedState() {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    var fullPhrase = phrases[0];
+    for (var i = 0; i < 4; i++) {
+      lineDivs[i].textContent = fullPhrase[i] || '';
+    }
+    if (caret.parentNode) {
+      caret.parentNode.removeChild(caret);
+    }
+  }
+
   function updateVisibility() {
+    var isPaused = document.documentElement.dataset.motion === 'paused';
+    if (isPaused) {
+      renderPausedState();
+      return;
+    }
+
     var shouldRun = !document.hidden && isIntersecting;
     isHidden = document.hidden;
 
@@ -186,6 +201,19 @@
     }
   }
 
+  window.addEventListener('motionchange', function () {
+    var isPaused = document.documentElement.dataset.motion === 'paused';
+    if (isPaused) {
+      renderPausedState();
+    } else {
+      currentPhraseIndex = 0;
+      currentCharIndex = 0;
+      state = 'type';
+      renderPhraseState(phrases[0], 0);
+      scheduleNextStep(95);
+    }
+  });
+
   document.addEventListener('visibilitychange', updateVisibility);
 
   var heroGrid = document.getElementById('hero-grid');
@@ -199,8 +227,11 @@
     observer.observe(heroGrid);
   }
 
-  // Start typing loop
-  // Initial state rendering before typing starts
-  renderPhraseState(phrases[0], 0);
-  scheduleNextStep(95);
+  // Start typing loop or render paused state based on initial motion state
+  if (document.documentElement.dataset.motion === 'paused') {
+    renderPausedState();
+  } else {
+    renderPhraseState(phrases[0], 0);
+    scheduleNextStep(95);
+  }
 })();

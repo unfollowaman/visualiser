@@ -1,9 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  (function(){var d=document.documentElement,w=d.clientWidth,h=window.innerHeight,n=w<760,p=w<640?14:28,c=n?6:(w<1100?10:14),S=Math.min(Math.floor((w-2*p)/c),112),r=Math.max(n?12:8,Math.floor((h-68)/S)),s=d.style;s.setProperty('--s',S+'px');s.setProperty('--cols',c);s.setProperty('--rows',r);s.setProperty('--gutter',Math.max(3,Math.round(S*0.07))+'px');})();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Waveform</title>
+  <title>Waveform: turn a voice note into a video</title>
+  <meta name="description" content="Turn a voice note into a video that moves with every word. Free, no account, runs in your browser. Choose lines, flowers or an orb.">
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Waveform: turn a voice note into a video">
+  <meta property="og:description" content="Turn a voice note into a video that moves with every word. Free, no account, runs in your browser. Choose lines, flowers or an orb.">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Waveform: turn a voice note into a video">
+  <meta name="twitter:description" content="Turn a voice note into a video that moves with every word. Free, no account, runs in your browser. Choose lines, flowers or an orb.">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Waveform",
+    "description": "Turn a voice note into a video that moves with every word. Free, no account, runs in your browser. Choose lines, flowers or an orb.",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
 
   <link rel="icon" type="image/png" href="favicons/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="favicons/favicon.svg" />
@@ -11,29 +43,37 @@
   <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png" />
   <link rel="manifest" href="favicons/site.webmanifest" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@700;800&family=Instrument+Serif:ital@0;1&display=swap">
+  <link rel="preload" href="assets/fonts/instrument-serif-v5-latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/instrument-serif-v5-latin-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/inter-tight-v9-latin-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/inter-tight-v9-latin-800.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
+  <a class="skip-link" href="#features">Skip to upload</a>
+  <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
   <header class="site-header"><a class="wordmark" href="#top" aria-label="Waveform home">Waveform</a></header>
   <main id="top">
+    <noscript>
+      <div class="noscript-notice">
+        <p>Waveform needs JavaScript to turn audio into video.</p>
+      </div>
+    </noscript>
     <section class="hero" aria-label="Introduction">
       <div class="grid grid--light" id="hero-grid">
         <canvas id="hero-flowers" aria-hidden="true"></canvas>
         <div id="hero-brain-slot" class="cell" aria-hidden="true"></div>
-        <h1 id="hero-title" class="hero-title cell" aria-label="Voices in my head. Needs to be articulated."><span id="hero-typed" aria-hidden="true"><div class="line">Voices</div><div class="line">in</div><div class="line">My</div><div class="line">Head</div></span></h1>
+        <h1 id="hero-title" class="hero-title cell" aria-label="Voices in my head. Needs to be articulated."><span id="hero-typed" aria-hidden="true"><span class="line">Voices</span><span class="line">in</span><span class="line">My</span><span class="line">Head</span></span></h1>
         <p id="hero-desc" class="hero-desc cell">Turn a voice note into a video that moves with every word. Upload it, pick a style, download.</p>
         <div id="hero-cta" class="hero-cta cell"><a class="btn-solid" href="#features">Upload voice</a></div>
       </div>
     </section>
-    <section class="features" id="features" aria-label="Create your video">
+    <section class="features" id="features" aria-label="Create your video" tabindex="-1">
       <div class="grid grid--dark" id="features-grid">
         <h2 id="feat-title-upload" class="feat-title cell">upload voice</h2>
         <div id="dropZone" class="drop-zone dropzone cell" role="button" tabindex="0" aria-label="Upload audio file">
-          <p id="dropZoneText" class="drop-zone-text">Drag & drop your files here</p>
+          <p id="dropZoneText" class="drop-zone-text">Drag &amp; drop your files here</p>
           <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
         </div>
         <h2 id="feat-title-style" class="feat-title cell">choose style</h2>
@@ -55,19 +95,20 @@
           <canvas id="orb-preview" class="orb-preview is-inactive" role="img" aria-label="Orb visualizer preview canvas"></canvas>
         </div>
         <div id="render-cell" class="cell">
-          <button id="renderBtn" class="btn btn-primary btn-solid btn-solid--light" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
-          <button id="renderFlowerBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
-          <button id="renderOrbBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render orb video and download" title="Load an audio file and choose aspect ratio to render orb video">RENDER AND DOWNLOAD</button>
+          <button type="button" id="renderBtn" class="btn btn-primary btn-solid btn-solid--light" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
+          <button type="button" id="renderFlowerBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
+          <button type="button" id="renderOrbBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render orb video and download" title="Load an audio file and choose aspect ratio to render orb video">RENDER AND DOWNLOAD</button>
         </div>
       </div>
       <p class="features-note">Works with mp3, m4a and wav. Your audio never leaves your browser.</p>
+      <footer class="site-footer"><span class="credit">Made by @unfollowaman</span><button type="button" id="motion-toggle" aria-pressed="false">Pause motion</button></footer>
       <div id="legacy-tool">
         <div class="container">
           <header class="app-header">
             <div class="title" role="heading" aria-level="2">Waveform</div>
           </header>
 
-          <main class="app-content">
+          <div class="app-content">
             <!-- File Selection Area -->
             <section class="panel upload-section">
               <div id="fileInfoContainer" class="file-info-container hidden" role="status" aria-live="polite">
@@ -87,7 +128,7 @@
                 Could not decode this audio file. Try MP3 or WAV.
               </div>
               <div class="controls-row" style="margin-top: 16px;">
-                <button id="showEditBtn" class="btn btn-secondary hidden" aria-controls="editSection" aria-expanded="false">EDIT AUDIO</button>
+                <button type="button" id="showEditBtn" class="btn btn-secondary hidden" aria-controls="editSection" aria-expanded="false">EDIT AUDIO</button>
               </div>
             </section>
 
@@ -110,11 +151,11 @@
               <div class="editor-container" id="editorContainer">
                 <canvas id="overviewCanvas" width="800" height="120" role="img" aria-label="Audio waveform timeline overview"></canvas>
                 <div id="selectionHighlight" class="selection-highlight hidden"></div>
-                <div id="leftTrimHandle" class="trim-handle left-handle" role="slider" aria-label="Left trim handle" tabindex="0">
+                <div id="leftTrimHandle" class="trim-handle left-handle" role="slider" aria-label="Left trim handle" tabindex="0" aria-valuenow="0">
                   <div class="handle-line"></div>
                   <div class="handle-readout" id="leftTrimReadout">00:00.0</div>
                 </div>
-                <div id="rightTrimHandle" class="trim-handle right-handle" role="slider" aria-label="Right trim handle" tabindex="0">
+                <div id="rightTrimHandle" class="trim-handle right-handle" role="slider" aria-label="Right trim handle" tabindex="0" aria-valuenow="0">
                   <div class="handle-line"></div>
                   <div class="handle-readout" id="rightTrimReadout">00:00.0</div>
                 </div>
@@ -124,13 +165,13 @@
               </div>
 
               <div class="controls-row">
-                <button id="playPreviewBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-pressed="false" aria-label="Play audio preview" title="Load an audio file to play preview">PLAY PREVIEW</button>
-                <button id="cutSelectedBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Cut selected audio range" title="Drag across waveform timeline to select a region to cut">CUT SELECTED</button>
-                <button id="undoBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Undo last audio edit (Ctrl+Z or Cmd+Z)" title="No edit history to undo">UNDO</button>
-                <button id="resetBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Reset audio edits" title="Audio is already at original full length">RESET</button>
+                <button type="button" id="playPreviewBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-pressed="false" aria-label="Play audio preview" title="Load an audio file to play preview">PLAY PREVIEW</button>
+                <button type="button" id="cutSelectedBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Cut selected audio range" title="Drag across waveform timeline to select a region to cut">CUT SELECTED</button>
+                <button type="button" id="undoBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Undo last audio edit (Ctrl+Z or Cmd+Z)" title="No edit history to undo">UNDO</button>
+                <button type="button" id="resetBtn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Reset audio edits" title="Audio is already at original full length">RESET</button>
               </div>
               <div class="controls-row">
-                <button id="continueBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Continue with current audio edits" title="Load an audio file to continue">CONTINUE</button>
+                <button type="button" id="continueBtn" class="btn btn-primary" disabled aria-disabled="true" aria-label="Continue with current audio edits" title="Load an audio file to continue">CONTINUE</button>
               </div>
             </section>
 
@@ -203,7 +244,7 @@
             <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
               <span class="eyebrow" style="letter-spacing: 0.1em; font-size: 10px;">@unfollowaman</span>
             </div>
-          </main>
+          </div>
         </div>
       </div>
     </section>
