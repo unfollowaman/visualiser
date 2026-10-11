@@ -146,15 +146,6 @@ html, body {
   height: calc(var(--h) * var(--s));
 }
 
-/* TEMPORARY, removed in Phase 3 */
-#legacy-tool {
-  background: #000000;
-  color: #ffffff;
-  max-width: calc(var(--cols) * var(--s));
-  margin: 0 auto;
-  padding: 0 14px;
-}
-
 html { scroll-behavior: smooth; }
 .hero-title { margin: 0; z-index: 2; font-family: var(--font-ui); font-weight: 800; letter-spacing: -0.045em; font-size: calc(var(--s) * var(--hero-font-scale, 0.84)); color: var(--ink); }
 .hero-title .line { display: block; height: var(--s); line-height: var(--s); white-space: nowrap; }
@@ -198,8 +189,6 @@ html { scroll-behavior: smooth; }
 .features-note { width: calc(var(--cols) * var(--s)); margin: 20px auto 0; font-family: var(--font-display); font-weight: 400; font-size: max(17px, calc(var(--s) * 0.26)); line-height: 1.3; color: #bdbdbd; }
 .site-footer { width: calc(var(--cols) * var(--s)); margin: 20px auto 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; color: #bdbdbd; }
 .site-footer .credit { font-family: var(--font-display); font-size: max(17px, calc(var(--s) * 0.26)); }
-#motion-toggle { min-height: 44px; padding: 0 16px; background: transparent; color: #ffffff; border: 1px solid #6a6a6a; border-radius: 999px; font: 600 0.875rem var(--font-ui); cursor: pointer; }
-#motion-toggle[aria-pressed="true"] { border-color: #ffffff; background: #161616; }
 
 .dropzone .drop-zone-text {
   font-family: inherit;
