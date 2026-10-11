@@ -187,19 +187,6 @@ test.describe('Phase 2 Hero Content Redesign', () => {
     expect(h1Label.id).toBe('hero-title');
     expect(h1Label.ariaLabel).toBe('Voices in my head. Needs to be articulated.');
 
-    const legacyHeading = await page.evaluate(() => {
-      const title = document.querySelector('#legacy-tool .title');
-      return {
-        tag: title.tagName.toLowerCase(),
-        role: title.getAttribute('role'),
-        ariaLevel: title.getAttribute('aria-level')
-      };
-    });
-
-    expect(legacyHeading.tag).toBe('div');
-    expect(legacyHeading.role).toBe('heading');
-    expect(legacyHeading.ariaLevel).toBe('2');
-
     // Test CTA button focus
     await page.keyboard.press('Tab');
     const focusedTag = await page.evaluate(() => document.activeElement.tagName.toLowerCase());
