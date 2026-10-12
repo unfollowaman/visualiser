@@ -190,18 +190,6 @@ function formatDurationDetailed(seconds) {
   return `${m}:${s}.${ms}`;
 }
 
-// Helper to apply fade-in and fade-out to a sample
-function applyFade(sample, index, rangeSamples, fadeSamples) {
-  if (index < fadeSamples) {
-    return sample * (index / fadeSamples);
-  }
-  if (index > rangeSamples - fadeSamples - 1) {
-    const fadeIndex = rangeSamples - 1 - index;
-    return sample * (fadeIndex / fadeSamples);
-  }
-  return sample;
-}
-
 // Build the working audio buffer from decodedAudioBuffer based on keepRanges
 function buildWorkingAudioBuffer() {
   if (!decodedAudioBuffer) return null;
