@@ -21,7 +21,6 @@ let flowerMuxerPromise = null;
 const ZERO_METRIC = Object.freeze({ amplitude: 0, frequency: 0 });
 
 // DOM Elements
-const flowerSection = document.getElementById("flowerSection");
 const flowerGrid = document.getElementById("flowerGrid");
 const renderFlowerBtn = document.getElementById("renderFlowerBtn");
 
