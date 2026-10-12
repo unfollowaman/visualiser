@@ -36,6 +36,17 @@
   var flowerBtn = document.querySelector('.style-card[data-style="flower"]');
   var orbBtn = document.querySelector('.style-card[data-style="orb"]');
 
+  var styleCardItems = [
+    { btn: linesBtn, style: 'lines', canvas: linesBtn ? linesBtn.querySelector('canvas') : null, cx: null },
+    { btn: flowerBtn, style: 'flower', canvas: flowerBtn ? flowerBtn.querySelector('canvas') : null, cx: null },
+    { btn: orbBtn, style: 'orb', canvas: orbBtn ? orbBtn.querySelector('canvas') : null, cx: null }
+  ];
+  styleCardItems.forEach(function (item) {
+    if (item.canvas) {
+      item.cx = item.canvas.getContext('2d');
+    }
+  });
+
   var renderBtn = document.getElementById('renderBtn');
   var renderFlowerBtn = document.getElementById('renderFlowerBtn');
   var renderOrbBtn = document.getElementById('renderOrbBtn');
@@ -180,47 +191,36 @@
   }
 
   function resizeCardCanvases() {
-    var cards = [linesBtn, flowerBtn, orbBtn];
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    cards.forEach(function (card) {
-      if (!card) return;
-      var canvas = card.querySelector('canvas');
-      if (!canvas) return;
+    styleCardItems.forEach(function (item) {
+      if (!item.btn || !item.canvas) return;
 
-      var rect = card.getBoundingClientRect();
+      var rect = item.btn.getBoundingClientRect();
       var w = rect.width || 100;
       var h = rect.height || 100;
 
       var pw = Math.round(w * dpr);
       var ph = Math.round(h * dpr);
 
-      if (canvas.width !== pw || canvas.height !== ph) {
-        canvas.width = pw;
-        canvas.height = ph;
+      if (item.canvas.width !== pw || item.canvas.height !== ph) {
+        item.canvas.width = pw;
+        item.canvas.height = ph;
       }
     });
   }
 
   function renderCardFrames(t) {
-    var cards = [
-      { btn: linesBtn, style: 'lines' },
-      { btn: flowerBtn, style: 'flower' },
-      { btn: orbBtn, style: 'orb' }
-    ];
-
     var lvl = cardLevel(t);
 
-    cards.forEach(function (item) {
-      if (!item.btn) return;
-      var canvas = item.btn.querySelector('canvas');
-      if (!canvas || !canvas.width || !canvas.height) return;
+    styleCardItems.forEach(function (item) {
+      if (!item.canvas || !item.cx || !item.canvas.width || !item.canvas.height) return;
 
-      var cx = canvas.getContext('2d');
+      var cx = item.cx;
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       cx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      var size = canvas.width / dpr;
+      var size = item.canvas.width / dpr;
       cx.clearRect(0, 0, size, size);
 
       if (item.style === 'lines') {
