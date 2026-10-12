@@ -280,4 +280,12 @@ test.describe('Phase 4: Orb Style Engine Tests', () => {
       expect(stats.avgMs).toBeLessThanOrEqual(8.0);
     }
   });
+
+  test('Null audioBuffer in analyzeOrbAudio returns null', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const res = await window.analyzeOrbAudio(null);
+      return res;
+    });
+    expect(result).toBeNull();
+  });
 });

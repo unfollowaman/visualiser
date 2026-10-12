@@ -84,9 +84,9 @@
   // Precalculated Audio Metrics Extraction
   async function extractOrbAudioMetrics(audioBuffer, totalFrames, fps = 60) {
     if (!audioBuffer) {
-      const empty = [];
+      const empty = new Array(totalFrames);
       for (let f = 0; f < totalFrames; f++) {
-        empty.push({ amplitude: 0, bass: 0, mid: 0, treble: 0 });
+        empty[f] = { amplitude: 0, bass: 0, mid: 0, treble: 0 };
       }
       return empty;
     }
