@@ -127,9 +127,21 @@ html, body {
 }
 
 .grid--light {
-  background-image: linear-gradient(90deg, #7d7d7d 1px, transparent 1px), linear-gradient(180deg, #7d7d7d 1px, transparent 1px), linear-gradient(90deg, #b9b9b9 1px, transparent 1px), linear-gradient(180deg, #b9b9b9 1px, transparent 1px);
-  border-right: 1px solid #7d7d7d;
-  border-bottom: 1px solid #7d7d7d;
+  background-image: linear-gradient(90deg, #b9b9b9 1px, transparent 1px), linear-gradient(180deg, #b9b9b9 1px, transparent 1px), linear-gradient(90deg, #b9b9b9 1px, transparent 1px), linear-gradient(180deg, #b9b9b9 1px, transparent 1px);
+  border-right: 1px solid #b9b9b9;
+  border-bottom: 1px solid #b9b9b9;
+}
+
+.grid--light::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  border-right: 1px solid #b9b9b9;
+  border-bottom: 1px solid #b9b9b9;
+  pointer-events: none;
 }
 
 .grid--dark {
