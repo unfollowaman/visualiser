@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <script>
-  (function(){var d=document.documentElement,w=d.clientWidth,h=window.innerHeight,n=w<760,p=w<640?14:28,c=n?6:(w<1100?10:14),S=Math.min(Math.floor((w-2*p)/c),112),r=Math.max(n?12:8,Math.floor((h-68)/S)),s=d.style;s.setProperty('--s',S+'px');s.setProperty('--cols',c);s.setProperty('--rows',r);s.setProperty('--gutter',Math.max(3,Math.round(S*0.07))+'px');})();
+  (function(){var d=document.documentElement,w=d.clientWidth,h=window.innerHeight,n=w<760,p=w<640?14:28,c=n?6:(w<1100?10:14),S=Math.min(Math.floor((w-2*p)/c),112),r=Math.max(n?12:8,Math.floor((h-68)/S)),s=d.style;s.setProperty('--s',S+'px');s.setProperty('--cols',c);s.setProperty('--rows',r);s.setProperty('--gutter',Math.max(3,Math.round(S*0.07))+'px');d.className=d.className.replace('no-js','js');})();
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -62,6 +62,7 @@
     </noscript>
     <section class="hero" aria-label="Introduction">
       <div class="grid grid--light" id="hero-grid">
+        <div class="hero-lines" aria-hidden="true"></div>
         <canvas id="hero-flowers" aria-hidden="true"></canvas>
         <div id="hero-brain-slot" class="cell" aria-hidden="true"></div>
         <h1 id="hero-title" class="hero-title cell" aria-label="Voices in my head. Needs to be articulated."><span id="hero-typed" aria-hidden="true"><span class="line">Voices</span><span class="line">in</span><span class="line">My</span><span class="line">Head</span></span></h1>
@@ -112,6 +113,7 @@
   <script src="js/features.js" defer></script>
   <script src="js/orb-export.js" defer></script>
   <script src="js/orb.js" defer></script>
+  <script src="js/grid-intro.js" defer></script>
   <script src="script.js" defer></script>
   <script src="flower.js" defer></script>
 </body>
