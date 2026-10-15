@@ -144,6 +144,23 @@ html, body {
   pointer-events: none;
 }
 
+html.js #hero-grid.grid--light {
+  background-image: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+html.js #hero-grid.grid--light::after {
+  display: none;
+}
+
+.hero-lines { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero-lines i { position: absolute; display: block; }
+.hero-lines .m0 { background: #b9b9b9; }
+.hero-lines .m1 { background: #b9b9b9; }
+.hero-lines .hl { left: 0; width: 100%; height: 1px; transform-origin: 50% 50%; }
+.hero-lines .vl { top: 0; height: 100%; width: 1px; transform-origin: 50% 0; }
+
 .grid--dark {
   background-image: linear-gradient(90deg, #9a9a9a 1px, transparent 1px), linear-gradient(180deg, #9a9a9a 1px, transparent 1px), linear-gradient(90deg, #555555 1px, transparent 1px), linear-gradient(180deg, #555555 1px, transparent 1px);
   border-right: 1px solid #9a9a9a;
