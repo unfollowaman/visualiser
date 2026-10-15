@@ -553,19 +553,21 @@ function setButtonDisabled(btn, isDisabled, disabledTitle = "", enabledTitle = "
 }
 
 // Ensure renderFlowerBtn is enabled when file is loaded and aspect ratio chosen
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.attributeName === "class") {
-       const aspectRatioSection = document.getElementById("aspectRatioSection");
-       if (!aspectRatioSection.classList.contains("hidden")) {
-          if (window.workingAudioBuffer) {
-              setButtonDisabled(renderFlowerBtn, false, "", "Render flower video and download");
-          }
-       }
-    }
+const aspectRatioSectionEl = document.getElementById("aspectRatioSection");
+if (aspectRatioSectionEl) {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === "class") {
+         if (!aspectRatioSectionEl.classList.contains("hidden")) {
+            if (window.workingAudioBuffer) {
+                setButtonDisabled(renderFlowerBtn, false, "", "Render flower video and download");
+            }
+         }
+      }
+    });
   });
-});
-observer.observe(document.getElementById("aspectRatioSection"), { attributes: true });
+  observer.observe(aspectRatioSectionEl, { attributes: true });
+}
 
 // Render Export
 async function renderAndExportFlowerVideo() {
