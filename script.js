@@ -1811,3 +1811,128 @@ if (downloadVideo) {
     init();
   }
 })();
+
+// FEATURES:START
+(function setupFeaturesGlue() {
+  function init() {
+    const fileInput = document.getElementById("fileInput");
+    const dropZone = document.getElementById("dropZone");
+    const renderNote = document.getElementById("fx-render-note");
+
+    function getSelectedStyleInfo() {
+      const checked = document.querySelector('input[name="style-choice"]:checked');
+      const val = checked ? checked.value : "lines";
+      if (val === "flower") return "Flower style";
+      if (val === "orb") return "Orb style";
+      return "Lines style";
+    }
+
+    function updateFileAddedState(file) {
+      if (!dropZone) return;
+      const initialView = dropZone.querySelector(".fx-drop-initial");
+      const addedView = dropZone.querySelector(".fx-drop-added");
+      const nameEl = dropZone.querySelector(".fx-file-name");
+
+      if (file || window.workingAudioBuffer) {
+        dropZone.classList.add("fx-has-file");
+        if (initialView) initialView.style.display = "none";
+        if (addedView) addedView.style.display = "flex";
+        if (nameEl) {
+          nameEl.textContent = file ? file.name : (nameEl.textContent || "Audio file loaded");
+        }
+      } else {
+        dropZone.classList.remove("fx-has-file");
+        if (initialView) initialView.style.display = "flex";
+        if (addedView) addedView.style.display = "none";
+        if (nameEl) nameEl.textContent = "";
+      }
+    }
+
+    function updateHelperNote() {
+      if (!renderNote) return;
+      const activeRenderBtn = document.querySelector("#renderBtn:not([hidden]), #renderFlowerBtn:not([hidden]), #renderOrbBtn:not([hidden])");
+      const isDisabled = activeRenderBtn ? activeRenderBtn.disabled : true;
+
+      if (isDisabled) {
+        renderNote.textContent = "Add a voice note in step 1 to unlock this.";
+      } else {
+        const styleName = getSelectedStyleInfo();
+        renderNote.textContent = `${styleName}, saved as an MP4.`;
+      }
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          updateFileAddedState(e.target.files[0]);
+        }
+      });
+    }
+
+    if (dropZone) {
+      dropZone.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("fx-over");
+      });
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("fx-over");
+      });
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("fx-over");
+      });
+      dropZone.addEventListener("drop", (e) => {
+        dropZone.classList.remove("fx-over");
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          updateFileAddedState(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    const radios = document.querySelectorAll('input[name="style-choice"]');
+    radios.forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        const val = e.target.value;
+        const card = document.querySelector(`.style-card[data-style="${val}"]`);
+        if (card && card.getAttribute("aria-pressed") !== "true") {
+          card.click();
+        }
+        updateHelperNote();
+      });
+    });
+
+    window.addEventListener("stylechange", (e) => {
+      const selectedStyle = e.detail && e.detail.style;
+      if (selectedStyle) {
+        const matchingRadio = document.querySelector(`input[name="style-choice"][value="${selectedStyle}"]`);
+        if (matchingRadio && !matchingRadio.checked) {
+          matchingRadio.checked = true;
+        }
+      }
+      updateHelperNote();
+    });
+
+    const observer = new MutationObserver(() => {
+      updateHelperNote();
+    });
+
+    const renderBtns = [
+      document.getElementById("renderBtn"),
+      document.getElementById("renderFlowerBtn"),
+      document.getElementById("renderOrbBtn")
+    ].filter(Boolean);
+
+    renderBtns.forEach((btn) => {
+      observer.observe(btn, { attributes: true, attributeFilter: ["disabled", "hidden"] });
+    });
+
+    updateHelperNote();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+// FEATURES:END
