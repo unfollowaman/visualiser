@@ -64,7 +64,7 @@ const undoBtn = document.getElementById("undoBtn");
 const resetBtn = document.getElementById("resetBtn");
 const continueBtn = document.getElementById("continueBtn");
 
-const ctxOverview = overviewCanvas.getContext("2d");
+const ctxOverview = overviewCanvas ? overviewCanvas.getContext("2d") : null;
 const playPreviewBtn = document.getElementById("playPreviewBtn");
 const renderBtn = document.getElementById("renderBtn");
 const progressContainer = document.getElementById("progressContainer");
@@ -498,23 +498,27 @@ const handleAspectKeydown = (e, targetCard, action) => {
   }
 };
 
-card16x9.addEventListener("click", () => {
-  if (card16x9.classList.contains("disabled")) return;
-  selectAspectRatio(1280, 720, card16x9, card9x16);
-});
-card16x9.addEventListener("keydown", (e) => {
-  if (card16x9.classList.contains("disabled")) return;
-  handleAspectKeydown(e, card9x16, () => selectAspectRatio(1280, 720, card16x9, card9x16));
-});
+if (card16x9) {
+  card16x9.addEventListener("click", () => {
+    if (card16x9.classList.contains("disabled")) return;
+    selectAspectRatio(1280, 720, card16x9, card9x16);
+  });
+  card16x9.addEventListener("keydown", (e) => {
+    if (card16x9.classList.contains("disabled")) return;
+    handleAspectKeydown(e, card9x16, () => selectAspectRatio(1280, 720, card16x9, card9x16));
+  });
+}
 
-card9x16.addEventListener("click", () => {
-  if (card9x16.classList.contains("disabled")) return;
-  selectAspectRatio(720, 1280, card9x16, card16x9);
-});
-card9x16.addEventListener("keydown", (e) => {
-  if (card9x16.classList.contains("disabled")) return;
-  handleAspectKeydown(e, card16x9, () => selectAspectRatio(720, 1280, card9x16, card16x9));
-});
+if (card9x16) {
+  card9x16.addEventListener("click", () => {
+    if (card9x16.classList.contains("disabled")) return;
+    selectAspectRatio(720, 1280, card9x16, card16x9);
+  });
+  card9x16.addEventListener("keydown", (e) => {
+    if (card9x16.classList.contains("disabled")) return;
+    handleAspectKeydown(e, card16x9, () => selectAspectRatio(720, 1280, card9x16, card16x9));
+  });
+}
 
 // Edit Interaction Logic
 let isDraggingLeftHandle = false;
@@ -645,8 +649,8 @@ function handleTrimKeydown(e, isLeft) {
   renderEditState();
 }
 
-leftTrimHandle.addEventListener("keydown", (e) => handleTrimKeydown(e, true));
-rightTrimHandle.addEventListener("keydown", (e) => handleTrimKeydown(e, false));
+if (leftTrimHandle) leftTrimHandle.addEventListener("keydown", (e) => handleTrimKeydown(e, true));
+if (rightTrimHandle) rightTrimHandle.addEventListener("keydown", (e) => handleTrimKeydown(e, false));
 
 function renderEditState() {
   updateEditStats();
@@ -680,70 +684,74 @@ function getCanvasX(e) {
 }
 
 // Left Handle Drag
-leftTrimHandle.addEventListener("mousedown", (e) => {
-  updateEditorDimensions();
-  isDraggingLeftHandle = true;
-  dragStartState = JSON.parse(JSON.stringify(keepRanges));
-  dragTotalDurationWithoutFirst = 0;
-  for (let i = 1; i < keepRanges.length; i++) {
-    dragTotalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
-  }
-  leftTrimHandle.classList.add("dragging");
-  e.stopPropagation();
-});
-leftTrimHandle.addEventListener("touchstart", (e) => {
-  updateEditorDimensions();
-  isDraggingLeftHandle = true;
-  dragStartState = JSON.parse(JSON.stringify(keepRanges));
-  dragTotalDurationWithoutFirst = 0;
-  for (let i = 1; i < keepRanges.length; i++) {
-    dragTotalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
-  }
-  leftTrimHandle.classList.add("dragging");
-  e.stopPropagation();
-});
+if (leftTrimHandle) {
+  leftTrimHandle.addEventListener("mousedown", (e) => {
+    updateEditorDimensions();
+    isDraggingLeftHandle = true;
+    dragStartState = JSON.parse(JSON.stringify(keepRanges));
+    dragTotalDurationWithoutFirst = 0;
+    for (let i = 1; i < keepRanges.length; i++) {
+      dragTotalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
+    }
+    leftTrimHandle.classList.add("dragging");
+    e.stopPropagation();
+  });
+  leftTrimHandle.addEventListener("touchstart", (e) => {
+    updateEditorDimensions();
+    isDraggingLeftHandle = true;
+    dragStartState = JSON.parse(JSON.stringify(keepRanges));
+    dragTotalDurationWithoutFirst = 0;
+    for (let i = 1; i < keepRanges.length; i++) {
+      dragTotalDurationWithoutFirst += keepRanges[i].end - keepRanges[i].start;
+    }
+    leftTrimHandle.classList.add("dragging");
+    e.stopPropagation();
+  });
+}
 
-// Right Handle Drag
-rightTrimHandle.addEventListener("mousedown", (e) => {
-  updateEditorDimensions();
-  isDraggingRightHandle = true;
-  dragStartState = JSON.parse(JSON.stringify(keepRanges));
-  dragTotalDurationWithoutLast = 0;
-  for (let i = 0; i < keepRanges.length - 1; i++) {
-    dragTotalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
-  }
-  rightTrimHandle.classList.add("dragging");
-  e.stopPropagation();
-});
-rightTrimHandle.addEventListener("touchstart", (e) => {
-  updateEditorDimensions();
-  isDraggingRightHandle = true;
-  dragStartState = JSON.parse(JSON.stringify(keepRanges));
-  dragTotalDurationWithoutLast = 0;
-  for (let i = 0; i < keepRanges.length - 1; i++) {
-    dragTotalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
-  }
-  rightTrimHandle.classList.add("dragging");
-  e.stopPropagation();
-});
+if (rightTrimHandle) {
+  rightTrimHandle.addEventListener("mousedown", (e) => {
+    updateEditorDimensions();
+    isDraggingRightHandle = true;
+    dragStartState = JSON.parse(JSON.stringify(keepRanges));
+    dragTotalDurationWithoutLast = 0;
+    for (let i = 0; i < keepRanges.length - 1; i++) {
+      dragTotalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
+    }
+    rightTrimHandle.classList.add("dragging");
+    e.stopPropagation();
+  });
+  rightTrimHandle.addEventListener("touchstart", (e) => {
+    updateEditorDimensions();
+    isDraggingRightHandle = true;
+    dragStartState = JSON.parse(JSON.stringify(keepRanges));
+    dragTotalDurationWithoutLast = 0;
+    for (let i = 0; i < keepRanges.length - 1; i++) {
+      dragTotalDurationWithoutLast += keepRanges[i].end - keepRanges[i].start;
+    }
+    rightTrimHandle.classList.add("dragging");
+    e.stopPropagation();
+  });
+}
 
-// Selection Drag
-editorContainer.addEventListener("mousedown", (e) => {
-  if (isDraggingLeftHandle || isDraggingRightHandle) return;
-  updateEditorDimensions();
-  isDraggingSelection = true;
-  selectionStartX = getCanvasX(e);
-  selectionEndX = selectionStartX;
-  updateSelectionHighlight();
-});
-editorContainer.addEventListener("touchstart", (e) => {
-  if (isDraggingLeftHandle || isDraggingRightHandle) return;
-  updateEditorDimensions();
-  isDraggingSelection = true;
-  selectionStartX = getCanvasX(e);
-  selectionEndX = selectionStartX;
-  updateSelectionHighlight();
-});
+if (editorContainer) {
+  editorContainer.addEventListener("mousedown", (e) => {
+    if (isDraggingLeftHandle || isDraggingRightHandle) return;
+    updateEditorDimensions();
+    isDraggingSelection = true;
+    selectionStartX = getCanvasX(e);
+    selectionEndX = selectionStartX;
+    updateSelectionHighlight();
+  });
+  editorContainer.addEventListener("touchstart", (e) => {
+    if (isDraggingLeftHandle || isDraggingRightHandle) return;
+    updateEditorDimensions();
+    isDraggingSelection = true;
+    selectionStartX = getCanvasX(e);
+    selectionEndX = selectionStartX;
+    updateSelectionHighlight();
+  });
+}
 
 function updateSelectionHighlight() {
   if (selectionStartX === null || selectionEndX === null) {
@@ -847,7 +855,7 @@ window.addEventListener("touchend", stopDragging);
 
 
 // Cut Action
-cutSelectedBtn.addEventListener("click", () => {
+if (cutSelectedBtn) cutSelectedBtn.addEventListener("click", () => {
   if (selectionStartX === null || selectionEndX === null || !decodedAudioBuffer) return;
 
   saveEditState();
@@ -893,7 +901,7 @@ cutSelectedBtn.addEventListener("click", () => {
   renderEditState();
 });
 
-undoBtn.addEventListener("click", () => {
+if (undoBtn) undoBtn.addEventListener("click", () => {
   if (editHistory.length > 0) {
     keepRanges = editHistory.pop();
     selectionStartX = null;
@@ -921,7 +929,7 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-resetBtn.addEventListener("click", () => {
+if (resetBtn) resetBtn.addEventListener("click", () => {
   if (decodedAudioBuffer) {
     editHistory = [];
     keepRanges = [{start: 0, end: decodedAudioBuffer.duration}];
@@ -932,7 +940,7 @@ resetBtn.addEventListener("click", () => {
   }
 });
 
-showEditBtn.addEventListener("click", () => {
+if (showEditBtn) showEditBtn.addEventListener("click", () => {
   editSection.classList.remove("hidden");
   showEditBtn.classList.add("hidden");
   showEditBtn.setAttribute("aria-expanded", "true");
@@ -1198,13 +1206,15 @@ function analyzeAudio(audioBuffer) {
 }
 
 // Live Preview Logic
-playPreviewBtn.addEventListener("click", () => {
-  if (isPreviewPlaying) {
-    stopPreview();
-  } else {
-    startPreview();
-  }
-});
+if (playPreviewBtn) {
+  playPreviewBtn.addEventListener("click", () => {
+    if (isPreviewPlaying) {
+      stopPreview();
+    } else {
+      startPreview();
+    }
+  });
+}
 
 // Custom helper to safely check state
 function startPreview() {
@@ -1595,7 +1605,7 @@ function checkBlobDuration(blob, expectedDurationSec) {
 }
 
 // Continue Button Handler
-continueBtn.addEventListener("click", () => {
+if (continueBtn) continueBtn.addEventListener("click", () => {
   stopPreview();
 
   // Build the final working buffer to use downstream
@@ -1624,7 +1634,7 @@ continueBtn.addEventListener("click", () => {
 
 
 // Main Controller Render Trigger
-renderBtn.addEventListener("click", async () => {
+if (renderBtn) renderBtn.addEventListener("click", async () => {
   if (!window.workingAudioBuffer || !chosenWidth || !chosenHeight) return;
 
   // Stop active preview

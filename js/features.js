@@ -142,7 +142,7 @@
   }
 
   function drawLinesCard(cx, size, t, lvl) {
-    var N = 13, gap = size * 0.08, bw = (size * 0.8 - gap * (N - 1)) / N, cy = size * 0.45;
+    var N = 13, gap = size * 0.02, bw = (size * 0.8 - gap * (N - 1)) / N, cy = size * 0.45;
     var gr = cx.createLinearGradient(0, size * 0.15, 0, size * 0.75);
     gr.addColorStop(0, '#7aa2ff'); gr.addColorStop(1, '#b04dff');
     cx.fillStyle = gr; cx.shadowColor = '#6d6bff'; cx.shadowBlur = size * 0.06;
@@ -150,9 +150,10 @@
       var u = (i / (N - 1)) * 2 - 1, env = Math.exp(-u * u * 2.2);
       var v = 0.5 + 0.5 * Math.sin(i * 0.9 - t * 5 + Math.sin(i * 0.3 + t) * 2);
       var bh = size * 0.05 + size * 0.5 * env * lvl * (0.3 + 0.7 * v);
+      var rad = Math.max(0, Math.min(bw / 2, bh / 2));
       cx.beginPath();
       if (cx.roundRect) {
-        cx.roundRect(size * 0.1 + i * (bw + gap), cy - bh / 2, bw, bh, bw / 2);
+        cx.roundRect(size * 0.1 + i * (bw + gap), cy - bh / 2, bw, bh, rad);
       } else {
         cx.rect(size * 0.1 + i * (bw + gap), cy - bh / 2, bw, bh);
       }
@@ -252,7 +253,7 @@
   }
 
   function loop(timestamp) {
-    if (isHidden || !isGridIntersecting) {
+    if (isHidden || !isGridIntersecting || document.documentElement.dataset.motion === 'paused') {
       animFrameId = null;
       return;
     }
@@ -260,9 +261,7 @@
     var t = timestamp / 1000;
     renderCardFrames(t);
 
-    if (!prefersReducedMotion) {
-      animFrameId = requestAnimationFrame(loop);
-    }
+    animFrameId = requestAnimationFrame(loop);
   }
 
   function startLoop() {
