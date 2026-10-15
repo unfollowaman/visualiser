@@ -103,6 +103,8 @@ html, body {
   min-width: 44px;
   display: inline-flex;
   align-items: center;
+  padding-left: 8px;
+  box-sizing: border-box;
 }
 
 .hero {
@@ -176,11 +178,11 @@ html.js #hero-grid.grid--light::after {
 }
 
 html { scroll-behavior: smooth; }
-.hero-title { margin: 0; z-index: 2; font-family: var(--font-ui); font-weight: 800; letter-spacing: -0.045em; font-size: calc(var(--s) * var(--hero-font-scale, 0.84)); color: var(--ink); }
+.hero-title { margin: 0; z-index: 2; font-family: var(--font-ui); font-weight: 800; letter-spacing: -0.045em; font-size: calc(var(--s) * var(--hero-font-scale, 0.84)); color: var(--ink); padding-left: 8px; box-sizing: border-box; }
 .hero-title .line { display: block; height: var(--s); line-height: var(--s); white-space: nowrap; }
 .type-caret { display: inline-block; width: 0.09em; min-width: 4px; height: calc(var(--s) * var(--hero-font-scale, 0.84) * 0.78); margin-left: 0.08em; background: var(--ink); vertical-align: baseline; animation: caret-blink 1s steps(1) infinite; }
 @keyframes caret-blink { 50% { opacity: 0; } }
-.hero-desc { margin: 0; z-index: 2; font-family: var(--font-display); font-weight: 400; font-size: max(19px, calc(var(--s) * 0.3)); line-height: 1.25; color: var(--ink); }
+.hero-desc { margin: 0; z-index: 2; font-family: var(--font-display); font-weight: 400; font-size: max(19px, calc(var(--s) * 0.3)); line-height: 1.25; color: var(--ink); padding-left: 8px; box-sizing: border-box; }
 .hero-cta { z-index: 2; }
 .btn-solid { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.5rem; background: var(--ink); color: var(--paper); font: 700 0.95rem var(--font-ui); text-decoration: none; }
 #hero-flowers { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 600ms ease; }
@@ -189,7 +191,7 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .type-caret { animation: none; opacity: 0; } #hero-flowers { transition: none; } }
 
 #features-grid { overflow: hidden; height: calc(var(--frows, var(--rows)) * var(--s)); }
-.feat-title { margin: 0; z-index: 2; height: var(--s); line-height: var(--s); white-space: nowrap; font-family: var(--font-ui); font-weight: 800; letter-spacing: -0.045em; font-size: calc(var(--s) * var(--hero-font-scale, 0.84)); color: var(--snow); text-transform: none; }
+.feat-title { margin: 0; z-index: 2; height: var(--s); line-height: var(--s); white-space: nowrap; font-family: var(--font-ui); font-weight: 800; letter-spacing: -0.045em; font-size: calc(var(--s) * var(--hero-font-scale, 0.84)); color: var(--snow); text-transform: none; padding-left: 8px; box-sizing: border-box; }
 .dropzone { z-index: 2; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--s) * 0.1); padding: 0 12px; text-align: center; cursor: pointer; background: #050505; color: var(--snow); border: 2px dashed #9a9a9a; border-radius: calc(var(--s) * 0.3); font-family: var(--font-ui); font-weight: 600; font-size: max(15px, calc(var(--s) * 0.26)); letter-spacing: 0; text-transform: none; }
 .dropzone.is-over { border-color: #ffffff; background: #161616; }
 .dropzone:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -215,8 +217,8 @@ html { scroll-behavior: smooth; }
   font-weight: 600;
   font-size: 1.1rem;
 }
-.features-note { width: calc(var(--cols) * var(--s)); margin: 20px auto 0; font-family: var(--font-display); font-weight: 400; font-size: max(17px, calc(var(--s) * 0.26)); line-height: 1.3; color: #bdbdbd; }
-.site-footer { width: calc(var(--cols) * var(--s)); margin: 20px auto 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; color: #bdbdbd; }
+.features-note { width: calc(var(--cols) * var(--s)); margin: 20px auto 0; font-family: var(--font-display); font-weight: 400; font-size: max(17px, calc(var(--s) * 0.26)); line-height: 1.3; color: #bdbdbd; padding-left: 8px; box-sizing: border-box; }
+.site-footer { width: calc(var(--cols) * var(--s)); margin: 20px auto 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; color: #bdbdbd; padding-left: 8px; box-sizing: border-box; }
 .site-footer .credit { font-family: var(--font-display); font-size: max(17px, calc(var(--s) * 0.26)); }
 
 .dropzone .drop-zone-text {
