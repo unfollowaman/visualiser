@@ -47,6 +47,9 @@
   <link rel="preload" href="assets/fonts/instrument-serif-v5-latin-italic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/inter-tight-v9-latin-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/inter-tight-v9-latin-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="css/site.css">
 </head>
@@ -70,40 +73,104 @@
         <div id="hero-cta" class="hero-cta cell"><a class="btn-solid" href="#features">Upload voice</a></div>
       </div>
     </section>
-    <section class="features" id="features" aria-label="Create your video" tabindex="-1">
-      <div class="grid grid--dark" id="features-grid">
-        <h2 id="feat-title-upload" class="feat-title cell">upload voice</h2>
-        <div id="dropZone" class="drop-zone dropzone cell" role="button" tabindex="0" aria-label="Upload audio file">
-          <p id="dropZoneText" class="drop-zone-text">Drag &amp; drop your files here</p>
-          <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1">
+<!-- FEATURES:START -->
+    <section class="features fx-features" id="features" aria-label="Create your video" tabindex="-1">
+      <div class="fx-step">
+        <div class="fx-head">
+          <span class="fx-num" aria-hidden="true">1</span>
+          <h2 class="fx-title" id="fx-h1">Upload your voice</h2>
         </div>
-        <h2 id="feat-title-style" class="feat-title cell">choose style</h2>
-        <div id="style-cards" role="group" aria-label="Visualizer style" style="display:contents">
-          <button type="button" class="style-card cell" data-style="lines" aria-pressed="true"><canvas aria-hidden="true"></canvas><span class="label">Lines</span></button>
-          <button type="button" class="style-card cell" data-style="flower" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="label">Flower</span></button>
-          <button type="button" class="style-card cell" data-style="orb" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="label">Orb</span></button>
+        <div id="dropZone" class="fx-drop dropzone" role="button" tabindex="0" aria-label="Upload audio file">
+          <div class="fx-drop-initial" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+            <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-size:16px;color:#c4c4c4;">Drag a file here, or</span>
+            <button type="button" class="fx-btn fx-on" onclick="document.getElementById('fileInput').click()">Choose audio file</button>
+            <span style="font-size:14px;color:#9a9a9a;">MP3, M4A or WAV</span>
+          </div>
+          <div class="fx-drop-added" style="display:none;width:100%;align-items:center;gap:16px;">
+            <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <div style="flex:1;min-width:0;">
+              <p class="fx-file-name" aria-live="polite" style="margin:0;font-weight:700;font-size:17px;color:#ffffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></p>
+              <span style="font-size:14px;color:#c4c4c4;">Added and ready</span>
+            </div>
+            <button type="button" class="fx-btn fx-sec" onclick="document.getElementById('fileInput').click()" style="width:auto;padding:0 16px;flex:none;">Replace file</button>
+          </div>
+          <input type="file" id="fileInput" accept="audio/*" class="hidden-input" tabindex="-1" aria-label="Choose audio file" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;">
         </div>
-        <div id="flower-options" class="cell" hidden>
+      </div>
+
+      <div class="fx-step">
+        <div class="fx-head">
+          <span class="fx-num" aria-hidden="true">2</span>
+          <h2 class="fx-title">Pick a look</h2>
+        </div>
+        <p class="fx-sub">Tap one. The highlighted card is your choice.</p>
+        <fieldset class="fx-styles">
+          <legend>Visual style</legend>
+          <div id="style-cards" role="group" aria-label="Visualizer style" style="display:contents">
+            <label class="fx-c style-card" data-style="lines">
+              <input type="radio" name="style-choice" value="lines" checked>
+              <span class="fx-k">
+                <canvas aria-hidden="true" style="width:64px;height:64px;object-fit:contain;"></canvas>
+                <b>Lines</b>
+                <i>Bars</i>
+                <span class="fx-t" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </span>
+            </label>
+            <label class="fx-c style-card" data-style="flower">
+              <input type="radio" name="style-choice" value="flower">
+              <span class="fx-k">
+                <canvas aria-hidden="true" style="width:64px;height:64px;object-fit:contain;"></canvas>
+                <b>Flower</b>
+                <i>Halftone</i>
+                <span class="fx-t" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </span>
+            </label>
+            <label class="fx-c style-card" data-style="orb">
+              <input type="radio" name="style-choice" value="orb">
+              <span class="fx-k">
+                <canvas aria-hidden="true" style="width:64px;height:64px;object-fit:contain;"></canvas>
+                <b>Orb</b>
+                <i>Glow</i>
+                <span class="fx-t" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+        <div id="flower-options" hidden>
           <div class="flower-grid" id="flowerGrid">
             <!-- Populated by JS -->
           </div>
         </div>
-        <div id="preview-cell" class="cell preview-stack">
+      </div>
+
+      <div class="fx-step">
+        <div class="fx-head">
+          <span class="fx-num" aria-hidden="true">3</span>
+          <h2 class="fx-title">Get your video</h2>
+        </div>
+        <div id="preview-cell" class="preview-stack" style="display:none;">
           <div class="canvas-container">
             <canvas id="previewCanvas" width="1280" height="720" role="img" aria-label="Audio visualizer preview canvas"></canvas>
           </div>
           <div id="flower-preview-container" class="flower-preview-container is-inactive"></div>
           <canvas id="orb-preview" class="orb-preview is-inactive" role="img" aria-label="Orb visualizer preview canvas"></canvas>
         </div>
-        <div id="render-cell" class="cell">
-          <button type="button" id="renderBtn" class="btn btn-primary btn-solid btn-solid--light" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">RENDER AND DOWNLOAD</button>
-          <button type="button" id="renderFlowerBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">RENDER AND DOWNLOAD</button>
-          <button type="button" id="renderOrbBtn" class="btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render orb video and download" title="Load an audio file and choose aspect ratio to render orb video">RENDER AND DOWNLOAD</button>
+        <div id="render-cell">
+          <button type="button" id="renderBtn" class="fx-btn fx-on btn btn-primary btn-solid btn-solid--light" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">Render and download</button>
+          <button type="button" id="renderFlowerBtn" class="fx-btn fx-on btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">Render and download</button>
+          <button type="button" id="renderOrbBtn" class="fx-btn fx-on btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render orb video and download" title="Load an audio file and choose aspect ratio to render orb video">Render and download</button>
         </div>
+        <p class="fx-note" id="fx-render-note" aria-live="polite">Add a voice note in step 1 to unlock this.</p>
+        <p class="fx-note">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c4c4c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Works with MP3, M4A and WAV. Your audio never leaves your device.
+        </p>
       </div>
-      <p class="features-note">Works with mp3, m4a and wav. Your audio never leaves your browser.</p>
+
       <footer class="site-footer"><span class="credit">Made by @unfollowaman</span></footer>
     </section>
+<!-- FEATURES:END -->
   </main>
 
   <script src="js/grid.js" defer></script>
