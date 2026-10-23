@@ -311,7 +311,7 @@ function drawBars(ctx, amplitudes, w, h) {
 
 // Draw static overview for edit section (200 bars)
 function drawOverview(audioBuffer) {
-  if (!audioBuffer) return;
+  if (!audioBuffer || !overviewCanvas) return;
 
   const w = overviewCanvas.width;
   const h = overviewCanvas.height;
@@ -558,13 +558,15 @@ function updateEditStats() {
     editedDuration += (range.end - range.start);
   }
 
-  originalLengthEl.textContent = formatDuration(originalDuration);
-  editedLengthEl.textContent = formatDuration(editedDuration);
+  if (originalLengthEl) originalLengthEl.textContent = formatDuration(originalDuration);
+  if (editedLengthEl) editedLengthEl.textContent = formatDuration(editedDuration);
 
-  if (editedDuration > 150) {
-    editDurationWarning.classList.remove("hidden");
-  } else {
-    editDurationWarning.classList.add("hidden");
+  if (editDurationWarning) {
+    if (editedDuration > 150) {
+      editDurationWarning.classList.remove("hidden");
+    } else {
+      editDurationWarning.classList.add("hidden");
+    }
   }
 }
 
@@ -579,24 +581,28 @@ function updateTrimHandles() {
   const leftPx = (firstRange.start / duration) * w;
   const rightPx = (lastRange.end / duration) * w;
 
-  leftTrimHandle.style.left = `${leftPx}px`;
-  rightTrimHandle.style.left = `${rightPx}px`;
+  if (leftTrimHandle) leftTrimHandle.style.left = `${leftPx}px`;
+  if (rightTrimHandle) rightTrimHandle.style.left = `${rightPx}px`;
 
-  leftTrimReadout.textContent = formatDurationDetailed(firstRange.start);
-  rightTrimReadout.textContent = formatDurationDetailed(lastRange.end);
+  if (leftTrimReadout) leftTrimReadout.textContent = formatDurationDetailed(firstRange.start);
+  if (rightTrimReadout) rightTrimReadout.textContent = formatDurationDetailed(lastRange.end);
 
   // Update slider ARIA attributes
-  leftTrimHandle.setAttribute("aria-valuenow", firstRange.start.toFixed(1));
-  leftTrimHandle.setAttribute("aria-valuemin", "0");
-  const leftMax = firstRange.end - 0.05;
-  leftTrimHandle.setAttribute("aria-valuemax", leftMax.toFixed(1));
-  leftTrimHandle.setAttribute("aria-valuetext", `${formatDurationDetailed(firstRange.start)} start time`);
+  if (leftTrimHandle) {
+    leftTrimHandle.setAttribute("aria-valuenow", firstRange.start.toFixed(1));
+    leftTrimHandle.setAttribute("aria-valuemin", "0");
+    const leftMax = firstRange.end - 0.05;
+    leftTrimHandle.setAttribute("aria-valuemax", leftMax.toFixed(1));
+    leftTrimHandle.setAttribute("aria-valuetext", `${formatDurationDetailed(firstRange.start)} start time`);
+  }
 
-  rightTrimHandle.setAttribute("aria-valuenow", lastRange.end.toFixed(1));
-  const rightMin = lastRange.start + 0.05;
-  rightTrimHandle.setAttribute("aria-valuemin", rightMin.toString());
-  rightTrimHandle.setAttribute("aria-valuemax", duration.toFixed(1));
-  rightTrimHandle.setAttribute("aria-valuetext", `${formatDurationDetailed(lastRange.end)} end time`);
+  if (rightTrimHandle) {
+    rightTrimHandle.setAttribute("aria-valuenow", lastRange.end.toFixed(1));
+    const rightMin = lastRange.start + 0.05;
+    rightTrimHandle.setAttribute("aria-valuemin", rightMin.toFixed(1));
+    rightTrimHandle.setAttribute("aria-valuemax", duration.toFixed(1));
+    rightTrimHandle.setAttribute("aria-valuetext", `${formatDurationDetailed(lastRange.end)} end time`);
+  }
 }
 
 function handleTrimKeydown(e, isLeft) {
@@ -1012,21 +1018,28 @@ function handleSelectedFile(file) {
   frameEnvelopeArray = null;
   chosenWidth = null;
   chosenHeight = null;
-  card16x9.classList.remove("selected", "disabled");
-  card9x16.classList.remove("selected", "disabled");
-  showEditBtn.classList.add("hidden");
-  editSection.classList.add("hidden");
+  if (card16x9) card16x9.classList.remove("selected", "disabled");
+  if (card9x16) card9x16.classList.remove("selected", "disabled");
+  if (showEditBtn) showEditBtn.classList.add("hidden");
+  if (editSection) editSection.classList.add("hidden");
 
-  fileInfoContainer.classList.add("hidden");
-  durationWarning.classList.add("hidden");
-  decodeError.textContent = "Could not decode this audio file. Try MP3 or WAV.";
-  decodeError.classList.add("hidden");
+  if (fileInfoContainer) fileInfoContainer.classList.add("hidden");
+  if (durationWarning) durationWarning.classList.add("hidden");
+  if (decodeError) {
+    decodeError.textContent = "Could not decode this audio file. Try MP3 or WAV.";
+    decodeError.classList.add("hidden");
+  }
   setButtonDisabled(playPreviewBtn, true, "Load an audio file to play preview");
   setButtonDisabled(renderBtn, true, "Select 16:9 or 9:16 aspect ratio format to render");
-  progressContainer.classList.add("hidden");
-  downloadContainer.classList.add("hidden");
-  statusLine.classList.add("hidden");
-  aspectRatioSection.classList.add("hidden");
+  const renderFlowerBtnEl = document.getElementById("renderFlowerBtn");
+  if (renderFlowerBtnEl) setButtonDisabled(renderFlowerBtnEl, true, "Load an audio file and choose aspect ratio to render flower video");
+  const renderOrbBtnEl = document.getElementById("renderOrbBtn");
+  if (renderOrbBtnEl) setButtonDisabled(renderOrbBtnEl, true, "Load an audio file and choose aspect ratio to render orb video");
+
+  if (progressContainer) progressContainer.classList.add("hidden");
+  if (downloadContainer) downloadContainer.classList.add("hidden");
+  if (statusLine) statusLine.classList.add("hidden");
+  if (aspectRatioSection) aspectRatioSection.classList.add("hidden");
 
   if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
 
@@ -1040,23 +1053,27 @@ function handleSelectedFile(file) {
   if (!isAudioType) {
     if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
     if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
-    decodeError.textContent = "Please select a valid audio file (MP3, WAV, etc.).";
-    decodeError.classList.remove("hidden");
+    if (decodeError) {
+      decodeError.textContent = "Please select a valid audio file (MP3, WAV, etc.).";
+      decodeError.classList.remove("hidden");
+    }
     return;
   }
 
   if (file.size > MAX_FILE_SIZE) {
     if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
     if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
-    decodeError.textContent = "File size exceeds the 50MB limit.";
-    decodeError.classList.remove("hidden");
+    if (decodeError) {
+      decodeError.textContent = "File size exceeds the 50MB limit.";
+      decodeError.classList.remove("hidden");
+    }
     return;
   }
 
   // Show selected info placeholder
-  fileName.textContent = file.name;
-  fileDuration.textContent = "Decoding...";
-  fileInfoContainer.classList.remove("hidden");
+  if (fileName) fileName.textContent = file.name;
+  if (fileDuration) fileDuration.textContent = "Decoding...";
+  if (fileInfoContainer) fileInfoContainer.classList.remove("hidden");
 
   // Read as ArrayBuffer
   const reader = new FileReader();
@@ -1075,18 +1092,18 @@ function handleSelectedFile(file) {
       editHistory = [];
 
       const duration = audioBuffer.duration;
-      fileDuration.textContent = formatDuration(duration);
+      if (fileDuration) fileDuration.textContent = formatDuration(duration);
 
       // Warn if duration is > 150 seconds
       if (duration > 150) {
-        durationWarning.classList.remove("hidden");
+        if (durationWarning) durationWarning.classList.remove("hidden");
       } else {
-        durationWarning.classList.add("hidden");
+        if (durationWarning) durationWarning.classList.add("hidden");
       }
 
       // Enable Edit Audio button and move straight to Aspect Ratio Section
       renderEditState();
-      showEditBtn.classList.remove("hidden");
+      if (showEditBtn) showEditBtn.classList.remove("hidden");
 
       if (dropZoneText) {
         dropZoneText.textContent = "DRAG & DROP NEW AUDIO FILE OR CLICK TO REPLACE";
@@ -1095,9 +1112,21 @@ function handleSelectedFile(file) {
         dropZone.setAttribute("aria-label", "Replace audio file");
       }
 
-      // We automatically jump to aspect ratio section since edit is optional
       window.workingAudioBuffer = buildWorkingAudioBuffer();
-      aspectRatioSection.classList.remove("hidden");
+      if (aspectRatioSection) aspectRatioSection.classList.remove("hidden");
+
+      // Default aspect ratio / dimensions
+      chosenWidth = 1280;
+      chosenHeight = 720;
+
+      // Enable render buttons for all visualizer styles
+      setButtonDisabled(renderBtn, false, "", "Render and download video");
+      if (renderFlowerBtnEl) setButtonDisabled(renderFlowerBtnEl, false, "", "Render flower video and download");
+      if (renderOrbBtnEl) setButtonDisabled(renderOrbBtnEl, false, "", "Render orb video and download");
+
+      if (playPreviewBtn) setButtonDisabled(playPreviewBtn, false, "", "Play audio preview");
+
+      window.dispatchEvent(new CustomEvent("audioloaded", { detail: { audioBuffer: window.workingAudioBuffer } }));
 
       if (showEditBtn) {
         showEditBtn.focus();
@@ -1106,8 +1135,8 @@ function handleSelectedFile(file) {
       logError("Decode Audio Data Error: ", err);
       if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
       if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
-      fileInfoContainer.classList.add("hidden");
-      decodeError.classList.remove("hidden");
+      if (fileInfoContainer) fileInfoContainer.classList.add("hidden");
+      if (decodeError) decodeError.classList.remove("hidden");
     });
   };
 
@@ -1115,8 +1144,8 @@ function handleSelectedFile(file) {
     logError("FileReader Error: ", err);
     if (dropZoneText) dropZoneText.textContent = "Drag & drop your files here";
     if (dropZone) dropZone.setAttribute("aria-label", "Upload audio file");
-    fileInfoContainer.classList.add("hidden");
-    decodeError.classList.remove("hidden");
+    if (fileInfoContainer) fileInfoContainer.classList.add("hidden");
+    if (decodeError) decodeError.classList.remove("hidden");
   };
 
   reader.readAsArrayBuffer(file);
@@ -1240,9 +1269,11 @@ function startPreview() {
   activePreviewAnalyser.connect(audioCtx.destination);
 
   isPreviewPlaying = true;
-  playPreviewBtn.textContent = "STOP PREVIEW";
-  playPreviewBtn.setAttribute("aria-pressed", "true");
-  playPreviewBtn.setAttribute("aria-label", "Stop audio preview");
+  if (playPreviewBtn) {
+    playPreviewBtn.textContent = "STOP PREVIEW";
+    playPreviewBtn.setAttribute("aria-pressed", "true");
+    playPreviewBtn.setAttribute("aria-label", "Stop audio preview");
+  }
 
   // Revert preview on natural audio completion
   activePreviewSource.onended = () => {
@@ -1258,10 +1289,14 @@ function startPreview() {
 
 function stopPreview() {
   isPreviewPlaying = false;
-  playPreviewBtn.textContent = "PLAY PREVIEW";
-  playPreviewBtn.setAttribute("aria-pressed", "false");
-  playPreviewBtn.setAttribute("aria-label", "Play audio preview");
-  playheadLine.classList.add("hidden");
+  if (playPreviewBtn) {
+    playPreviewBtn.textContent = "PLAY PREVIEW";
+    playPreviewBtn.setAttribute("aria-pressed", "false");
+    playPreviewBtn.setAttribute("aria-label", "Play audio preview");
+  }
+  if (playheadLine) {
+    playheadLine.classList.add("hidden");
+  }
 
   if (activePreviewSource) {
     try {
@@ -1635,19 +1670,23 @@ if (continueBtn) continueBtn.addEventListener("click", () => {
 
 // Main Controller Render Trigger
 if (renderBtn) renderBtn.addEventListener("click", async () => {
-  if (!window.workingAudioBuffer || !chosenWidth || !chosenHeight) return;
+  if (!window.workingAudioBuffer) return;
+  if (!chosenWidth || !chosenHeight) {
+    chosenWidth = 1280;
+    chosenHeight = 720;
+  }
 
   // Stop active preview
   stopPreview();
 
   // Reset progress, disable buttons and aspect cards during render
   setButtonDisabled(renderBtn, true, "Video rendering in progress...");
-  setButtonDisabled(playPreviewBtn, true, "Video rendering in progress...");
-  card16x9.classList.add("disabled");
-  card9x16.classList.add("disabled");
-  progressContainer.classList.remove("hidden");
-  downloadContainer.classList.add("hidden");
-  statusLine.classList.add("hidden");
+  if (playPreviewBtn) setButtonDisabled(playPreviewBtn, true, "Video rendering in progress...");
+  if (card16x9) card16x9.classList.add("disabled");
+  if (card9x16) card9x16.classList.add("disabled");
+  if (progressContainer) progressContainer.classList.remove("hidden");
+  if (downloadContainer) downloadContainer.classList.add("hidden");
+  if (statusLine) statusLine.classList.add("hidden");
 
   try {
     const duration = window.workingAudioBuffer.duration;
@@ -1687,33 +1726,39 @@ if (renderBtn) renderBtn.addEventListener("click", async () => {
     checkBlobDuration(finalBlob, duration);
 
     // Render Completed successfully!
-    progressContainer.classList.add("hidden");
+    if (progressContainer) progressContainer.classList.add("hidden");
 
     // Create Download Link
     const url = URL.createObjectURL(finalBlob);
     const filenameLabel = chosenWidth === 1280 ? "16x9" : "9x16";
 
-    downloadVideo.href = url;
-    downloadVideo.download = `visualizer-${filenameLabel}${fileExtension}`;
-    downloadVideo.textContent = `DOWNLOAD VIDEO (${fileExtension.substring(1).toUpperCase()})`;
+    if (downloadVideo) {
+      downloadVideo.href = url;
+      downloadVideo.download = `visualizer-${filenameLabel}${fileExtension}`;
+      downloadVideo.textContent = `DOWNLOAD VIDEO (${fileExtension.substring(1).toUpperCase()})`;
+    }
 
-    downloadContainer.classList.remove("hidden");
-    statusLine.textContent = "Rendering completed successfully!";
-    statusLine.classList.remove("hidden");
+    if (downloadContainer) downloadContainer.classList.remove("hidden");
+    if (statusLine) {
+      statusLine.textContent = "Rendering completed successfully!";
+      statusLine.classList.remove("hidden");
+    }
     if (downloadVideo) {
       downloadVideo.focus();
     }
   } catch (err) {
     logError("Export Error: ", err);
-    statusLine.textContent = `Error: ${err.message || err}`;
-    statusLine.classList.remove("hidden");
-    progressContainer.classList.add("hidden");
+    if (statusLine) {
+      statusLine.textContent = `Error: ${err.message || err}`;
+      statusLine.classList.remove("hidden");
+    }
+    if (progressContainer) progressContainer.classList.add("hidden");
   } finally {
     // Graceful recovery
     setButtonDisabled(renderBtn, false, "", "Render and download video");
-    setButtonDisabled(playPreviewBtn, false, "", "Play audio preview");
-    card16x9.classList.remove("disabled");
-    card9x16.classList.remove("disabled");
+    if (playPreviewBtn) setButtonDisabled(playPreviewBtn, false, "", "Play audio preview");
+    if (card16x9) card16x9.classList.remove("disabled");
+    if (card9x16) card9x16.classList.remove("disabled");
   }
 });
 

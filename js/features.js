@@ -425,6 +425,7 @@
   function initFeatures() {
     checkFileState();
     checkExportSupport();
+    selectStyle('lines');
     if (window.waveformGrid) {
       layoutFeatures(window.waveformGrid, st);
     }
