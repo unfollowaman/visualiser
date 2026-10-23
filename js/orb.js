@@ -585,20 +585,32 @@
     }
   }
 
+  function syncOrbRenderBtn() {
+    if (window.workingAudioBuffer && renderOrbBtn) {
+      setButtonDisabled(renderOrbBtn, false, "", "Render orb video and download");
+    }
+  }
+
   if (aspectRatioSection && renderOrbBtn) {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
           if (!aspectRatioSection.classList.contains('hidden')) {
-            if (window.workingAudioBuffer) {
-              setButtonDisabled(renderOrbBtn, false, "", "Render orb video and download");
-            }
+            syncOrbRenderBtn();
           }
         }
       });
     });
     observer.observe(aspectRatioSection, { attributes: true });
   }
+
+  window.addEventListener('audioloaded', () => {
+    updateAudioAnalysis();
+    syncOrbRenderBtn();
+  });
+  window.addEventListener('stylechange', () => {
+    syncOrbRenderBtn();
+  });
 
   // Export MP4 Render Function
   let orbMp4MuxerPromise = null;

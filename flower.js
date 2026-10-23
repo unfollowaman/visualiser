@@ -552,22 +552,29 @@ function setButtonDisabled(btn, isDisabled, disabledTitle = "", enabledTitle = "
   }
 }
 
-// Ensure renderFlowerBtn is enabled when file is loaded and aspect ratio chosen
+// Ensure renderFlowerBtn is enabled when file is loaded
+function syncFlowerRenderBtn() {
+  if (window.workingAudioBuffer && renderFlowerBtn) {
+    setButtonDisabled(renderFlowerBtn, false, "", "Render flower video and download");
+  }
+}
+
 const aspectRatioSectionEl = document.getElementById("aspectRatioSection");
 if (aspectRatioSectionEl) {
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.attributeName === "class") {
          if (!aspectRatioSectionEl.classList.contains("hidden")) {
-            if (window.workingAudioBuffer) {
-                setButtonDisabled(renderFlowerBtn, false, "", "Render flower video and download");
-            }
+            syncFlowerRenderBtn();
          }
       }
     });
   });
   observer.observe(aspectRatioSectionEl, { attributes: true });
 }
+
+window.addEventListener("audioloaded", syncFlowerRenderBtn);
+window.addEventListener("stylechange", syncFlowerRenderBtn);
 
 // Render Export
 async function renderAndExportFlowerVideo() {
