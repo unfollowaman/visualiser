@@ -24,13 +24,17 @@ const ZERO_METRIC = Object.freeze({ amplitude: 0, frequency: 0 });
 const flowerGrid = document.getElementById("flowerGrid");
 const renderFlowerBtn = document.getElementById("renderFlowerBtn");
 
-// Export UI Elements
-const flowerProgressContainer = document.getElementById("flowerProgressContainer");
-const flowerProgressPercentage = document.getElementById("flowerProgressPercentage");
-const flowerProgressBarFill = document.getElementById("flowerProgressBarFill");
-const flowerStatusLine = document.getElementById("flowerStatusLine");
-const flowerDownloadContainer = document.getElementById("flowerDownloadContainer");
-const flowerDownloadVideo = document.getElementById("flowerDownloadVideo");
+// Helper to retrieve export DOM elements dynamically
+function getFlowerExportDOMElements() {
+  return {
+    flowerProgressContainer: document.getElementById("flowerProgressContainer"),
+    flowerProgressPercentage: document.getElementById("flowerProgressPercentage"),
+    flowerProgressBarFill: document.getElementById("flowerProgressBarFill"),
+    flowerStatusLine: document.getElementById("flowerStatusLine"),
+    flowerDownloadContainer: document.getElementById("flowerDownloadContainer"),
+    flowerDownloadVideo: document.getElementById("flowerDownloadVideo")
+  };
+}
 
 // GLSL Shader Sources for WebGL Halftone Dot Pipeline
 const VS_SOURCE = `
@@ -582,13 +586,22 @@ async function renderAndExportFlowerVideo() {
 
   stopAllPreviews();
 
+  const {
+    flowerProgressContainer,
+    flowerProgressPercentage,
+    flowerProgressBarFill,
+    flowerStatusLine,
+    flowerDownloadContainer,
+    flowerDownloadVideo
+  } = getFlowerExportDOMElements();
+
   setButtonDisabled(renderFlowerBtn, true, "Flower video rendering in progress...");
-  flowerProgressContainer.classList.remove("hidden");
-  flowerDownloadContainer.classList.add("hidden");
-  flowerStatusLine.classList.add("hidden");
-  flowerProgressBarFill.style.width = "0%";
-  flowerProgressPercentage.textContent = "0%";
-  flowerProgressContainer.setAttribute("aria-valuenow", "0");
+  if (flowerProgressContainer) flowerProgressContainer.classList.remove("hidden");
+  if (flowerDownloadContainer) flowerDownloadContainer.classList.add("hidden");
+  if (flowerStatusLine) flowerStatusLine.classList.add("hidden");
+  if (flowerProgressBarFill) flowerProgressBarFill.style.width = "0%";
+  if (flowerProgressPercentage) flowerProgressPercentage.textContent = "0%";
+  if (flowerProgressContainer) flowerProgressContainer.setAttribute("aria-valuenow", "0");
 
   try {
     const fps = 60;
@@ -750,15 +763,15 @@ async function renderAndExportFlowerVideo() {
 
       if (i % 15 === 0) {
         const progress = Math.min(100, Math.round((i / totalFrames) * 100));
-        flowerProgressBarFill.style.width = `${progress}%`;
-        flowerProgressPercentage.textContent = `${progress}%`;
-        flowerProgressContainer.setAttribute("aria-valuenow", progress.toString());
+        if (flowerProgressBarFill) flowerProgressBarFill.style.width = `${progress}%`;
+        if (flowerProgressPercentage) flowerProgressPercentage.textContent = `${progress}%`;
+        if (flowerProgressContainer) flowerProgressContainer.setAttribute("aria-valuenow", progress.toString());
       }
     }
 
-    flowerProgressBarFill.style.width = "100%";
-    flowerProgressPercentage.textContent = "100%";
-    flowerProgressContainer.setAttribute("aria-valuenow", "100");
+    if (flowerProgressBarFill) flowerProgressBarFill.style.width = "100%";
+    if (flowerProgressPercentage) flowerProgressPercentage.textContent = "100%";
+    if (flowerProgressContainer) flowerProgressContainer.setAttribute("aria-valuenow", "100");
 
     if (audioEncoder) {
       await audioEncoder.flush();
@@ -773,22 +786,28 @@ async function renderAndExportFlowerVideo() {
     const blob = new Blob([buffer], { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
 
-    flowerDownloadVideo.href = url;
-    flowerDownloadVideo.download = `flower-1x1.webm`;
+    if (flowerDownloadVideo) {
+      flowerDownloadVideo.href = url;
+      flowerDownloadVideo.download = `flower-1x1.webm`;
+    }
 
-    flowerProgressContainer.classList.add("hidden");
-    flowerDownloadContainer.classList.remove("hidden");
-    flowerStatusLine.textContent = "Rendering completed successfully!";
-    flowerStatusLine.classList.remove("hidden");
+    if (flowerProgressContainer) flowerProgressContainer.classList.add("hidden");
+    if (flowerDownloadContainer) flowerDownloadContainer.classList.remove("hidden");
+    if (flowerStatusLine) {
+      flowerStatusLine.textContent = "Rendering completed successfully!";
+      flowerStatusLine.classList.remove("hidden");
+    }
     if (flowerDownloadVideo) {
       flowerDownloadVideo.focus();
     }
 
   } catch (err) {
     logError("Export Error:", err);
-    flowerStatusLine.textContent = `Error: ${err.message || err}`;
-    flowerStatusLine.classList.remove("hidden");
-    flowerProgressContainer.classList.add("hidden");
+    if (flowerStatusLine) {
+      flowerStatusLine.textContent = `Error: ${err.message || err}`;
+      flowerStatusLine.classList.remove("hidden");
+    }
+    if (flowerProgressContainer) flowerProgressContainer.classList.add("hidden");
   } finally {
     setButtonDisabled(renderFlowerBtn, false, "", "Render flower video and download");
     startAllPreviews();

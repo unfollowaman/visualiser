@@ -160,6 +160,38 @@
           <button type="button" id="renderBtn" class="fx-btn fx-on btn btn-primary btn-solid btn-solid--light" disabled aria-disabled="true" aria-label="Render and download video" title="Select 16:9 or 9:16 aspect ratio format to render">Render and download</button>
           <button type="button" id="renderFlowerBtn" class="fx-btn fx-on btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render flower video and download" title="Load an audio file and choose aspect ratio to render flower video">Render and download</button>
           <button type="button" id="renderOrbBtn" class="fx-btn fx-on btn btn-primary btn-solid btn-solid--light" hidden disabled aria-disabled="true" aria-label="Render orb video and download" title="Load an audio file and choose aspect ratio to render orb video">Render and download</button>
+
+          <div id="progressContainer" class="progress-container hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Video rendering progress">
+            <div class="progress-header">
+              <span id="progressLabel" class="progress-label">RENDERING 16:9 FORMAT...</span>
+              <span id="progressPercentage" class="progress-percentage">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="progressBarFill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+          <div id="statusLine" class="status-line hidden" role="status" aria-live="polite"></div>
+          <div id="downloadContainer" class="download-container hidden">
+            <div class="download-links">
+              <a id="downloadVideo" class="btn btn-primary btn-solid" href="#" download>DOWNLOAD VIDEO (MP4)</a>
+            </div>
+          </div>
+
+          <div id="flowerProgressContainer" class="progress-container hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Flower video rendering progress">
+            <div class="progress-header">
+              <span class="progress-label">RENDERING FLOWER FORMAT...</span>
+              <span id="flowerProgressPercentage" class="progress-percentage">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="flowerProgressBarFill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+          <div id="flowerStatusLine" class="status-line hidden" role="status" aria-live="polite"></div>
+          <div id="flowerDownloadContainer" class="download-container hidden">
+            <div class="download-links">
+              <a id="flowerDownloadVideo" class="btn btn-primary btn-solid" href="#" download>DOWNLOAD VIDEO (WEBM)</a>
+            </div>
+          </div>
         </div>
         <p class="fx-note" id="fx-render-note" aria-live="polite">Add a voice note in step 1 to unlock this.</p>
         <p class="fx-note">

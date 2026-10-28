@@ -1895,14 +1895,14 @@ if (downloadVideo) {
 
     function updateHelperNote() {
       if (!renderNote) return;
-      const activeRenderBtn = document.querySelector("#renderBtn:not([hidden]), #renderFlowerBtn:not([hidden]), #renderOrbBtn:not([hidden])");
-      const isDisabled = activeRenderBtn ? activeRenderBtn.disabled : true;
-
-      if (isDisabled) {
+      if (!window.workingAudioBuffer) {
         renderNote.textContent = "Add a voice note in step 1 to unlock this.";
       } else {
         const styleName = getSelectedStyleInfo();
-        renderNote.textContent = `${styleName}, saved as an MP4.`;
+        const checked = document.querySelector('input[name="style-choice"]:checked');
+        const val = checked ? checked.value : "lines";
+        const formatExt = val === "flower" ? "WebM" : "MP4";
+        renderNote.textContent = `${styleName}, saved as a ${formatExt}.`;
       }
     }
 
